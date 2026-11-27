@@ -22,6 +22,7 @@ import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import {
   TSurvey,
   TSurveyEditorTabs,
+  TSurveyStatus,
   TSurveyStyling,
   TSurveyVisibility,
 } from "@formbricks/types/surveys/types";
@@ -43,6 +44,10 @@ import type { TSurveyLinkedCreative } from "@/modules/ee/creatives/lib/survey-si
 import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/types";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
+import type { TRevealRequest } from "@/modules/survey/editor/components/block-card";
+import { EditorErrorBadge } from "@/modules/survey/editor/components/editor-error-badge";
+import { EditorIssueBar } from "@/modules/survey/editor/components/editor-issue-bar";
+import { EditorIssuesProvider } from "@/modules/survey/editor/components/editor-issues-context";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
 import { EMBEDDED_DATA_CARD_ID } from "@/modules/survey/editor/components/embedded-data-card";
 import { FlowView } from "@/modules/survey/editor/components/flow-view";
@@ -51,9 +56,33 @@ import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { isCustomCssBlockingManualSave } from "@/modules/survey/editor/lib/custom-css-autosave";
 import { describeRuleSummary } from "@/modules/survey/editor/lib/flow-outline-text";
 import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flow-tab-notice";
+import {
+  focusActiveTab,
+  focusIssueTarget,
+  focusSettingsField,
+} from "@/modules/survey/editor/lib/focus-issue";
+import {
+  findIssueOwnerBlock,
+  findRuleId,
+  getElementToOpen,
+  getIssueLocationDetail,
+  getIssueSummaryLabel,
+  mergeRepeatedIssues,
+} from "@/modules/survey/editor/lib/issue-summary";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
+import {
+  type TEditorIssue,
+  type TIssueTab,
+  areIssueListsEqual,
+  collectEditorIssues,
+  getFlaggedPlaces,
+  getIssueTargetIds,
+  getPublishTargetStatus,
+  reconcileIssues,
+} from "@/modules/survey/editor/lib/validation-issues";
 import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
@@ -67,6 +96,7 @@ import {
   isOutboundBlocked,
   withoutVisibilityControls,
 } from "@/modules/survey/visibility/lib/state";
+import { type TErrorSummaryItem } from "@/modules/ui/components/error-summary/error-list";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getEditorWorkspace, getWorkspaceLanguages } from "../lib/api-client";
 import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
@@ -74,6 +104,9 @@ import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
 // How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
 // following each keystroke made typing lag on large surveys (ENG-991).
 const PREVIEW_DEBOUNCE_MS = 300;
+// How long the issue list trails the editor after a failed save, so typing is not parsed on every keystroke.
+const ISSUE_RECHECK_DEBOUNCE_MS = 300;
+const NO_ISSUES: TEditorIssue[] = [];
 // Memoized so the editor's per-keystroke re-renders skip the preview while its debounced inputs are
 // unchanged; without it the preview would still re-render (and re-mount the survey) every time.
 const MemoizedPreviewSurvey = memo(PreviewSurvey);
@@ -199,15 +232,32 @@ export const SurveyEditor = ({
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   // Only the preview trails; the editor panes keep reading `localSurvey` so input stays immediate.
   const debouncedPreviewSurvey = useDebouncedValue(localSurvey, PREVIEW_DEBOUNCE_MS);
-  const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
+  const { t, i18n } = useTranslation();
+  // What stopped the last save or publish, and the status it was heading for. Null until one has been
+  // refused, so nothing is flagged before the author tries to publish.
+  const [issueReport, setIssueReport] = useState<{
+    issues: TEditorIssue[];
+    // Every place the attempt flagged, kept after a place is fixed so breaking it again flags it again.
+    flaggedPlaces: Set<string>;
+    targetStatus: TSurveyStatus;
+  } | null>(null);
+  // A failed save or publish that is not about the survey's content: the server refused, or the network failed.
+  const [systemError, setSystemError] = useState<string | null>(null);
+  // Bumped on every refused attempt; the summary moves focus to its heading each time.
+  const [summaryFocusRequest, setSummaryFocusRequest] = useState(0);
+  // The attempt whose bar already took focus: leaving the review tab and coming back must not take it again.
+  const [focusedSummaryRequest, setFocusedSummaryRequest] = useState(0);
+  // The list the menu bar's red badge opens.
+  const [isErrorPanelOpen, setIsErrorPanelOpen] = useState(false);
+  // Bumped when an issue's link is followed, so a question card the author folded opens again.
+  const [revealRequest, setRevealRequest] = useState<TRevealRequest | null>(null);
   // The Flow tab's open blocks, kept here because the tab unmounts on every switch: coming back keeps
   // what was opened and closed. It opens with every block collapsed.
+  // The rule a Review entry points at: the Flow tab opens it, so its fields exist when focus goes there.
+  const [flowRuleToOpen, setFlowRuleToOpen] = useState<{ id: string; request: number } | null>(null);
   const [flowExpandedBlockIds, setFlowExpandedBlockIds] = useState<Set<string>>(() => new Set());
   const flowHandledInvalidRef = useRef<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
-  // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
-  // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
-  const [hasTriggerError, setHasTriggerError] = useState(false);
   // Held here rather than in the targeting card, which unmounts with the Settings tab (ENG-6957).
   const [sharedSegmentEdit, setSharedSegmentEdit] = useState<TSharedSegmentEdit | null>(null);
 
@@ -351,7 +401,6 @@ export const SurveyEditor = ({
 
   // How the preview's banner reads a rule before the first question that screened it out: as the
   // Flow tab writes it (ENG-6969 T13 ①).
-  const { t, i18n } = useTranslation();
   const textLocale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const describeStartRule = useCallback(
     (rule: TSurveyBlockLogic, previewed: TSurvey) =>
@@ -359,15 +408,145 @@ export const SurveyEditor = ({
     [t, textLocale]
   );
 
+  const issues = issueReport?.issues ?? NO_ISSUES;
+  // Nothing left to list: the list closes, and opens closed the next time errors appear.
+  if (issues.length === 0 && isErrorPanelOpen) setIsErrorPanelOpen(false);
+  // What the cards' red bars and borders are drawn from. A fresh array for every refused attempt, so a card
+  // switches back to its Questions tab again on a second try.
+  const invalidElements = useMemo(
+    () =>
+      issueReport ? getIssueTargetIds(issueReport.issues.filter((issue) => issue.tab === "elements")) : null,
+    [issueReport]
+  );
+  // The same for the Flow tab, where rules and show-ifs are written: its rows and the Questions tab's cards
+  // each only carry the problems that are theirs to fix.
+  const invalidFlowIds = useMemo(
+    () =>
+      issueReport ? getIssueTargetIds(issueReport.issues.filter((issue) => issue.tab === "flow")) : null,
+    [issueReport]
+  );
+  // The Survey Trigger card says so while a save is refused for a missing trigger (ENG-2581).
+  const hasTriggerError = issues.some((issue) => issue.field === "trigger");
+
+  const reportIssues = useCallback((found: TEditorIssue[], targetStatus: TSurveyStatus) => {
+    setSystemError(null);
+    setIssueReport({ issues: found, flaggedPlaces: getFlaggedPlaces(found), targetStatus });
+    setSummaryFocusRequest((count) => count + 1);
+  }, []);
+  const clearIssues = useCallback(() => {
+    setIssueReport(null);
+    setSystemError(null);
+  }, []);
+  const reportSystemError = useCallback((message: string | null) => {
+    setSystemError(message);
+    if (message) setSummaryFocusRequest((count) => count + 1);
+  }, []);
+
+  const collectFor = (survey: TSurvey, targetStatus: TSurveyStatus) =>
+    collectEditorIssues(
+      {
+        survey,
+        selectedLanguageCode,
+        finishedResponseCount,
+        targetStatus,
+        isOpenedByCreative: linkedCreatives.length > 0,
+        isCustomCssBlocking: isCustomCssBlockingManualSave(surveyCustomCssValidation.status),
+        locale,
+      },
+      t
+    );
+
+  // After a refused attempt the issues follow the survey as it is edited: fixed ones disappear, broken ones
+  // come back. The report stays (empty) after the last fix, so the badge returns if something breaks again.
+  // The check runs when the survey settles, not when the report changes, because a fresh report was built from
+  // the current survey already.
+  const debouncedSurveyForIssues = useDebouncedValue(localSurvey, ISSUE_RECHECK_DEBOUNCE_MS);
+  const issueReportRef = useRef(issueReport);
+  useEffect(() => {
+    issueReportRef.current = issueReport;
+  }, [issueReport]);
+  useEffect(() => {
+    const report = issueReportRef.current;
+    if (!report || !debouncedSurveyForIssues) return;
+    // The custom CSS check is still running: its problem stays until it answers, and this runs again then.
+    if (surveyCustomCssValidation.status === "pending") return;
+
+    const next = reconcileIssues(
+      report.flaggedPlaces,
+      collectFor(debouncedSurveyForIssues, report.targetStatus)
+    );
+    setIssueReport((current) => {
+      if (!current) return current;
+      return areIssueListsEqual(current.issues, next) ? current : { ...current, issues: next };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see the comment above
+  }, [debouncedSurveyForIssues, surveyCustomCssValidation.status]);
+
   if (!localSurvey) {
     return <LoadingSkeleton />;
   }
+
+  // Clicking a disabled Activate is asking for the list: the check runs again against the survey as it is now,
+  // so the list has everything in the way, and the cards carry the same errors when the author goes to fix them.
+  const openErrorPanel = () => {
+    // A draft-save report (CSS only) must not narrow the list to draft rules: Activate needs more.
+    const reported = issueReport?.targetStatus;
+    const targetStatus = reported && reported !== "draft" ? reported : getPublishTargetStatus(localSurvey);
+    const found = collectFor(localSurvey, targetStatus);
+    setIssueReport(
+      found.length > 0 ? { issues: found, flaggedPlaces: getFlaggedPlaces(found), targetStatus } : null
+    );
+    setIsErrorPanelOpen(found.length > 0);
+  };
+
+  const goToIssue = (issue: TEditorIssue) => {
+    setActiveView(issue.tab);
+
+    if (!issue.targetId) {
+      // A Settings problem about one input (the response limit) lands on it.
+      if (issue.tab === "settings" && focusSettingsField(issue.field)) return;
+      // Nothing on the tab to land on (a Language or Settings entry): the tab itself, never the page body.
+      focusActiveTab();
+      return;
+    }
+    if (issue.tab === "elements") {
+      setActiveElementId(getElementToOpen(localSurvey, issue.targetId));
+      setRevealRequest((previous) => ({ request: (previous?.request ?? 0) + 1 }));
+    }
+    // The Flow tab opens the block that holds the rule, the show-if's question, or is the show-if's own block.
+    const owner = issue.tab === "flow" ? findIssueOwnerBlock(localSurvey, issue.targetId) : undefined;
+    if (owner) setFlowExpandedBlockIds((current) => new Set(current).add(owner.id));
+    const ruleId = issue.tab === "flow" ? findRuleId(localSurvey, issue.targetId) : null;
+    if (ruleId) setFlowRuleToOpen((previous) => ({ id: ruleId, request: (previous?.request ?? 0) + 1 }));
+    focusIssueTarget(issue);
+  };
+
+  const tabLabels: Record<TIssueTab, string> = {
+    elements: t("common.questions"),
+    flow: t("workspace.surveys.edit.flow.tab"),
+    styling: t("common.styling"),
+    language: t("common.language"),
+    settings: t("common.settings"),
+    followUps: t("workspace.surveys.edit.follow_ups"),
+  };
+  const summaryEntries = mergeRepeatedIssues(issues).map(({ issue, count }) => ({
+    tab: issue.tab,
+    item: {
+      key: issue.key,
+      label: getIssueSummaryLabel(issue, count, t),
+      group: tabLabels[issue.tab],
+      location: issue.location,
+      locationDetail: getIssueLocationDetail(localSurvey, issue),
+      onSelect: () => goToIssue(issue),
+    } satisfies TErrorSummaryItem,
+  }));
+  const summaryItems: TErrorSummaryItem[] = summaryEntries.map((entry) => entry.item);
 
   // After the null guard, we can safely narrow the setter type for child components
   const setLocalSurveyNonNull = setLocalSurvey as Dispatch<SetStateAction<TSurvey>>;
   const previewSurvey = debouncedPreviewSurvey ?? localSurvey;
 
-  return (
+  const editor = (
     <div className="flex h-full w-full flex-col">
       <SurveyMenuBar
         setLocalSurvey={setLocalSurveyNonNull}
@@ -375,8 +554,21 @@ export const SurveyEditor = ({
         survey={survey}
         activeId={activeView}
         setActiveId={setActiveView}
-        setInvalidElements={setInvalidElements}
-        setHasTriggerError={setHasTriggerError}
+        onIssuesFound={reportIssues}
+        onIssuesCleared={clearIssues}
+        onSystemError={reportSystemError}
+        errorCount={issues.length}
+        onBlockedActivateClick={openErrorPanel}
+        errorBadge={
+          issues.length > 0 ? (
+            <EditorErrorBadge
+              items={summaryItems}
+              errorCount={issues.length}
+              open={isErrorPanelOpen}
+              onOpenChange={setIsErrorPanelOpen}
+            />
+          ) : null
+        }
         workspace={localWorkspace}
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
@@ -404,6 +596,11 @@ export const SurveyEditor = ({
         // A full-width strip under the menu bar, like the bar itself.
         <RestrictedSurveyBanner ownerName={ownerName} className="rounded-none border-x-0 border-t-0 px-5" />
       )}
+      <EditorIssueBar
+        systemError={systemError}
+        shouldFocus={summaryFocusRequest > focusedSummaryRequest}
+        onFocused={() => setFocusedSummaryRequest(summaryFocusRequest)}
+      />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
           className="relative z-0 w-full overflow-y-auto bg-slate-50 focus:outline-hidden md:w-2/3"
@@ -426,8 +623,7 @@ export const SurveyEditor = ({
               setActiveElementId={setActiveElementId}
               workspace={localWorkspace}
               invalidElements={invalidElements}
-              setInvalidElements={setInvalidElements}
-              selectedLanguageCode={selectedLanguageCode || "default"}
+              revealRequest={revealRequest}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
@@ -444,9 +640,9 @@ export const SurveyEditor = ({
             <FlowView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
-              invalidElements={invalidElements}
-              setInvalidElements={setInvalidElements}
+              invalidElements={invalidFlowIds}
               expandedBlockIds={flowExpandedBlockIds}
+              ruleToOpen={flowRuleToOpen}
               handledInvalidRef={flowHandledInvalidRef}
               onAddCalculatedField={openEmbeddedDataCard}
               setExpandedBlockIds={setFlowExpandedBlockIds}
@@ -557,4 +753,6 @@ export const SurveyEditor = ({
       <EditPublicSurveyAlertDialog open={isCautionDialogOpen} setOpen={setIsCautionDialogOpen} />
     </div>
   );
+
+  return <EditorIssuesProvider value={issues}>{editor}</EditorIssuesProvider>;
 };

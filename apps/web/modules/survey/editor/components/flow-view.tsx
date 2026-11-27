@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
+import { useEditorIssues } from "@/modules/survey/editor/components/editor-issues-context";
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import {
   OptionsShowIfCounts,
@@ -66,6 +67,7 @@ import {
   getHeadlineText,
   summarizeRuleActions,
 } from "@/modules/survey/editor/lib/flow-outline-text";
+import { blockOwnsTarget } from "@/modules/survey/editor/lib/issue-summary";
 import {
   START_SCOPE_BLOCK_IDX,
   type TNewRuleKind,
@@ -88,7 +90,6 @@ import {
   isComputedDateField,
   scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
-import { isBlockLogicItemValid } from "@/modules/survey/editor/lib/validation";
 import { getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import { getElementIconMap } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
@@ -98,6 +99,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { FieldError } from "@/modules/ui/components/field-error";
 import {
   ENDING_TONE,
   FlowOutline,
@@ -115,7 +117,8 @@ interface FlowViewProps {
   readonly localSurvey: TSurvey;
   readonly setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   readonly invalidElements: string[] | null;
-  readonly setInvalidElements: Dispatch<SetStateAction<string[] | null>>;
+  /** A rule to open, when something outside the tab points at it; a new `request` opens it again. */
+  readonly ruleToOpen?: { id: string; request: number } | null;
   /**
    * The blocks open on the Flow tab. Kept by the survey editor: this tab unmounts on every tab switch,
    * and coming back keeps what the person opened and closed. Empty at first: every block collapsed.
@@ -157,23 +160,38 @@ export const FlowView = ({
   localSurvey,
   setLocalSurvey,
   invalidElements,
-  setInvalidElements,
   expandedBlockIds,
+  ruleToOpen,
   setExpandedBlockIds,
   handledInvalidRef,
   onAddCalculatedField,
 }: FlowViewProps) => {
   const { t, i18n } = useTranslation();
+  const issues = useEditorIssues();
   // Dates on the rows read in the viewer's language (P65).
   const textFormat = { locale: i18n.resolvedLanguage ?? i18n.language ?? "en-US" };
   const outline = useMemo(() => buildFlowOutline(localSurvey), [localSurvey]);
   const elementIcons = useMemo(() => getElementIconMap(t), [t]);
+
+  // A block's row says what is wrong with its show-if; when it is folded over other problems, how many.
+  const getBlockErrorMessages = (blockId: string, hiddenProblemCount: number): string[] => {
+    const showIfMessages = issues
+      .filter((issue) => issue.tab === "flow" && issue.targetId === blockId && issue.field === "showIf")
+      .map((issue) => issue.message);
+    if (showIfMessages.length > 0) return showIfMessages;
+    return hiddenProblemCount > 0
+      ? [t("workspace.surveys.edit.issue_card_errors", { count: hiddenProblemCount })]
+      : [];
+  };
 
   // The show-if popovers and the info tooltips stay inside the editor column rather than spill over
   // the preview or cover the editor's header.
   const [popoverBoundary, setPopoverBoundary] = useState<HTMLDivElement | null>(null);
   // One row's settings open at a time, as in the UI mock.
   const [openRowId, setOpenRowId] = useState<string | null>(null);
+  useEffect(() => {
+    if (ruleToOpen) setOpenRowId(ruleToOpen.id);
+  }, [ruleToOpen]);
   const toggleRow = (rowId: string) => setOpenRowId((current) => (current === rowId ? null : rowId));
   // The show-if popover open, keyed by what carries it: `block:<id>`, `element:<id>` or `options:<id>`.
   const [openShowIfKey, setOpenShowIfKey] = useState<string | null>(null);
@@ -223,21 +241,6 @@ export const FlowView = ({
     // Re-run only for a new validation pass, not on every edit of the outline.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invalidElements]);
-
-  // Live-clear a flagged rule once it is fixed, as the Questions tab did. Never adds: a rule just
-  // added and not filled in yet is flagged by the next save or publish, not while it is being written.
-  useEffect(() => {
-    if (!invalidElements?.length) return;
-    const fixedIds = [
-      ...(localSurvey.startLogic ?? []),
-      ...localSurvey.blocks.flatMap((block) => block.logic ?? []),
-    ]
-      .filter((rule) => invalidElements.includes(rule.id) && isBlockLogicItemValid(rule))
-      .map((rule) => rule.id);
-    if (fixedIds.length > 0) {
-      setInvalidElements((current) => (current ?? []).filter((id) => !fixedIds.includes(id)));
-    }
-  }, [localSurvey.startLogic, localSurvey.blocks, invalidElements, setInvalidElements]);
 
   const updateBlockRules = (blockIdx: number, rules: TSurveyBlockLogic[]) =>
     setLocalSurvey((survey) => setBlockRules(survey, blockIdx, rules));
@@ -332,6 +335,9 @@ export const FlowView = ({
           tone={row.type}
           icon={<RuleTypeIcon type={row.type} />}
           isInvalid={invalidElements?.includes(row.id) ?? false}
+          errorMessages={issues
+            .filter((issue) => issue.tab === "flow" && issue.targetId === row.id)
+            .map((issue) => issue.message)}
           readOnlyLabel={row.editable ? undefined : t("workspace.surveys.edit.flow.read_only")}
           onToggle={row.editable ? () => toggleRow(row.id) : undefined}
           ariaLabel={row.editable ? sentence : undefined}
@@ -541,12 +547,21 @@ export const FlowView = ({
         )}
         <ul className="col-span-3 grid grid-cols-subgrid">
           {rows.map(({ element, elementIdx, target, questionCell, optionsCell }) => {
+            const showIfIssues = issues.filter(
+              (issue) => issue.tab === "flow" && issue.targetId === element.id
+            );
             return (
               <li
                 key={element.id}
+                // The Questions tab is not mounted here, so the question's id is free to name this row.
+                id={element.id}
                 // The show-if popovers open under the whole question row (ENG-6969 review).
                 {...SHOW_IF_ANCHOR_PROPS}
-                className="col-span-3 grid min-h-8 grid-cols-subgrid items-center border-b border-slate-100 last:border-b-0">
+                className={cn(
+                  "col-span-3 grid min-h-8 scroll-mt-20 grid-cols-subgrid items-center border-b border-slate-100 last:border-b-0",
+                  // An offset outline and a margin: room around the row without moving the table's columns.
+                  showIfIssues.length > 0 && "my-2 rounded-md outline-1 outline-offset-[6px] outline-red-400"
+                )}>
                 <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-700">
                   <span className="shrink-0 text-slate-400 [&>svg]:size-3.5" aria-hidden="true">
                     {elementIcons[element.type]}
@@ -564,6 +579,13 @@ export const FlowView = ({
                 <div className="flex min-w-0">
                   {renderOptionsShowIfCell(optionsCell, block.blockIdx, elementIdx)}
                 </div>
+                {showIfIssues.map((showIfIssue) => (
+                  <FieldError
+                    key={showIfIssue.key}
+                    message={showIfIssue.message}
+                    className="col-span-3 pt-1 [&>p]:mb-0"
+                  />
+                ))}
               </li>
             );
           })}
@@ -751,6 +773,14 @@ export const FlowView = ({
             }
             const isNamed = surveyBlock.name.trim() !== "" && !isAutoBlockName(surveyBlock.name);
 
+            // A collapsed block hides its problems: it says how many there are, like a collapsed question card.
+            const hiddenProblemCount = isExpanded
+              ? 0
+              : issues.filter(
+                  (issue) =>
+                    issue.tab === "flow" && !!issue.targetId && blockOwnsTarget(surveyBlock, issue.targetId)
+                ).length;
+
             return (
               <FlowOutlineGroup key={block.id}>
                 <FlowOutlineRow
@@ -765,8 +795,11 @@ export const FlowView = ({
                   // A collapsed block hides its rules: it shows when one of them is flagged.
                   isInvalid={
                     (invalidElements?.includes(block.id) ?? false) ||
-                    (!isExpanded && block.rules.some((row) => invalidElements?.includes(row.id)))
+                    (!isExpanded &&
+                      (block.rules.some((row) => invalidElements?.includes(row.id)) ||
+                        surveyBlock.elements.some((element) => invalidElements?.includes(element.id))))
                   }
+                  errorMessages={getBlockErrorMessages(block.id, hiddenProblemCount)}
                   body={isExpanded ? renderQuestionTable(block) : null}>
                   <span className="shrink-0 text-xs font-medium text-slate-500">
                     {t("workspace.surveys.edit.block_n", { blockNumber: block.blockIdx + 1 })}

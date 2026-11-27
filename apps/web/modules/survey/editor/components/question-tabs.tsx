@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 
@@ -11,6 +11,10 @@ interface QuestionTabsProps {
   settings: ReactNode;
   /** A code problem lives on the Settings tab: the tabs open there, and flag it while Content is showing. */
   hasSettingsIssue?: boolean;
+  /** Counts up each time something (the show-if chip) asks for the Settings tab; 0 when nothing has. */
+  settingsRequest?: number;
+  /** Called once the request is taken, so reopening the question later starts on Content again. */
+  onSettingsRequestHandled?: () => void;
 }
 
 /**
@@ -21,11 +25,22 @@ export const QuestionTabs = ({
   content,
   settings,
   hasSettingsIssue = false,
+  settingsRequest = 0,
+  onSettingsRequestHandled,
 }: Readonly<QuestionTabsProps>) => {
   const { t } = useTranslation();
   // The tabs mount when the question is opened, so a question opened with a code problem starts on
   // Settings, where the Recode field shows it (the publish check scrolls to the card, not into it).
-  const [tab, setTab] = useState(hasSettingsIssue ? "settings" : "content");
+  const [tab, setTab] = useState(hasSettingsIssue || settingsRequest > 0 ? "settings" : "content");
+  // A request while the tabs are already showing switches them; one that opened the question is the start tab.
+  const [seenRequest, setSeenRequest] = useState(settingsRequest);
+  if (settingsRequest !== seenRequest) {
+    setSeenRequest(settingsRequest);
+    if (settingsRequest > 0) setTab("settings");
+  }
+  useEffect(() => {
+    if (settingsRequest > 0) onSettingsRequestHandled?.();
+  }, [settingsRequest, onSettingsRequestHandled]);
 
   return (
     <Tabs value={tab} onValueChange={setTab} className="mt-2 gap-4">

@@ -1225,3 +1225,51 @@ test.describe("Overlapping file uploads", () => {
     });
   });
 });
+
+test.describe("Publishing a survey with errors", () => {
+  test("counts the error, lists it, jumps to its field, and publishes once it is fixed", async ({
+    page,
+    users,
+  }) => {
+    const user = await users.create();
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await createSurveyFromScratch(page);
+
+    const headline = page.locator('[data-issue-field$=":headline"] .editor-input').first();
+    const badge = page.getByRole("button", { name: helper.EDITOR_ERRORS_BADGE_NAME });
+    const activate = page.getByRole("button", { name: "Activate", exact: true });
+
+    await test.step("a survey with no errors shows no badge", async () => {
+      await expect(headline).toBeVisible();
+      await expect(badge).toBeHidden();
+    });
+
+    await test.step("an emptied question headline stops the publish and the badge counts it", async () => {
+      await headline.fill("");
+      // The live preview re-renders after the edit, and may move focus to its own first control when it is
+      // done. Waiting for it to show the empty headline settles that before anything below is clicked, and
+      // the editor reads the survey as it was when the edit settled.
+      await expect(
+        page.getByTestId("fb__surveys__auto-close-wrapper-test").getByText("What would you like to know?")
+      ).toBeHidden();
+
+      await activate.click();
+      await expect(badge).toHaveText("1 error found");
+      await expect(activate).toHaveAttribute("aria-disabled", "true");
+    });
+
+    await test.step("the badge lists it, and the list goes to the field", async () => {
+      await badge.hover();
+      await page.getByRole("button", { name: "Enter a question" }).click();
+      await expect(headline).toBeFocused();
+    });
+
+    await test.step("fixing it clears the badge and the survey publishes", async () => {
+      await helper.fillRichTextEditor(page, "Question*", "How was it?");
+      await expect(badge).toBeHidden();
+
+      await helper.publishSurvey(page);
+    });
+  });
+});

@@ -4,6 +4,8 @@ import { EyeIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
+import { useEditorIssues } from "@/modules/survey/editor/components/editor-issues-context";
 import {
   OptionsShowIfCounts,
   OptionsShowIfPopover,
@@ -25,6 +27,7 @@ import {
 import { toPlainText } from "@/modules/survey/editor/lib/reference-chips";
 import { SHOW_IF_ANCHOR_PROPS } from "@/modules/survey/editor/lib/show-if-anchor";
 import type { TShowIfTarget } from "@/modules/survey/editor/lib/show-if-editing";
+import { FieldError } from "@/modules/ui/components/field-error";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -40,6 +43,8 @@ interface SectionProps {
   readonly help: string;
   /** The longer explanation behind an (i) next to the title, and that (i)'s accessible name. */
   readonly info?: { readonly label: string; readonly content: ReactNode };
+  /** What is wrong with the condition, shown under it: the same problems the Flow tab lists. */
+  readonly errors?: readonly string[];
   readonly children: ReactNode;
 }
 
@@ -47,7 +52,7 @@ interface SectionProps {
  * A section's heading reads like the other settings on the card (Recode): the popover it opens leaves
  * its own heading out, and opens under the whole section (`SHOW_IF_ANCHOR_PROPS`).
  */
-const ShowIfSettingsSection = ({ title, help, info, children }: SectionProps) => (
+const ShowIfSettingsSection = ({ title, help, info, errors = [], children }: SectionProps) => (
   <div className="flex flex-col gap-1" {...SHOW_IF_ANCHOR_PROPS}>
     <div className="flex items-center gap-1.5">
       <Label>{title}</Label>
@@ -55,6 +60,9 @@ const ShowIfSettingsSection = ({ title, help, info, children }: SectionProps) =>
     </div>
     <p className="text-sm text-slate-500">{help}</p>
     <div className="mt-2 flex min-w-0">{children}</div>
+    {errors.map((message) => (
+      <FieldError key={message} message={message} />
+    ))}
   </div>
 );
 
@@ -144,9 +152,17 @@ interface BlockShowIfSettingsProps {
 /** "Show block if…" on a block's Settings tab. */
 export const BlockShowIfSettings = ({ localSurvey, setLocalSurvey, blockIdx }: BlockShowIfSettingsProps) => {
   const { t } = useTranslation();
+  const issues = useEditorIssues();
+  const blockId = localSurvey.blocks[blockIdx]?.id;
+  const errors = issues
+    .filter((issue) => issue.tab === "flow" && issue.targetId === blockId && issue.field === "showIf")
+    .map((issue) => issue.message);
   const title = t("workspace.surveys.edit.flow.show_block_if");
   return (
-    <ShowIfSettingsSection title={title} help={t("workspace.surveys.edit.flow.show_if_block_help")}>
+    <ShowIfSettingsSection
+      title={title}
+      help={t("workspace.surveys.edit.flow.show_if_block_help")}
+      errors={errors}>
       <ShowIfField
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
@@ -230,12 +246,24 @@ export const QuestionShowIfSettings = ({
   elementIdx,
 }: QuestionShowIfSettingsProps) => {
   const { t } = useTranslation();
+  const issues = useEditorIssues();
   const sections = getQuestionShowIfSections(localSurvey, blockIdx, elementIdx);
   const title = t("workspace.surveys.edit.flow.show_question_if");
+  const elementId = localSurvey.blocks[blockIdx]?.elements[elementIdx]?.id;
+  const elementIssues = issues.filter((issue) => issue.tab === "flow" && issue.targetId === elementId);
+  const questionErrors = elementIssues
+    .filter((issue) => issue.field === "showIf")
+    .map((issue) => issue.message);
+  const optionsErrors = elementIssues
+    .filter((issue) => /^(choices|rows|columns)\.\d+\.showIf$/.test(issue.field ?? ""))
+    .map((issue) => issue.message);
 
   return (
     <div className="flex flex-col gap-4">
-      <ShowIfSettingsSection title={title} help={t("workspace.surveys.edit.flow.show_if_question_help")}>
+      <ShowIfSettingsSection
+        title={title}
+        help={t("workspace.surveys.edit.flow.show_if_question_help")}
+        errors={questionErrors}>
         <ShowIfField
           localSurvey={localSurvey}
           setLocalSurvey={setLocalSurvey}
@@ -249,6 +277,7 @@ export const QuestionShowIfSettings = ({
         <ShowIfSettingsSection
           title={t("workspace.surveys.edit.flow.show_options_if")}
           help={t("workspace.surveys.edit.flow.options_shown_if_help")}
+          errors={optionsErrors}
           info={{
             label: t("workspace.surveys.edit.flow.options_shown_if_info_label"),
             content: t("workspace.surveys.edit.flow.options_shown_if_info"),
@@ -269,6 +298,8 @@ export const QuestionShowIfSettings = ({
 interface ShowIfBadgeProps {
   readonly localSurvey: TSurvey;
   readonly target: Exclude<TShowIfTarget, { type: "option" }>;
+  /** Makes the chip a button that takes the author to the show-if: the card's Settings tab. */
+  readonly onOpen?: () => void;
 }
 
 /**
@@ -276,7 +307,7 @@ interface ShowIfBadgeProps {
  * "Optional · code" (review of ENG-6949): the Flow tab's eye chip, read-only, so a block or question
  * that can be hidden says so without opening its Settings tab. Nothing when it has none.
  */
-export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
+export const ShowIfBadge = ({ localSurvey, target, onOpen }: ShowIfBadgeProps) => {
   const { t, i18n } = useTranslation();
   const elementIcons = useElementIcons();
   const showIf = getCardShowIf(localSurvey, target);
@@ -288,15 +319,42 @@ export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
     target.type === "block"
       ? t("workspace.surveys.edit.flow.show_block_if")
       : t("workspace.surveys.edit.flow.show_question_if");
-  return (
-    <span
-      className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
-      title={`${label} ${toPlainText(parts)}`}>
+  const content = (
+    <>
       <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
       <span className="sr-only">{label}</span>
       <span className="flex min-w-0 items-center gap-1">
         <FlowTextParts parts={parts} elementIcons={elementIcons} centered />
       </span>
-    </span>
+    </>
+  );
+  const chipClassName =
+    "inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600";
+  const title = `${label} ${toPlainText(parts)}`;
+
+  if (!onOpen) {
+    return (
+      <span className={chipClassName} title={title}>
+        {content}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-show-if-chip
+      className={cn(
+        chipClassName,
+        "cursor-pointer hover:border-slate-300 hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+      )}
+      title={title}
+      onClick={(event) => {
+        // The chip sits inside the card's header, which opens and closes the card: this click is not for it.
+        event.stopPropagation();
+        onOpen();
+      }}>
+      {content}
+    </button>
   );
 };

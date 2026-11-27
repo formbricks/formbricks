@@ -4,8 +4,16 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { GripIcon, PencilIcon } from "lucide-react";
-import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
+import { AlertCircleIcon, GripIcon, PencilIcon } from "lucide-react";
+import {
+  type Dispatch,
+  type KeyboardEvent,
+  type SetStateAction,
+  memo,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
@@ -29,6 +37,7 @@ import { CSATElementForm } from "@/modules/survey/editor/components/csat-element
 import { CTAElementForm } from "@/modules/survey/editor/components/cta-element-form";
 import { DateElementForm } from "@/modules/survey/editor/components/date-element-form";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
+import { useEditorIssues } from "@/modules/survey/editor/components/editor-issues-context";
 import { FileUploadElementForm } from "@/modules/survey/editor/components/file-upload-element-form";
 import { MatrixElementForm } from "@/modules/survey/editor/components/matrix-element-form";
 import { MultipleChoiceElementForm } from "@/modules/survey/editor/components/multiple-choice-element-form";
@@ -47,9 +56,16 @@ import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes"
 import { setOptionHiddenById } from "@/modules/survey/editor/lib/option-hide-toggle";
 import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { isInlineIssueField } from "@/modules/survey/editor/lib/validation-issues";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
+import { FieldError } from "@/modules/ui/components/field-error";
 import { Input } from "@/modules/ui/components/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
+
+/** A fresh object for every followed issue link: the card sees a new request, whatever else is unchanged. */
+export interface TRevealRequest {
+  readonly request: number;
+}
 
 interface BlockCardProps {
   localSurvey: TSurvey;
@@ -73,6 +89,8 @@ interface BlockCardProps {
   lastElement: boolean;
   lastElementIndex: number;
   invalidElements?: string[];
+  /** Set when an issue's link was followed: the card that owns the question opens, even if it was folded. */
+  revealRequest?: TRevealRequest | null;
   addElement: (element: TSurveyElement, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
@@ -91,6 +109,22 @@ interface BlockCardProps {
   onInteract: (blockId: string) => void;
 }
 
+/**
+ * Following an issue's link opens the card it is in, even one the author folded by hand: nothing else about
+ * the card changes then, so the request itself is what says "open now". Adjusted during render rather than
+ * in an effect, so the field is mounted before the scroll looks for it.
+ */
+const useRevealOnRequest = (
+  revealRequest: TRevealRequest | null | undefined,
+  isBlockOpen: boolean,
+  onReveal: () => void
+) => {
+  const [lastReveal, setLastReveal] = useState(revealRequest);
+  if (lastReveal === revealRequest) return;
+  setLastReveal(revealRequest);
+  if (revealRequest && isBlockOpen) onReveal();
+};
+
 const BlockCardComponent = ({
   localSurvey,
   persistedSurvey,
@@ -108,6 +142,7 @@ const BlockCardComponent = ({
   lastElement,
   lastElementIndex,
   invalidElements,
+  revealRequest,
   addElement,
   isFormbricksCloud,
   isCxMode,
@@ -130,6 +165,9 @@ const BlockCardComponent = ({
   });
   const { t } = useTranslation();
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
+  const issues = useEditorIssues();
+  const blockNameIssue = issues.find((issue) => issue.targetId === block.id && issue.field === "name");
+  const blockNameErrorId = `${block.id}-name-error`;
 
   // The question codes of the block, in order: the names an export and a webhook know its questions by.
   const blockCodes = block.elements
@@ -150,6 +188,12 @@ const BlockCardComponent = ({
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [blockTab, setBlockTab] = useState("questions");
+  // A question's show-if chip asks for that question's Settings tab; taken once the tabs have switched.
+  const [questionSettingsRequest, setQuestionSettingsRequest] = useState<{
+    elementId: string;
+    request: number;
+  } | null>(null);
+  const clearQuestionSettingsRequest = useCallback(() => setQuestionSettingsRequest(null), []);
 
   // Questions live on the Questions tab, so a flagged one switches back to it: the
   // error is then visible, and the publish check's scroll finds the question's card (the Settings tab
@@ -165,6 +209,11 @@ const BlockCardComponent = ({
     setLastIssueCheck({ invalidElements, hasQuestionsTabIssue });
     if (hasQuestionsTabIssue) setBlockTab("questions");
   }
+
+  useRevealOnRequest(revealRequest, isBlockOpen, () => {
+    setIsBlockCollapsed(false);
+    setBlockTab("questions");
+  });
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
@@ -313,7 +362,7 @@ const BlockCardComponent = ({
           onOpenChange={() => setIsBlockCollapsed(!isBlockCollapsed)}
           className={cn(isBlockCollapsed ? "h-full" : "")}>
           <Collapsible.CollapsibleTrigger asChild>
-            <div className="block h-full w-full cursor-pointer hover:bg-slate-100">
+            <div className="block h-full w-full cursor-pointer hover:bg-slate-100 has-[[data-show-if-chip]:hover]:bg-transparent">
               <div
                 className="flex h-full items-center justify-between px-4 py-2"
                 data-testid="block-card-header">
@@ -328,6 +377,7 @@ const BlockCardComponent = ({
                       aria-label={t("workspace.surveys.edit.block_name")}
                       maxLength={BLOCK_NAME_MAX_LENGTH}
                       isInvalid={hasInvalidName}
+                      aria-describedby={blockNameIssue ? blockNameErrorId : undefined}
                       onChange={(e) => updateBlockName(blockIdx, e.target.value)}
                       onKeyDown={handleNameKeyDown}
                       // The whole header row is the collapse trigger, so a click meant for the
@@ -358,12 +408,26 @@ const BlockCardComponent = ({
                       className="pointer-events-none absolute top-1 right-2 size-3.5 text-slate-400 opacity-0 transition-opacity group-focus-within/name:opacity-0 group-hover/name:opacity-100"
                     />
                     <div className="flex min-w-0 items-center gap-2">
-                      <p className="shrink-0 text-xs text-slate-500">
-                        {[t("common.count_questions", { count: block.elements.length }), blockCodes]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                      <ShowIfBadge localSurvey={localSurvey} target={{ type: "block", blockIdx }} />
+                      {blockNameIssue ? (
+                        <p id={blockNameErrorId} className="flex items-center gap-1 text-xs text-error">
+                          <AlertCircleIcon aria-hidden="true" className="size-3.5 shrink-0" />
+                          {blockNameIssue.message}
+                        </p>
+                      ) : (
+                        <p className="shrink-0 text-xs text-slate-500">
+                          {[t("common.count_questions", { count: block.elements.length }), blockCodes]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </p>
+                      )}
+                      <ShowIfBadge
+                        localSurvey={localSurvey}
+                        target={{ type: "block", blockIdx }}
+                        onOpen={() => {
+                          setIsBlockCollapsed(false);
+                          setBlockTab("settings");
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -404,6 +468,13 @@ const BlockCardComponent = ({
                     elementIdx += elementIndex;
 
                     const isOpen = activeElementId === element.id;
+                    const elementIssues = issues.filter(
+                      (issue) => issue.tab === "elements" && issue.targetId === element.id
+                    );
+                    // Problems about the whole question, or about a field that has no input of its own to sit next to.
+                    const cardIssues = elementIssues.filter(
+                      (issue) => issue.level === "question" || !isInlineIssueField(issue.field)
+                    );
 
                     return (
                       <div
@@ -467,7 +538,22 @@ const BlockCardComponent = ({
                                       <ShowIfBadge
                                         localSurvey={localSurvey}
                                         target={{ type: "element", blockIdx, elementIdx: elementIndex }}
+                                        onOpen={() => {
+                                          setActiveElementId(element.id);
+                                          setQuestionSettingsRequest((previous) => ({
+                                            elementId: element.id,
+                                            request: (previous?.request ?? 0) + 1,
+                                          }));
+                                        }}
                                       />
+                                      {!isOpen && elementIssues.length > 0 && (
+                                        <p className="flex shrink-0 items-center gap-1 text-xs text-error">
+                                          <AlertCircleIcon aria-hidden="true" className="size-3.5 shrink-0" />
+                                          {t("workspace.surveys.edit.issue_card_errors", {
+                                            count: elementIssues.length,
+                                          })}
+                                        </p>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -503,9 +589,23 @@ const BlockCardComponent = ({
                           </Collapsible.CollapsibleTrigger>
                           <Collapsible.CollapsibleContent
                             className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
+                            {cardIssues.map((issue) => (
+                              <FieldError
+                                key={issue.key}
+                                id={`${element.id}-${issue.field ?? "question"}-error`}
+                                message={issue.message}
+                                className="pt-2"
+                              />
+                            ))}
                             <QuestionTabs
                               content={renderElementForm(element, elementIdx)}
                               hasSettingsIssue={codeIssues.has(element.id)}
+                              settingsRequest={
+                                questionSettingsRequest?.elementId === element.id
+                                  ? questionSettingsRequest.request
+                                  : 0
+                              }
+                              onSettingsRequestHandled={clearQuestionSettingsRequest}
                               settings={
                                 <AdvancedSettings
                                   // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.

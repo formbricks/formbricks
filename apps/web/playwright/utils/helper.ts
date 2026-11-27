@@ -719,6 +719,15 @@ export const fillChoiceOptions = async (page: Page, values: string[]) => {
 // editor and would be reported as publish failures.
 const errorToastsOf = (page: Page): Locator => page.locator(".formbricks__toast__error");
 
+// What stopped a save or publish is counted by a red "N errors found" badge in the editor's menu bar, which stays
+// until it is fixed; hovering it lists them. A save that failed for a reason outside the survey says so in a
+// "Something went wrong" bar under the menu bar.
+export const EDITOR_ERRORS_BADGE_NAME = /^\d+ errors? found$/;
+const editorProblemsOf = (page: Page): Locator =>
+  page
+    .getByRole("button", { name: EDITOR_ERRORS_BADGE_NAME })
+    .or(page.getByRole("region", { name: /^Something went wrong/ }));
+
 // The editor button that activates a survey: "Activate", "Schedule survey" once a publish date is set,
 // or the CX editor's "Save & Close".
 const ACTIVATION_TRIGGERS = {
@@ -748,11 +757,16 @@ export const activateSurvey = async (
   await trigger.click({ noWaitAfter: true });
   const actionName = via === "schedule" ? "Schedule survey" : "Activate";
 
-  // The editor validates before it opens the dialog and reports a problem only through a toast, so
-  // wait for whichever comes first and fail with the editor's own message rather than a locator timeout.
+  // The editor validates before it opens the dialog and shows an errors badge (or, for
+  // a few messages, a toast), so wait for whichever comes first and fail with the editor's own message
+  // rather than a locator timeout.
   const dialog = page.getByRole("dialog", { name: "Who can view this survey in your workspace?" });
   const errorToast = errorToastsOf(page).first();
-  await expect(dialog.or(errorToast).first()).toBeVisible();
+  const problems = editorProblemsOf(page);
+  await expect(dialog.or(errorToast).or(problems).first()).toBeVisible();
+  if (await problems.isVisible()) {
+    throw new Error(`${actionName} was rejected by the editor: ${(await problems.innerText()).trim()}`);
+  }
   if (await errorToast.isVisible()) {
     throw new Error(`${actionName} was rejected by the editor: ${(await errorToast.innerText()).trim()}`);
   }
@@ -766,9 +780,9 @@ export const activateSurvey = async (
 /**
  * Publish the survey being edited and wait for the summary page.
  *
- * The editor validates client-side and reports problems only through a toast that auto-dismisses, so
- * a failed publish otherwise surfaces as an opaque `waitForURL` timeout. This watches for the
- * navigation and collects error toasts alongside it, then fails with the message the editor actually
+ * The editor validates client-side and lists what is wrong in its problems box, so a failed publish
+ * otherwise surfaces as an opaque `waitForURL` timeout. This watches for the navigation and collects
+ * the problems (and any error toast) alongside it, then fails with the message the editor actually
  * gave — or says plainly that none was shown, which points at a slow publish rather than a rejected
  * one.
  */
@@ -779,6 +793,7 @@ export const publishSurvey = async (page: Page): Promise<void> => {
   const publishTimeoutMs = 120000;
   const summaryUrl = /\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/;
   const errorToasts = errorToastsOf(page);
+  const problems = editorProblemsOf(page);
 
   await activateSurvey(page);
 
@@ -798,7 +813,11 @@ export const publishSurvey = async (page: Page): Promise<void> => {
     if (settled === false) break;
 
     // The publish may still navigate between the race above and this read.
-    for (const text of await errorToasts.allInnerTexts().catch(() => [])) {
+    const reportedTexts = [
+      ...(await errorToasts.allInnerTexts().catch(() => [])),
+      ...(await problems.allInnerTexts().catch(() => [])),
+    ];
+    for (const text of reportedTexts) {
       const message = text.trim();
       if (message) seen.add(message);
     }
@@ -807,7 +826,7 @@ export const publishSurvey = async (page: Page): Promise<void> => {
   const reported =
     seen.size > 0
       ? `Editor reported: ${JSON.stringify([...seen])}`
-      : "No validation toast was shown, so this is a slow publish rather than a rejected one";
+      : "No problem was shown, so this is a slow publish rather than a rejected one";
 
   throw new Error(
     `Publish did not reach the summary page within ${publishTimeoutMs}ms. ${reported} (url: ${page.url()})`

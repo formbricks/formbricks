@@ -6,7 +6,7 @@ import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
-import { BlockCard } from "@/modules/survey/editor/components/block-card";
+import { BlockCard, type TRevealRequest } from "@/modules/survey/editor/components/block-card";
 
 interface BlocksDroppableProps {
   localSurvey: TSurvey;
@@ -26,6 +26,7 @@ interface BlocksDroppableProps {
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
   invalidElements: string[] | null;
+  revealRequest?: TRevealRequest | null;
   addElement: (element: TSurveyElement, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
@@ -47,6 +48,7 @@ export const BlocksDroppable = ({
   deleteElement,
   duplicateElement,
   invalidElements,
+  revealRequest,
   localSurvey,
   persistedSurvey,
   setLocalSurvey,
@@ -106,6 +108,7 @@ export const BlocksDroppable = ({
               lastElement={isLastBlock}
               lastElementIndex={lastElementIndex}
               invalidElements={invalidElements ?? undefined}
+              revealRequest={revealRequest}
               addElement={addElement}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}

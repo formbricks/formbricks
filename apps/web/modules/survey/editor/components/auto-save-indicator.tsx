@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { InfoTooltipContent } from "@/modules/ui/components/info-tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import {
   type TAutoSaveBadgeLabel,
   type TAutoSaveBadgeTooltip,
@@ -89,7 +90,9 @@ export const AutoSaveIndicator = ({
               {label}
             </button>
           </TooltipTrigger>
-          <TooltipContent className="max-w-64 text-center">{tooltip}</TooltipContent>
+          <InfoTooltipContent side="bottom" align="end">
+            {tooltip}
+          </InfoTooltipContent>
         </Tooltip>
       </TooltipProvider>
       {/* The live region speaks only when a save fails, with the explanation the tooltip carries. The

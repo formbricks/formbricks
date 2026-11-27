@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import React, { SetStateAction, useEffect, useMemo, useState } from "react";
+import React, { SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -23,10 +23,10 @@ import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
+import type { TRevealRequest } from "@/modules/survey/editor/components/block-card";
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
 import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
@@ -57,12 +57,6 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useStableCallback } from "@/modules/ui/hooks/use-stable-callback";
-import {
-  isBlockLogicItemValid,
-  isEndingCardValid,
-  isWelcomeCardValid,
-  validateElement,
-} from "../lib/validation";
 
 // Module-level so the sensor descriptor keeps its identity: a fresh options object per render gives
 // DndContext new activators, which re-renders every useSortable consumer (each BlockCard) on every edit.
@@ -77,8 +71,8 @@ interface ElementsViewProps {
   setActiveElementId: (elementId: string | null) => void;
   workspace: TWorkspaceWithoutCustomCss;
   invalidElements: string[] | null;
-  setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
-  selectedLanguageCode: string;
+  /** A new request each time an issue's link is followed; the card holding that question opens. */
+  revealRequest?: TRevealRequest | null;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -99,8 +93,7 @@ export const ElementsView = ({
   persistedSurvey,
   workspace,
   invalidElements,
-  setInvalidElements,
-  selectedLanguageCode,
+  revealRequest,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -127,8 +120,6 @@ export const ElementsView = ({
   const deletionWarning = describeDeletionWarning(logicDeletionWarning.useKind, t);
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
-
-  const surveyLanguages = localSurvey.languages;
 
   const updateElement = (elementIdx: number, updatedAttributes: Record<string, unknown>) => {
     // Get element ID from current elements array (for validation)
@@ -609,91 +600,6 @@ export const ElementsView = ({
     setLocalSurvey(result.data);
   };
 
-  // Validate survey when changes are made to languages or elements
-  // using set for O(1) lookup
-  useEffect(() => {
-    if (!invalidElements) return;
-
-    const currentInvalidSet = new Set(invalidElements);
-    let hasChanges = false;
-
-    // Live re-validation: clear errors as elements become valid (including
-    // drafts), but don't flag freshly added drafts — save/publish does that.
-    elements.forEach((element) => {
-      const isValid = validateElement(element, surveyLanguages);
-      if (isValid) {
-        if (currentInvalidSet.has(element.id)) {
-          currentInvalidSet.delete(element.id);
-          hasChanges = true;
-        }
-      } else if (!element.isDraft && !currentInvalidSet.has(element.id)) {
-        currentInvalidSet.add(element.id);
-        hasChanges = true;
-      }
-    });
-
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      if (!currentInvalidSet.has("start")) {
-        currentInvalidSet.add("start");
-        hasChanges = true;
-      }
-    } else if (currentInvalidSet.has("start")) {
-      currentInvalidSet.delete("start");
-      hasChanges = true;
-    }
-
-    // Check thank you card
-    localSurvey.endings.forEach((ending) => {
-      if (!isEndingCardValid(ending, surveyLanguages)) {
-        if (!currentInvalidSet.has(ending.id)) {
-          currentInvalidSet.add(ending.id);
-          hasChanges = true;
-        }
-      } else if (currentInvalidSet.has(ending.id)) {
-        currentInvalidSet.delete(ending.id);
-        hasChanges = true;
-      }
-    });
-
-    // Live-clear conditional logic and block-name errors as they get fixed. We only clear
-    // here (never add) so freshly added, not-yet-filled-in rules aren't
-    // flagged prematurely — logic errors are added on save/publish instead.
-    localSurvey.blocks.forEach((block) => {
-      if (currentInvalidSet.has(block.id) && block.name.trim()) {
-        currentInvalidSet.delete(block.id);
-        hasChanges = true;
-      }
-
-      (block.logic ?? []).forEach((logicItem) => {
-        if (currentInvalidSet.has(logicItem.id) && isBlockLogicItemValid(logicItem)) {
-          currentInvalidSet.delete(logicItem.id);
-          hasChanges = true;
-        }
-      });
-    });
-
-    if (hasChanges) {
-      setInvalidElements(Array.from(currentInvalidSet));
-    }
-  }, [
-    elements,
-    surveyLanguages,
-    invalidElements,
-    setInvalidElements,
-    localSurvey.welcomeCard,
-    localSurvey.endings,
-    localSurvey.blocks,
-  ]);
-
-  useEffect(() => {
-    const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
-    if (elementWithEmptyFallback && activeElementId !== elementWithEmptyFallback.id) {
-      setActiveElementId(elementWithEmptyFallback.id);
-      toast.error(t("workspace.surveys.edit.fallback_missing"));
-    }
-  }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode, t]);
-
   const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
 
   const onBlockCardDragEnd = (event: DragEndEvent) => {
@@ -789,6 +695,7 @@ export const ElementsView = ({
           activeElementId={activeElementId}
           setActiveElementId={setActiveElementId}
           invalidElements={invalidElements}
+          revealRequest={revealRequest}
           addElement={stableAddElement}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
