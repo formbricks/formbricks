@@ -249,7 +249,7 @@ describe("saving dashboard filters (ENG-6900)", () => {
     expect(row.filters).toEqual([filterOf(1, LANGUAGE)]);
   });
 
-  test("takes exactly 10 filters and refuses an 11th, an unknown field, a repeated id and no values before saving", () => {
+  test("takes exactly 10 filters and refuses an 11th and no values before saving, with 400", () => {
     const body = (filters: unknown[]) => ({
       name: "Board",
       expectedUpdatedAt: new Date().toISOString(),
@@ -259,12 +259,6 @@ describe("saving dashboard filters (ENG-6900)", () => {
     const ten = Array.from({ length: 10 }, (_, i) => filterOf(i + 1, SOURCE));
     expect(ZV3DashboardReplaceBody.safeParse(body(ten)).success).toBe(true);
     expect(ZV3DashboardReplaceBody.safeParse(body([...ten, filterOf(11, SOURCE)])).success).toBe(false);
-    expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, "FeedbackRecords.nope")])).success).toBe(
-      false
-    );
-    expect(
-      ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE), filterOf(1, LANGUAGE)])).success
-    ).toBe(false);
     // A locked filter applies its values to every read, so it cannot be saved without any.
     expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "equals", [])])).success).toBe(false);
     // set / notSet compare against nothing: saved with no values, and refused with any.
@@ -272,13 +266,43 @@ describe("saving dashboard filters (ENG-6900)", () => {
     expect(ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "notSet", ["x"])])).success).toBe(
       false
     );
-    // The no-value pick is a list filter's alone.
     expect(
       ZV3DashboardReplaceBody.safeParse(body([filterOf(1, SOURCE, "equals", [NO_VALUE_PICK])])).success
     ).toBe(true);
-    expect(
-      ZV3DashboardReplaceBody.safeParse(body([filterOf(1, FREE_TEXT, "equals", [NO_VALUE_PICK])])).success
-    ).toBe(false);
+  });
+
+  test("refuses an unknown field, an operator the field refuses, a repeated id and a value the field cannot take with 422, saving nothing (ENG-7061)", async () => {
+    const dashboard = await createDashboard([], [filterOf(1, LANGUAGE)]);
+
+    const response = await replaceV3Dashboard({
+      dashboardId: dashboard.id,
+      body: ZV3DashboardReplaceBody.parse({
+        name: "Renamed",
+        expectedUpdatedAt: dashboard.updatedAt.toISOString(),
+        filters: [
+          filterOf(1, "FeedbackRecords.nope"),
+          filterOf(2, SOURCE, "gt", ["1"]),
+          filterOf(1, SOURCE),
+          // The no-value pick is a list filter's alone.
+          filterOf(4, FREE_TEXT, "equals", [NO_VALUE_PICK]),
+        ],
+        widgets: [],
+      }),
+      ...ctx(),
+    });
+
+    expect(response.status).toBe(422);
+    const body = (await response.json()) as { code: string; invalid_params: { name: string }[] };
+    expect(body.code).toBe("unprocessable_content");
+    expect(body.invalid_params.map(({ name }) => name)).toEqual([
+      "filters.0.field",
+      "filters.1.operator",
+      "filters.2.id",
+      "filters.3.values",
+    ]);
+    const row = await prisma.dashboard.findUniqueOrThrow({ where: { id: dashboard.id } });
+    expect(row.name).not.toBe("Renamed");
+    expect(row.filters).toEqual([filterOf(1, LANGUAGE)]);
   });
 
   test("a copy of the dashboard keeps its filters", async () => {

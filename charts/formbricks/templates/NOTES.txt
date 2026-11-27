@@ -34,6 +34,28 @@ Accessing Your Application:
    ```
    Then visit: **http://localhost:3000**
 {{- end }}
+{{- $trustedProxyHops := index (.Values.deployment.env | default dict) "TRUSTED_PROXY_HOP_COUNT" }}
+{{- /* The app reads the value as a number, so "0" and "00" both disable forwarding headers. Unset means 1; a
+     valueFrom reference is unknown here, so it is warned about. */}}
+{{- $forwardingHeadersIgnored := and (not (kindIs "map" $trustedProxyHops)) (regexMatch "^\\s*0+\\s*$" (toString $trustedProxyHops)) }}
+{{- $exposedService := and .Values.service.enabled (or (contains "LoadBalancer" .Values.service.type) (contains "NodePort" .Values.service.type)) }}
+{{- $bypassesIngress := or .Values.deployment.hostNetwork $exposedService }}
+{{- if and $bypassesIngress (not $forwardingHeadersIgnored) }}
+
+⚠️ Client IP addresses:
+   {{ if .Values.deployment.hostNetwork }}hostNetwork{{ else }}The {{ .Values.service.type }} Service{{ end }} lets clients reach Formbricks without passing through the proxies that
+   deployment.env.TRUSTED_PROXY_HOP_COUNT counts. Formbricks reads the client IP from the X-Forwarded-For entry
+   at that position, which a client connecting directly writes itself: it can pick a new IP for every request,
+   getting fresh rate limits (sign-in, sign-up, password reset) and a forged IP in audit logs.
+   Every request must reach Formbricks through proxies that append X-Forwarded-For: serve traffic through the
+   ingress (a ClusterIP Service, no hostNetwork), or block every direct path so that only those proxies reach
+   the app ({{ if and .Values.deployment.hostNetwork $exposedService }}this Service and the app's port on every node{{ else if .Values.deployment.hostNetwork }}the app's port on every node{{ else }}this Service{{ end }}). A proxy in front does not stop direct connections, and a ClusterIP Service
+   still admits other pods: restrict them with a NetworkPolicy that admits only the trusted proxies,
+   including the ingress controller.
+   Setting TRUSTED_PROXY_HOP_COUNT to "0" stops the spoofing but makes every client one address, so one
+   client can use up the sign-in limits for everyone: a stopgap.
+   See https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging#configure-trusted-proxy-hops
+{{- end }}
 
 ---
 

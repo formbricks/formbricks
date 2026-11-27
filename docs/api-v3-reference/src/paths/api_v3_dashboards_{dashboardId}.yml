@@ -115,7 +115,11 @@ put:
     Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
     is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
 
-    `filters`, when sent, replace the dashboard's filters. A filter on an embedded-data field
+    `filters`, when sent, replace the dashboard's filters. A filter that is well-formed but does not fit
+    the field catalog (a field outside it, an operator the field does not allow, an id used twice, or
+    values the field cannot take) answers 422 `unprocessable_content`, naming each one as
+    `filters.<index>.field`, `filters.<index>.operator`, `filters.<index>.id` or
+    `filters.<index>.values`; nothing is saved. A filter on an embedded-data field
     (`FeedbackRecords.ed_*`) must name a key that the Feedback Dataset of at least one widget the save
     keeps has; otherwise the save answers 422 naming `filters[<index>].field` with
     `invalid_reference`. A filter already saved on the dashboard is not asked again, so it keeps

@@ -157,7 +157,7 @@ The [reserved fields](/surveys/embedded-data/reserved-fields) work in a WebView 
 | Captured on mobile                                                                                     | Absent on mobile                                            |
 | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
 | `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`                 | `url`, `source`, `pagePath`, `pageReferrer`, every `utm*`   |
-| `browser`, `os`, `deviceType`, `country`, `ipAddress` — derived server-side from the request           |                                                             |
+| `browser`, `os`, `deviceType`, `ipAddress` — derived server-side from the request; `country` too, unless you set it with `setEmbeddedData` |                                                             |
 | `finished`, `language`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`         |                                                             |
 
 The absent ones are absent on purpose. A WebView has no host page, so `location` and `document.referrer` describe nothing real, and filling those fields would produce values that look valid and mean nothing. A screen name is host-supplied rather than observed, which makes it ingested data by definition: declare a `screen` hidden field and push it yourself with `setEmbeddedData`.

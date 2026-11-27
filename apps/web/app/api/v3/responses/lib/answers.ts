@@ -5,6 +5,7 @@ import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { LINK_SURVEY_SYSTEM_PARAM_KEYS } from "@formbricks/types/surveys/validation";
+import { TTC_TOTAL_KEY } from "@/lib/response/utils";
 import { localizeSurveyString } from "./label-resolution";
 import {
   type TV3ResponseAnswer,
@@ -141,9 +142,6 @@ const indexChoices = (element: TSurveyElement, lookupKey: string): TV3ChoiceInde
 
 const MAX_DURATION_SECONDS = MAX_RESPONSE_TTC / 1000;
 
-/** The whole-response bucket the server keeps in `ttc` alongside real element ids. */
-const TTC_TOTAL_BUCKET = "_total";
-
 /**
  * Milliseconds to seconds, clamped into the range the contract publishes.
  *
@@ -185,7 +183,7 @@ export const sumV3DurationSeconds = (ttc: TResponseTtc | undefined): number | un
   let counted = false;
 
   for (const [key, milliseconds] of Object.entries(ttc)) {
-    if (key === TTC_TOTAL_BUCKET) continue;
+    if (key === TTC_TOTAL_KEY) continue;
 
     const seconds = toDurationSeconds(milliseconds);
     if (seconds === undefined) continue;

@@ -1,7 +1,10 @@
 import type { TFunction } from "i18next";
 import { ArrowDownToLineIcon, CalculatorIcon, type LucideIcon } from "lucide-react";
 import type { TEmbeddedDataSource } from "@formbricks/types/embedded-data";
-import type { TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
+import type {
+  TReservedFieldCapturedWhen,
+  TReservedFieldPrivacy,
+} from "@formbricks/types/embedded-data-resolver";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import type { TAutoCapturedAvailability } from "./auto-captured-fields";
 
@@ -58,6 +61,37 @@ export const getPrivacyLabel = (privacy: TReservedFieldPrivacy, t: TFunction): s
       return t("workspace.embedded_data.privacy_not_stored");
     case "redactQuery":
       return t("workspace.embedded_data.privacy_query_removed");
+  }
+};
+
+/**
+ * When an auto-captured field carries a value, as the table's "Captured when" column reads it.
+ *
+ * Written for the reader whose column is empty: each label names the one thing that has to be true,
+ * so a link-survey team can tell "Source needs ?source= on the link" from "Country needs the hosting".
+ *
+ * `urlParam` and `hostOrCdnCountry` are not here: their labels set a parameter or an SDK call as code,
+ * so `FieldCapturedWhen` (field-status.tsx) renders them through `<Trans>` rather than as a string.
+ */
+export const getCapturedWhenLabel = (
+  capturedWhen: Exclude<TReservedFieldCapturedWhen, { kind: "urlParam" | "hostOrCdnCountry" }>,
+  t: TFunction
+): string => {
+  switch (capturedWhen.kind) {
+    case "always":
+      return t("workspace.embedded_data.captured_always");
+    case "referrer":
+      return t("workspace.embedded_data.captured_referrer");
+    case "appSurvey":
+      return t("workspace.embedded_data.captured_app_survey");
+    case "ipCapture":
+      return t("workspace.embedded_data.captured_ip_capture");
+    case "websiteVisit":
+      return t("workspace.embedded_data.captured_website_visit");
+    case "creative":
+      return t("workspace.embedded_data.captured_creative");
+    case "finishedResponse":
+      return t("workspace.embedded_data.captured_finished_response");
   }
 };
 

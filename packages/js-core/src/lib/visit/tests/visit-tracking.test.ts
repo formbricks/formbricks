@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { recordNavigation, recordPageHide, recordPageLoad, recordPathReplace } from "@/lib/visit/visit-store";
+import {
+  recordCampaign,
+  recordNavigation,
+  recordPageHide,
+  recordPageLoad,
+  recordPathReplace,
+} from "@/lib/visit/visit-store";
 
 vi.mock("@/lib/visit/visit-store", () => ({
   recordPageLoad: vi.fn(),
+  recordCampaign: vi.fn(),
   recordNavigation: vi.fn(),
   recordPathReplace: vi.fn(),
   recordPageHide: vi.fn(),
@@ -22,11 +29,11 @@ type TListener = (event?: unknown) => void;
 
 describe("startVisitTracking", () => {
   let listeners: Map<string, TListener>;
-  let location: { pathname: string };
+  let location: { pathname: string; search: string };
 
   beforeEach(() => {
     listeners = new Map();
-    location = { pathname: "/plans" };
+    location = { pathname: "/plans", search: "?utm_campaign=oe2027" };
     vi.stubGlobal("window", {
       ...window,
       location,
@@ -76,6 +83,27 @@ describe("startVisitTracking", () => {
 
     listeners.get("pageshow")?.({ persisted: true });
     expect(recordPageLoad).toHaveBeenCalledWith("/plans", "https://www.google.com/");
+  });
+
+  test("hands every recorded page's query string to the campaign, after the page is counted", async () => {
+    await start();
+    expect(recordCampaign).toHaveBeenLastCalledWith("?utm_campaign=oe2027");
+    expect(vi.mocked(recordPageLoad).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(recordCampaign).mock.invocationCallOrder[0]
+    );
+
+    location.search = "";
+    listeners.get("pushstate")?.();
+    expect(recordCampaign).toHaveBeenLastCalledWith("");
+
+    location.search = "?utm_source=promo";
+    listeners.get("replacestate")?.();
+    expect(recordCampaign).toHaveBeenLastCalledWith("?utm_source=promo");
+
+    location.search = "?utm_medium=cpc";
+    listeners.get("pageshow")?.({ persisted: true });
+    expect(recordCampaign).toHaveBeenLastCalledWith("?utm_medium=cpc");
+    expect(recordCampaign).toHaveBeenCalledTimes(4);
   });
 
   test("banks the page's time when the visitor leaves it", async () => {

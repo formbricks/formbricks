@@ -292,32 +292,53 @@ export const refuseRepeatedWidgets = (widgets: { widgetId?: string }[], ctx: z.R
   });
 };
 
+/** One problem with a list of locked filters, at its position in the list (`[]`: the list as a whole). */
+export type TDashboardFiltersIssue = {
+  path: (string | number)[];
+  message: string;
+  code?: "limit_exceeded";
+};
+
 /**
  * The checks a list of locked filters must pass beyond each filter's own shape: each a catalog dimension
  * or an embedded-data field with an operator it allows, ids unique, and all their values within the budget
- * a read's picks have. Every problem is named at its position. Shared with the MCP `set_dashboard_filters`
- * input.
+ * a read's picks have. Every problem is named at its position. The cap is the array's own `max`, so only
+ * the per-filter problems are listed.
  */
+export const findInvalidDashboardFilters = (
+  filters: readonly TLockedDashboardFilter[]
+): TDashboardFiltersIssue[] => {
+  const issues: TDashboardFiltersIssue[] = findDashboardFilterIssues(filters).filter(
+    (issue) => issue.path.length > 0
+  );
+  const picks = Object.fromEntries(filters.map((filter) => [filter.id, filter.values]));
+  for (const issue of findPickIssues(filters, picks)) {
+    const index = filters.findIndex((filter) => `picks[${filter.id}]` === issue.name);
+    issues.push({
+      path: index >= 0 ? [index, "values"] : [],
+      message: issue.reason,
+      ...(issue.code && { code: issue.code }),
+    });
+  }
+  return issues;
+};
+
+/** `findInvalidDashboardFilters` as Zod issues. The MCP `set_dashboard_filters` input refuses with it. */
 export const refuseInvalidDashboardFilters = (
   filters: readonly TLockedDashboardFilter[],
   ctx: z.RefinementCtx
 ): void => {
-  // The cap is the array's own `max`; only the per-filter problems are added here.
-  for (const issue of findDashboardFilterIssues(filters)) {
-    if (issue.path.length > 0) ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
-  }
-  const picks = Object.fromEntries(filters.map((filter) => [filter.id, filter.values]));
-  for (const issue of findPickIssues(filters, picks)) {
-    const index = filters.findIndex((filter) => `picks[${filter.id}]` === issue.name);
-    ctx.addIssue({ code: "custom", message: issue.reason, path: index >= 0 ? [index, "values"] : [] });
+  for (const { path, message } of findInvalidDashboardFilters(filters)) {
+    ctx.addIssue({ code: "custom", message, path });
   }
 };
 
-/** A dashboard's locked filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each checked as above. */
-export const ZV3DashboardFilters = z
-  .array(ZLockedDashboardFilter)
-  .max(MAX_DASHBOARD_FILTERS)
-  .superRefine(refuseInvalidDashboardFilters);
+/**
+ * A dashboard's locked filters as a write sends them: at most `MAX_DASHBOARD_FILTERS`, each well-shaped.
+ * Only the shape is checked here (a 400); whether each filter fits the catalog is the operation's
+ * `findInvalidDashboardFilters` check, a 422 (ENG-7061).
+ */
+export const ZV3DashboardFilters = z.array(ZLockedDashboardFilter).max(MAX_DASHBOARD_FILTERS);
 
 /** A new page's key in a save: how the save's widgets name a page that does not exist yet. */
 export const ZV3NewPageKey = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
