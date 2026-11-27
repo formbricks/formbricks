@@ -794,6 +794,41 @@ describe("create_workflow advertised input schema", () => {
   });
 });
 
+describe("unknown keys inside a workflow definition (ENG-2437)", () => {
+  // `sendTo` is a misspelling of `to`; the real `to` stays, so the only thing wrong is the extra key.
+  const misspelled = {
+    ...VALID_CREATE_WORKFLOW_INPUT.definition,
+    nodes: [
+      {
+        ...VALID_CREATE_WORKFLOW_INPUT.definition.nodes[0],
+        config: { ...VALID_CREATE_WORKFLOW_INPUT.definition.nodes[0].config, sendTo: "ops@example.com" },
+      },
+    ],
+  };
+
+  test.each([
+    ["create_workflow", { ...VALID_CREATE_WORKFLOW_INPUT, definition: misspelled }],
+    ["patch_workflow", { workflowId: WORKFLOW_ID, data: { definition: misspelled } }],
+  ])("%s refuses the call through the SDK's validate and names the key", async (tool, input) => {
+    const { tools } = createToolServer();
+    const schema = tools.get(tool)!.config.inputSchema as z.ZodType;
+
+    const result = await schema["~standard"].validate(input);
+
+    expect(result.issues).toBeDefined();
+    expect(JSON.stringify(result.issues)).toContain('Unrecognized key: \\"sendTo\\"');
+  });
+
+  test("the v3 REST contract still drops the key, as before", async () => {
+    const { ZCreateWorkflowInput } = await import("@formbricks/workflows");
+
+    const parsed = ZCreateWorkflowInput.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition: misspelled });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.definition.nodes[0].config).not.toHaveProperty("sendTo");
+  });
+});
+
 describe("delete_workflow confirmation", () => {
   const input = { workflowId: WORKFLOW_ID };
 

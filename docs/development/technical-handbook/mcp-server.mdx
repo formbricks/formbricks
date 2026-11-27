@@ -774,11 +774,11 @@ Two kinds of exception:
 - **Free-form by design.** `blocks`, `metadata`, `welcomeCard` and friends on `create_survey`, and the
   `data` payload on `patch_survey` / `validate_survey`, accept any nested shape. They are validated by the
   v3 survey document contract once the call reaches the operation.
-- **The workflow `definition`.** Everything below `definition` on `create_workflow` and `patch_workflow`
-  is still open, so a misspelled key inside a trigger, node, edge or node `config` is dropped rather than
-  rejected. That schema is shared with the v3 Workflows REST API and the workflow builder, so tightening it
-  is a v3 API change rather than an MCP one; it is tracked as ENG-2437. Treat a `create_workflow` result as
-  confirming only what it echoes back.
+- **Workflow `ui` metadata.** The `definition` on `create_workflow` and `patch_workflow` is strict at
+  every level, so a misspelled key inside a trigger, step, edge or step `config` is rejected and named.
+  Only the builder's `ui` objects (on the definition, the trigger and each step) keep any key, so a
+  definition read back from `get_workflow` can be sent again. The v3 Workflows REST API still drops
+  unknown keys inside `definition` until the next major.
 
 <Note>
   A client that adds its own keys to a tool call's `arguments` will be rejected. Nothing in the MCP spec
