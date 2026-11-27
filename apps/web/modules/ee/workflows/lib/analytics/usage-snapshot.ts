@@ -6,6 +6,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
+import { isCloudLicenseUsable } from "@/modules/entitlements/lib/cloud-license";
 import { WORKFLOW_NODE_TYPE_SNAPSHOT_EVENT, WORKFLOW_USAGE_SNAPSHOT_EVENT } from "../analytics-events";
 
 const RUN_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -63,8 +64,8 @@ const liveWorkflowCount = (counts: StatusCounts): number => counts.draft + count
 const toWorkflowsEntitlement = (stripeFeatures: string[], license: LicenseFacts): boolean => {
   if (!IS_FORMBRICKS_CLOUD) return license.active && !!license.features?.workflows;
   if (!stripeFeatures.includes(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS)) return false;
+  if (!isCloudLicenseUsable({ licenseActive: license.active, licenseStatus: license.status })) return false;
   if (license.status === "no-license") return true;
-  if (license.status !== "active") return false;
   return !!license.features?.workflows;
 };
 

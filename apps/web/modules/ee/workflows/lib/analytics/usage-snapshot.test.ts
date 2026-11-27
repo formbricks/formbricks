@@ -138,6 +138,26 @@ describe("collectOrganizationWorkflowUsage", () => {
     expect(usage.context.hasWorkflowsEntitlement).toBe(false);
   });
 
+  // ENG-7563: the same Cloud rule as the access-control gate, so analytics agrees with what users get.
+  test.each([
+    { status: "unreachable", active: true, expected: true },
+    { status: "unreachable", active: false, expected: false },
+    { status: "expired", active: true, expected: false },
+  ])(
+    "reads the license as the access-control gate does: $status, active $active → $expected",
+    async ({ status, active, expected }) => {
+      vi.mocked(getEnterpriseLicense).mockResolvedValue({
+        active,
+        status,
+        features: { workflows: true },
+      } as never);
+
+      const [usage] = await collectOrganizationWorkflowUsage(now);
+
+      expect(usage.context.hasWorkflowsEntitlement).toBe(expected);
+    }
+  );
+
   test("honours the license guard over the Stripe feature", async () => {
     vi.mocked(getEnterpriseLicense).mockResolvedValue({
       active: true,

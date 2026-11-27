@@ -368,6 +368,40 @@ describe("License Core Logic", () => {
       });
     });
 
+    // ENG-7563: grace reports a refusal recorded in the stored previous result, and ignores a value
+    // there that is not one (an older or corrupted blob), which reads as plain "unreachable".
+    test.each([
+      { lastRefusal: "instance_mismatch", status: "instance_mismatch" },
+      { lastRefusal: "bogus", status: "unreachable" },
+      { lastRefusal: undefined, status: "unreachable" },
+    ])(
+      "reports grace as $status when the stored refusal is $lastRefusal",
+      async ({ lastRefusal, status }) => {
+        const { getEnterpriseLicense } = await import("./license");
+        const fetch = global.fetch as Mock;
+
+        mockCache.get.mockImplementation(async (key: string) => {
+          if (key.includes(":previous_result")) {
+            return {
+              ok: true,
+              data: {
+                active: true,
+                features: { removeBranding: true, workspaces: 5 },
+                lastChecked: new Date(Date.now() - 24 * 60 * 60 * 1000),
+                lastRefusal,
+              },
+            };
+          }
+          return { ok: true, data: null };
+        });
+        fetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+        const license = await getEnterpriseLicense();
+
+        expect(license).toMatchObject({ active: true, fallbackLevel: "grace", status });
+      }
+    );
+
     // The sibling of the test above, and the case every other grace test here misses: the check
     // does not fail, it succeeds and reports the key as expired. getFallbackLevel treats any
     // non-active answer as grace, so the instance keeps its cached allowance for the rest of the
@@ -1512,6 +1546,43 @@ describe("License Core Logic", () => {
         { error: new Error("Redis error") },
         "Failed to delete license cache"
       );
+    });
+  });
+
+  // ENG-7563: the one reading of a license-server rejection, shared by the regular check and the recheck.
+  describe("handleLicenseRejection", () => {
+    const activePrevious = {
+      active: true,
+      features: { removeBranding: true, workspaces: 5 },
+      lastChecked: new Date(Date.now() - 60 * 60 * 1000),
+    };
+
+    test.each([
+      [400, "invalid_license"],
+      [403, "instance_mismatch"],
+    ])("records an HTTP %i as %s on the license in grace", async (status, expected) => {
+      const { handleLicenseRejection, LicenseApiError } = await import("./license");
+      mockCache.get.mockImplementation(async (key: string) =>
+        key.includes(":previous_result") ? { ok: true, data: activePrevious } : { ok: true, data: null }
+      );
+      mockCache.set.mockResolvedValue({ ok: true });
+
+      expect(await handleLicenseRejection(new LicenseApiError("refused", status))).toBe(expected);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        expect.stringContaining(":previous_result"),
+        expect.objectContaining({ active: true, lastRefusal: expected }),
+        expect.any(Number)
+      );
+    });
+
+    test.each([
+      ["an HTTP 500", async () => new (await import("./license")).LicenseApiError("boom", 500)],
+      ["a network error", async () => new TypeError("fetch failed")],
+    ])("returns null and records nothing for %s", async (_label, makeError) => {
+      const { handleLicenseRejection } = await import("./license");
+
+      expect(await handleLicenseRejection(await makeError())).toBeNull();
+      expect(mockCache.set).not.toHaveBeenCalled();
     });
   });
 

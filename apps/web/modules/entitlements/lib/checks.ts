@@ -1,6 +1,7 @@
 import "server-only";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
+import { isCloudLicenseUsable } from "./cloud-license";
 import { getOrganizationEntitlementsContext } from "./provider";
 import { type TEntitlementFeature, isEntitlementFeature } from "./types";
 
@@ -61,12 +62,13 @@ export const hasOrganizationEntitlementWithLicenseGuard = async (
     return false;
   }
 
-  if (context.licenseStatus === "no-license") {
-    return true;
+  if (!isCloudLicenseUsable(context)) {
+    return false;
   }
 
-  if (context.licenseStatus !== "active") {
-    return false;
+  // Without a license key there are no license features to consult: the Stripe entitlement decides.
+  if (context.licenseStatus === "no-license") {
+    return true;
   }
 
   const mappedLicenseFeature = LICENSE_GUARDED_ENTITLEMENTS[featureLookupKey];
