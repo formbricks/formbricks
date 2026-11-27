@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { ISO_COUNTRY_CODES } from "./country-codes";
 import {
   MAX_RESPONSE_DATA_ENTRIES,
   MAX_RESPONSE_DATA_KEYS,
@@ -14,6 +15,7 @@ import {
   ZResponseUpdate,
   ZResponseUpdateInput,
   checkResponseDataSize,
+  normalizeCountryCode,
   pickAutoCapturedResponseMeta,
 } from "./responses";
 
@@ -124,20 +126,27 @@ describe("ZResponseUpdate.meta", () => {
   });
 
   test("strips the server-derived keys a renderer has no business claiming", () => {
-    // `country`, `userAgent` and `ipAddress` are derived from the request by the ingest routes. A
-    // client asserting them would be asserting something it cannot know.
+    // `userAgent` and `ipAddress` are derived from the request by the ingest routes. A client
+    // asserting them would be asserting something it cannot know.
     const parsed = ZResponseUpdate.parse({
       finished: true,
       data: {},
       meta: {
         pagePath: "/checkout",
-        country: "XX",
         ipAddress: "203.0.113.7",
         userAgent: { browser: "Chrome" },
       },
     });
 
     expect(parsed.meta).toStrictEqual({ pagePath: "/checkout" });
+  });
+
+  test("keeps `country`: the host may set it, and the ingest routes check it", () => {
+    // `?country=` or `setEmbeddedData({ country })`, carried as `meta.country`. The routes keep only a
+    // two-letter code and otherwise fall back to the CDN header (`resolveResponseCountry`).
+    const parsed = ZResponseUpdate.parse({ finished: true, data: {}, meta: { country: "DE" } });
+
+    expect(parsed.meta).toStrictEqual({ country: "DE" });
   });
 });
 
@@ -436,5 +445,34 @@ describe("response input caps", () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0].path).toEqual(path);
+  });
+});
+
+describe("normalizeCountryCode", () => {
+  test("keeps an assigned code, trimmed and upper-cased", () => {
+    expect(normalizeCountryCode("DE")).toBe("DE");
+    expect(normalizeCountryCode(" us ")).toBe("US");
+    expect(normalizeCountryCode("gb")).toBe("GB");
+  });
+
+  test("keeps XK, the code Cloudflare reports for Kosovo", () => {
+    expect(normalizeCountryCode("xk")).toBe("XK");
+  });
+
+  test("holds exactly the 249 ISO 3166-1 codes plus XK", () => {
+    expect(ISO_COUNTRY_CODES.size).toBe(250);
+    for (const code of ISO_COUNTRY_CODES) expect(code).toMatch(/^[A-Z]{2}$/);
+  });
+
+  test("refuses anything else, so the ingest routes fall back to the CDN header", () => {
+    for (const value of ["Germany", "D", "DEU", "D1", "", 49, null, undefined, ["DE"]]) {
+      expect(normalizeCountryCode(value)).toBeUndefined();
+    }
+  });
+
+  test("refuses well-formed codes that name no country: unassigned, deprecated, groupings", () => {
+    for (const value of ["ZZ", "XX", "QQ", "UK", "SU", "EU", "UN", "T1"]) {
+      expect(normalizeCountryCode(value)).toBeUndefined();
+    }
   });
 });

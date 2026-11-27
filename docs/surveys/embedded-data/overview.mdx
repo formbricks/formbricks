@@ -137,7 +137,7 @@ When two sources offer the same field on the same response, the more explicit on
 4. the field's default value;
 5. otherwise the field is unset.
 
-Reserved fields sit outside this list because they are never written from outside. The one interaction is **shadowing**: if a survey declares its own field named `url` or `country`, that name resolves to the declared field everywhere, and the reserved field of the same name is not offered, listed or exported for that survey.
+Reserved fields sit outside this list because they are not written from outside. The exception is `country`, which you can set with `?country=` or `setEmbeddedData`; see [Reserved Fields](/surveys/embedded-data/reserved-fields). The one interaction is **shadowing**: if a survey declares its own field named `url` or `country`, that name resolves to the declared field everywhere, and the reserved field of the same name is not offered, listed or exported for that survey.
 
 ## Reading the Values Back
 
