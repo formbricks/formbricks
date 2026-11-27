@@ -54,7 +54,7 @@ import {
   getPageVisibility,
   startSurvey,
 } from "@/lib/block-flow";
-import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
+import { type TWebSurveyMeta, createWebSurveyMetaSnapshot, readExplicitCountry } from "@/lib/browser-context";
 import { getCardStartsWithMedia } from "@/lib/card-header";
 import { type TFinishOnLoad, getFinishOnLoadToSend, prepareResponseCreate } from "@/lib/finish-on-load";
 import { getLocalizedValue } from "@/lib/i18n";
@@ -311,7 +311,18 @@ export function Survey({
    */
   const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
   webSurveyMetaRef.current ??= (() => {
-    const snapshot = createWebSurveyMetaSnapshot(isWebEnvironment, visit);
+    const snapshot = createWebSurveyMetaSnapshot(
+      isWebEnvironment,
+      visit,
+      readExplicitCountry({
+        hiddenFieldsRecord,
+        isLinkSurvey: survey.type === "link",
+        shadowingNames: listShadowingNames(
+          getSurveyEmbeddedFields(survey),
+          getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id)
+        ),
+      })
+    );
     // The editor preview's Test values can stand in for the page address (`previewPageUrl`); a live
     // survey always reports the page it is shown on.
     return isPreviewMode && previewPageUrl ? () => ({ ...snapshot(), url: previewPageUrl }) : snapshot;

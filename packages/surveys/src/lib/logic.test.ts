@@ -1,5 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
+import {
+  RESERVED_FIELD_CATALOG,
+  buildEmbeddedLookup,
+  projectClientReservedValues,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -2162,6 +2167,86 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
             {}
           )
         ).toEqual({ [STORAGE_KEY]: "42" });
+      });
+    });
+
+    // ENG-7431: the one-step shape the API accepts for "set to a metadata value". It used to write nothing,
+    // so pages viewed stored 0 however many pages the visit had.
+    describe("a reserved (metadata) operand", () => {
+      const fromReserved = (operator: "assign" | "add", name: string): TSurveyBlockLogicAction => ({
+        id: "a1",
+        objective: "calculate",
+        variableId: STORAGE_KEY,
+        operator,
+        value: { type: "reserved", value: name },
+      });
+      const run = (
+        survey: TJsWorkspaceStateSurvey,
+        action: TSurveyBlockLogicAction,
+        calculations: TResponseVariables,
+        embeddedValues: TResponseData
+      ) => performActions(survey, [action], {}, calculations, { embeddedValues }).calculations;
+      // The map the survey builds at runtime, from the catalog: a name the catalog does not use reads
+      // as unset here, as it does for a respondent.
+      const lookup = (survey: TJsWorkspaceStateSurvey, meta: Record<string, unknown>) =>
+        buildEmbeddedLookup(
+          survey,
+          projectClientReservedValues(RESERVED_FIELD_CATALOG, {
+            surveyId: "survey_1",
+            language: null,
+            data: {},
+            variables: {},
+            ttc: {},
+            meta,
+          }),
+          {}
+        );
+
+      test("assign stores the pages a visit viewed", () => {
+        const survey = buildSurvey([], computedRow("number", 0));
+        expect(
+          run(survey, fromReserved("assign", "visitPagesViewed"), {}, lookup(survey, { visitPagesViewed: 6 }))
+        ).toEqual({ [STORAGE_KEY]: 6 });
+      });
+
+      test("add sums a numeric reserved field into a number field", () => {
+        expect(
+          run(
+            buildSurvey([], computedRow("number", 0)),
+            fromReserved("add", "visitPagesViewed"),
+            { [STORAGE_KEY]: 1 },
+            { visitPagesViewed: "4" }
+          )
+        ).toEqual({ [STORAGE_KEY]: 5 });
+      });
+
+      test("a text field keeps the text", () => {
+        const survey = buildSurvey([], computedRow("string", ""));
+        expect(
+          run(survey, fromReserved("assign", "pagePath"), {}, lookup(survey, { pagePath: "/pricing" }))
+        ).toEqual({ [STORAGE_KEY]: "/pricing" });
+      });
+
+      // `"https://…" + 1` would be NaN, which a response cannot store.
+      test("a number field ignores a text reserved field", () => {
+        const survey = buildSurvey([], computedRow("number", 3));
+        expect(
+          run(
+            survey,
+            fromReserved("add", "url"),
+            { [STORAGE_KEY]: 3 },
+            lookup(survey, { url: "https://example.com" })
+          )
+        ).toEqual({ [STORAGE_KEY]: 3 });
+      });
+
+      // A server-derived name (country, …) and a name the catalog does not use (a lowercased one) are
+      // not in the map: the field keeps its value rather than gaining a manufactured 0 or "".
+      test.each(["country", "visitpagesviewed"])("%s writes nothing", (name) => {
+        const survey = buildSurvey([], computedRow("number", 3));
+        expect(
+          run(survey, fromReserved("assign", name), {}, lookup(survey, { visitPagesViewed: 6 }))
+        ).toEqual({});
       });
     });
 

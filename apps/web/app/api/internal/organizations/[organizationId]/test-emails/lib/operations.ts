@@ -9,6 +9,7 @@ import {
 } from "@/app/api/v3/lib/response";
 import { getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { sendEmailCustomizationPreviewEmail } from "@/modules/email";
 import { type TWhiteLabelRequestContext, requireWhiteLabelOrgAccess } from "../../lib/whitelabel-access";
 
@@ -39,7 +40,8 @@ export async function sendTestEmailOperation(context: TWhiteLabelRequestContext)
       user.locale,
       user.id,
       organization.whitelabel?.logoUrl || "",
-      organization.id
+      organization.id,
+      getEmailLogo(organization.whitelabel).hideLogo
     );
   } catch (error) {
     // The sender's email budget is spent: the limiter's message, which says when to try again.

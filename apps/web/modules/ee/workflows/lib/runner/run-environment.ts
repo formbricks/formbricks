@@ -17,6 +17,7 @@ import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { isSurveyOutboundAllowed } from "@/lib/survey/visibility/outbound";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
@@ -48,6 +49,8 @@ export interface WorkflowRunEnvironment {
   /** Only for Webhook runs: the JSON object the Webhook Secret URL call delivered (ENG-7177). */
   payload?: Record<string, unknown>;
   logoUrl: string;
+  /** The organization removed its email logo: the run's emails show none. */
+  hideLogo: boolean;
   /**
    * Lowercased emails of everyone who can access this run's workspace. A literal `to` recipient must
    * be in this set (ENG-2029, ENG-2186). Loaded only when a step has a literal recipient; empty
@@ -189,6 +192,7 @@ export const loadWorkflowRunEnvironment = async ({
     surveyResponse,
     ...(trigger.type === "webhook" ? { payload: trigger.payload } : {}),
     logoUrl: organization?.whitelabel?.logoUrl ?? "",
+    hideLogo: getEmailLogo(organization?.whitelabel).hideLogo,
     allowedRecipientEmails,
     secretValues,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },

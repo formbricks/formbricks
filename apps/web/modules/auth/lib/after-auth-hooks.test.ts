@@ -7,6 +7,7 @@ import { runAfterAuthHooks } from "./after-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
 import { settleSignInBudgetAfterHandler } from "./better-auth-sign-in-budget";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
+import { maskUnverifiedSignInAfterHandler } from "./better-auth-unverified-sign-in";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
 import { revokeTokensBeyondConsentAfterHandler } from "./oauth-grant-revocation";
 import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check";
@@ -18,6 +19,7 @@ vi.mock("@/modules/ee/sso/lib/better-auth-hooks", () => ({
 vi.mock("./better-auth-observability", () => ({ auditFailedAuthAfter: vi.fn() }));
 vi.mock("./better-auth-sign-in-budget", () => ({ settleSignInBudgetAfterHandler: vi.fn() }));
 vi.mock("./better-auth-two-factor-backfill", () => ({ twoFactorBackfillAfterHandler: vi.fn() }));
+vi.mock("./better-auth-unverified-sign-in", () => ({ maskUnverifiedSignInAfterHandler: vi.fn() }));
 vi.mock("./better-auth-verification-autosignin", () => ({
   verificationAutoSignInAfterHandler: vi.fn(),
 }));
@@ -75,5 +77,30 @@ describe("runAfterAuthHooks", () => {
       "oauth-consent-narrowed",
       "redirect",
     ]);
+  });
+
+  // ENG-2099: the unverified-sign-in rewrite replaces the response, so the failed-sign-in audit (which
+  // records the real `email_not_verified` reason) and the sign-in budget (which spends the unit for it)
+  // have to read the request's own error first. Its response is what the chain returns.
+  test("rewrites an unverified sign-in last, after the audit and the budget have read the real code", async () => {
+    vi.clearAllMocks();
+    const calls: string[] = [];
+    vi.mocked(auditFailedAuthAfter).mockImplementation(async () => {
+      calls.push("audit");
+    });
+    vi.mocked(settleSignInBudgetAfterHandler).mockImplementation(async () => {
+      calls.push("sign-in-budget");
+    });
+    vi.mocked(blockedSignupDomainRedirectAfterHandler).mockImplementation(async () => {
+      calls.push("redirect");
+    });
+    const rewritten = new Response(null, { status: 401 });
+    vi.mocked(maskUnverifiedSignInAfterHandler).mockImplementation(() => {
+      calls.push("mask-unverified");
+      return rewritten;
+    });
+
+    await expect(runAfterAuthHooks({} as never)).resolves.toBe(rewritten);
+    expect(calls).toEqual(["audit", "sign-in-budget", "redirect", "mask-unverified"]);
   });
 });

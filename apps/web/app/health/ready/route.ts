@@ -24,15 +24,25 @@ export async function GET() {
       });
       if (!state?.completedPhases.includes("prepare")) throw new Error("preparation_incomplete");
     }
-    // This constraint arbitrates concurrent bootstrap sign-ups, including maintenance installs.
-    const [index] = await prisma.$queryRaw<{ ready: boolean }[]>`
-      SELECT EXISTS (
-        SELECT 1 FROM pg_index x JOIN pg_class i ON i.oid = x.indexrelid
-        WHERE i.relnamespace = current_schema()::regnamespace
-          AND i.relname = 'User_isBootstrapAdmin_key' AND x.indisvalid AND x.indisunique
-      ) AS ready
+    // This constraint arbitrates concurrent bootstrap sign-ups, including maintenance installs. The
+    // setup marker table is required by every page that asks whether the instance is fresh (ENG-7313),
+    // so a pod that starts before its migration must not report ready.
+    const [readiness] = await prisma.$queryRaw<
+      { bootstrap_constraint: boolean; instance_setup_table: boolean }[]
+    >`
+      SELECT
+        EXISTS (
+          SELECT 1 FROM pg_index x JOIN pg_class i ON i.oid = x.indexrelid
+          WHERE i.relnamespace = current_schema()::regnamespace
+            AND i.relname = 'User_isBootstrapAdmin_key' AND x.indisvalid AND x.indisunique
+        ) AS bootstrap_constraint,
+        EXISTS (
+          SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = current_schema() AND c.relname = 'InstanceSetup' AND c.relkind = 'r'
+        ) AS instance_setup_table
     `;
-    if (!index?.ready) throw new Error("bootstrap_constraint_missing");
+    if (!readiness?.bootstrap_constraint) throw new Error("bootstrap_constraint_missing");
+    if (!readiness?.instance_setup_table) throw new Error("instance_setup_table_missing");
     return Response.json({ status: "ready" });
   } catch {
     return Response.json({ status: "not_ready" }, { status: 503 });

@@ -87,5 +87,17 @@ describe("sendResponseFinishedEmail", () => {
 
     expect(mockResolveStorageUrl).not.toHaveBeenCalled();
     expect(mockRenderResponseFinishedEmail.mock.calls[0][0].logoUrl).toBeUndefined();
+    expect(mockRenderResponseFinishedEmail.mock.calls[0][0].hideLogo).toBe(false);
+  });
+
+  test("renders no logo when the organization removed it (ENG-545)", async () => {
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({
+      id: "org1",
+      whitelabel: { logoUrl: null, hideLogo: true },
+    });
+
+    await sendResponseFinishedEmail("owner@example.com", "en-US", "workspace1", survey, response, 1);
+
+    expect(mockRenderResponseFinishedEmail.mock.calls[0][0].hideLogo).toBe(true);
   });
 });

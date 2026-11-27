@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   getSurvey: vi.fn(),
   getOrganizationIdFromSurveyId: vi.fn(),
-  getOrganizationLogoUrl: vi.fn(),
+  getOrganizationEmailLogo: vi.fn(),
   getEmailTemplateHtml: vi.fn(),
   sendEmbedSurveyPreviewEmail: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock("@/lib/user/service", () => ({ getUser: mocks.getUser }));
 vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromSurveyId: mocks.getOrganizationIdFromSurveyId }));
 vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
-  getOrganizationLogoUrl: mocks.getOrganizationLogoUrl,
+  getOrganizationEmailLogo: mocks.getOrganizationEmailLogo,
 }));
 vi.mock(
   "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate",
@@ -58,7 +58,10 @@ beforeEach(() => {
   mocks.can.mockResolvedValue(true);
   mocks.getUser.mockResolvedValue({ id: USER_ID, email: "test@example.com", locale: "de-DE" });
   mocks.getOrganizationIdFromSurveyId.mockResolvedValue(ORG_ID);
-  mocks.getOrganizationLogoUrl.mockResolvedValue("https://example.com/logo.png");
+  mocks.getOrganizationEmailLogo.mockResolvedValue({
+    logoUrl: "https://example.com/logo.png",
+    hideLogo: false,
+  });
   mocks.getSurvey.mockResolvedValue({ id: SURVEY_ID, workspaceId: WORKSPACE_ID });
   mocks.getEmailTemplateHtml.mockResolvedValue(
     '<a href="https://f.test/s/1?preview=true&amp;lang=de">Start</a><a href="https://f.test/s/1?preview=true">Go</a>'
@@ -81,15 +84,26 @@ describe("POST /api/internal/surveys/{surveyId}/preview-emails", () => {
       locale: "de-DE",
       actorUserId: USER_ID,
       logoUrl: "https://example.com/logo.png",
+      hideLogo: false,
       surveyId: SURVEY_ID,
       organizationId: ORG_ID,
     });
   });
 
   test("sends without a logo when the organization has none", async () => {
-    mocks.getOrganizationLogoUrl.mockResolvedValue(null);
+    mocks.getOrganizationEmailLogo.mockResolvedValue({ logoUrl: null, hideLogo: false });
     await send();
-    expect(mocks.sendEmbedSurveyPreviewEmail).toHaveBeenCalledWith(expect.objectContaining({ logoUrl: "" }));
+    expect(mocks.sendEmbedSurveyPreviewEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ logoUrl: "", hideLogo: false })
+    );
+  });
+
+  test("sends with no logo at all when the organization removed it (ENG-545)", async () => {
+    mocks.getOrganizationEmailLogo.mockResolvedValue({ logoUrl: null, hideLogo: true });
+    await send();
+    expect(mocks.sendEmbedSurveyPreviewEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ logoUrl: "", hideLogo: true })
+    );
   });
 
   test("says when no email went out, on an instance without SMTP", async () => {

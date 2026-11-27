@@ -19,8 +19,11 @@ import { build } from "vite";
  * (~0.5 KB). The canonical language table stays in the surveys bundle. Raised from 19 500 when surveys'
  * show conditions landed (ENG-3926/3927; ~20.6 KB): their newer evaluator and visit store replaced the
  * copy above (~0.5 KB), plus the SDK debug reporting (~0.4 KB) and the per-survey check (~0.3 KB).
+ * Raised from 21 000 for landing-page attribution (ENG-7430; ~21.1 KB): the visit keeps the UTM
+ * parameters it arrived with so a survey on a later page records them (~0.2 KB). The UTM parameter
+ * table is the one the renderer reads, shared from `@formbricks/types/visit` rather than copied.
  */
-const JS_CORE_MAX_GZIP_BYTES = 21_000;
+const JS_CORE_MAX_GZIP_BYTES = 21_200;
 
 /**
  * The creatives renderer on its own: `resolve`, `render` and their helpers (about 6 KB gz).

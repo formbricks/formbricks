@@ -4,7 +4,7 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { MULTI_ORG_DISABLED_DETAIL } from "./lib/operations";
+import { FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL, MULTI_ORG_DISABLED_DETAIL } from "./lib/operations";
 import { POST } from "./route";
 import { ORGANIZATION_NAME_MAX } from "./schemas";
 
@@ -14,8 +14,10 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
   applyRateLimit: vi.fn(),
   getHasNoOrganizations: vi.fn(),
+  getIsEligibleFirstOrganizationOwner: vi.fn(),
   getIsMultiOrgEnabled: vi.fn(),
   createOrganization: vi.fn(),
+  createOrganizationIfNoneExists: vi.fn(),
   createMembership: vi.fn(),
   createWorkspace: vi.fn(),
   capturePostHogEvent: vi.fn(),
@@ -29,10 +31,14 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: mocks.applyRateLimit,
   applyIPRateLimit: vi.fn(),
 }));
-vi.mock("@/lib/instance/service", () => ({ getHasNoOrganizations: mocks.getHasNoOrganizations }));
+vi.mock("@/lib/instance/service", () => ({
+  getHasNoOrganizations: mocks.getHasNoOrganizations,
+  getIsEligibleFirstOrganizationOwner: mocks.getIsEligibleFirstOrganizationOwner,
+}));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: mocks.getIsMultiOrgEnabled }));
 vi.mock("@/lib/organization/service", () => ({
   createOrganization: mocks.createOrganization,
+  createOrganizationIfNoneExists: mocks.createOrganizationIfNoneExists,
   getOrganization: vi.fn(),
   updateOrganization: vi.fn(),
   deleteOrganization: vi.fn(),
@@ -85,8 +91,10 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ id: USER_ID, email: "ada@example.com" });
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.getHasNoOrganizations.mockResolvedValue(true);
+  mocks.getIsEligibleFirstOrganizationOwner.mockResolvedValue(true);
   mocks.getIsMultiOrgEnabled.mockResolvedValue(false);
   mocks.createOrganization.mockResolvedValue(organization);
+  mocks.createOrganizationIfNoneExists.mockResolvedValue(organization);
   mocks.createWorkspace.mockResolvedValue({ id: "clws111111111111111111111", name: "My Workspace" });
 });
 
@@ -97,7 +105,8 @@ describe("POST /api/internal/organizations", () => {
     expect(response.status).toBe(201);
     expect(response.headers.get("Location")).toBe(`/api/internal/organizations/${ORG_ID}`);
     expect((await response.json()).data).toEqual({ id: ORG_ID, name: "Acme" });
-    expect(mocks.createOrganization).toHaveBeenCalledWith({ name: "Acme" });
+    // The default instance is single-organization and empty: the claim is atomic.
+    expect(mocks.createOrganizationIfNoneExists).toHaveBeenCalledWith({ name: "Acme" });
     expect(mocks.createMembership).toHaveBeenCalledWith(ORG_ID, USER_ID, { role: "owner", accepted: true });
     expect(mocks.createWorkspace).toHaveBeenCalledWith(
       ORG_ID,
@@ -152,6 +161,58 @@ describe("POST /api/internal/organizations", () => {
       { organization_id: ORG_ID, is_first_org: true },
       expect.anything()
     );
+  });
+
+  describe("first organization on a single-organization instance (ENG-7313)", () => {
+    test("refuses a signed-in user who is not the bootstrap administrator or the earliest user", async () => {
+      mocks.getIsEligibleFirstOrganizationOwner.mockResolvedValue(false);
+
+      const response = await create();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe(FIRST_ORGANIZATION_NOT_ELIGIBLE_DETAIL);
+      expect(mocks.getIsEligibleFirstOrganizationOwner).toHaveBeenCalledWith(USER_ID);
+      expect(mocks.createOrganization).not.toHaveBeenCalled();
+      expect(mocks.createOrganizationIfNoneExists).not.toHaveBeenCalled();
+      expect(mocks.createMembership).not.toHaveBeenCalled();
+    });
+
+    test("allows the eligible first owner, claiming the instance atomically", async () => {
+      expect((await create()).status).toBe(201);
+      expect(mocks.getIsEligibleFirstOrganizationOwner).toHaveBeenCalledWith(USER_ID);
+      expect(mocks.createOrganizationIfNoneExists).toHaveBeenCalledTimes(1);
+      expect(mocks.createOrganization).not.toHaveBeenCalled();
+    });
+
+    // Two claims that both passed the policy check: the atomic create lets one through.
+    test("refuses a concurrent claim that finds the organization already created", async () => {
+      mocks.createOrganizationIfNoneExists.mockResolvedValue(null);
+
+      const response = await create();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("This action can only be performed on a fresh instance.");
+      expect(mocks.createMembership).not.toHaveBeenCalled();
+    });
+
+    test("does not consult eligibility on a multi-organization instance, nor lock the claim", async () => {
+      mocks.getIsMultiOrgEnabled.mockResolvedValue(true);
+
+      expect((await create()).status).toBe(201);
+      expect(mocks.getIsEligibleFirstOrganizationOwner).not.toHaveBeenCalled();
+      expect(mocks.createOrganization).toHaveBeenCalledTimes(1);
+      expect(mocks.createOrganizationIfNoneExists).not.toHaveBeenCalled();
+    });
+
+    test("does not consult eligibility once an organization exists (still refused)", async () => {
+      mocks.getHasNoOrganizations.mockResolvedValue(false);
+
+      const response = await create();
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).detail).toBe("This action can only be performed on a fresh instance.");
+      expect(mocks.getIsEligibleFirstOrganizationOwner).not.toHaveBeenCalled();
+    });
   });
 
   describe("from the organization settings (flow: additional)", () => {
@@ -236,7 +297,7 @@ describe("POST /api/internal/organizations", () => {
   test(`accepts a name of exactly ${ORGANIZATION_NAME_MAX} characters`, async () => {
     const name = "x".repeat(ORGANIZATION_NAME_MAX);
     expect((await create({ name })).status).toBe(201);
-    expect(mocks.createOrganization).toHaveBeenCalledWith({ name });
+    expect(mocks.createOrganizationIfNoneExists).toHaveBeenCalledWith({ name });
   });
 
   test("answers 401 without a session, and refuses a cross-site request", async () => {

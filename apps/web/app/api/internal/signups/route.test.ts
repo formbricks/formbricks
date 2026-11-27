@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   TooManyRequestsError,
@@ -12,7 +13,7 @@ import {
 import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { flushAfter } from "@/integration/after";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { getIsFreshInstance, markInstanceSetupCompleted } from "@/lib/instance/service";
 import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
@@ -111,7 +112,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: v
 vi.mock("@/modules/ee/mailing/lib/mailing-subscription", () => ({ subscribeUserToMailingList: vi.fn() }));
 vi.mock("@/modules/email", () => ({ sendInviteAcceptedEmail: vi.fn() }));
 vi.mock("@/modules/workspaces/settings/lib/workspace", () => ({ createWorkspace: vi.fn() }));
-vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
+vi.mock("@/lib/instance/service", () => ({
+  getIsFreshInstance: vi.fn(),
+  markInstanceSetupCompleted: vi.fn(),
+}));
 
 // Getters so individual tests can flip the Cloud gate / invite kill-switch / Turnstile at runtime. The
 // real signup-email-domain utility reads these through live bindings; only the constants are mocked.
@@ -121,6 +125,7 @@ const constantsOverrides = vi.hoisted(() => ({
   SIGNUP_ENABLED: true,
   IS_TURNSTILE_CONFIGURED: false,
   TURNSTILE_SECRET_KEY: undefined as string | undefined,
+  SETUP_TOKEN: undefined as string | undefined,
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => ({
@@ -144,6 +149,9 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
   },
   get SIGNUP_ENABLED() {
     return constantsOverrides.SIGNUP_ENABLED;
+  },
+  get SETUP_TOKEN() {
+    return constantsOverrides.SETUP_TOKEN;
   },
 }));
 
@@ -204,7 +212,9 @@ beforeEach(() => {
   constantsOverrides.SIGNUP_ENABLED = true;
   constantsOverrides.IS_TURNSTILE_CONFIGURED = false;
   constantsOverrides.TURNSTILE_SECRET_KEY = undefined;
+  constantsOverrides.SETUP_TOKEN = undefined;
   vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+  vi.mocked(markInstanceSetupCompleted).mockResolvedValue(undefined);
   vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -648,6 +658,63 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
 
       expect((await signUp()).status).toBe(200);
       expect(auth.api.signUpEmail).toHaveBeenCalled();
+    });
+
+    // ENG-7313: with SETUP_TOKEN configured, the fresh-instance exception requires the token the setup
+    // form carries. The route is the only caller that can present it.
+    describe("with SETUP_TOKEN configured", () => {
+      const token = "0123456789abcdef-setup-token";
+      beforeEach(() => {
+        constantsOverrides.SETUP_TOKEN = token;
+        vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      });
+
+      test("refuses a fresh-instance signup with no token and creates no user", async () => {
+        const response = await signUp();
+
+        expect(response.status).toBe(422);
+        expect(await reasonOf(response)).toBe(SETUP_TOKEN_INVALID_ERROR_CODE);
+        expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+        expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
+      });
+
+      test("refuses a wrong token and creates no user", async () => {
+        const response = await signUp({ ...baseInput, setupToken: "not-the-token" });
+
+        expect(response.status).toBe(422);
+        expect(await reasonOf(response)).toBe(SETUP_TOKEN_INVALID_ERROR_CODE);
+        expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+        expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
+      });
+
+      test("logs a wrong-token attempt for the operator, without the token or the address", async () => {
+        await signUp({ ...baseInput, setupToken: "not-the-token" });
+
+        expect(logger.warn).toHaveBeenCalledWith(
+          { layer: "sign-up-route", reason: SETUP_TOKEN_INVALID_ERROR_CODE },
+          "Rejected a fresh-instance sign-up without the correct setup token"
+        );
+        expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain("not-the-token");
+        expect(JSON.stringify(vi.mocked(logger.warn).mock.calls)).not.toContain(baseInput.email);
+      });
+
+      test("admits the right token and records the instance as set up", async () => {
+        const response = await signUp({ ...baseInput, setupToken: token });
+
+        expect(response.status).toBe(200);
+        expect(auth.api.signUpEmail).toHaveBeenCalled();
+        expect(markInstanceSetupCompleted).toHaveBeenCalledTimes(1);
+      });
+
+      test("does not make a closed instance fresh again", async () => {
+        vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+
+        const response = await signUp({ ...baseInput, setupToken: token });
+
+        expect(response.status).toBe(422);
+        expect(await reasonOf(response)).toBe(SIGNUP_DISABLED_ERROR_CODE);
+        expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+      });
     });
 
     test("still allows a signup backed by a valid matching invite", async () => {

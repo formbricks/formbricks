@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
-  ZCreateWorkflowInput,
-  ZPatchWorkflowInput,
+  ZCreateWorkflowInputStrict,
+  ZPatchWorkflowInputStrict,
   ZWorkflowRunStatus,
   ZWorkflowSortBy,
   ZWorkflowStatus,
@@ -17,14 +17,10 @@ const MCP_MAX_FILTER_VALUES = 10;
 // Add `.strict()` to any new schema you add here — except where the base is already a `z.strictObject`,
 // in which case leave it alone and see the note on `ZMcpCreateWorkflowInput`.
 //
-// One exception, and it is not a small one: the `definition` payload on create/patch is open at every
-// level below `definition` itself, so a misspelled key inside a trigger, node, edge or node `config` is
-// still dropped rather than rejected — ENG-2256's failure mode, in a mutation. It cannot be closed here.
-// `definition` is `ZWorkflowDefinition` from `packages/workflows`, which the v3 Workflows REST route
-// parses and the workflow builder posts, so making it strict is a v3 API change (the builder sends `ui`
-// metadata and would have to be checked first) rather than part of an MCP migration. Tracked as
-// ENG-2437; `./schemas.test.ts` pins the hole to this subtree so it cannot quietly spread to a
-// top-level workflow argument.
+// That includes the workflow `definition` on create/patch: they parse the strict variant of the v3
+// contract (ENG-2437), so a misspelled key inside a trigger, step, edge or step `config` fails, naming
+// the key, instead of being dropped. The v3 REST route and the builder keep the lenient definition until
+// the next major. Builder `ui` metadata stays open on both.
 
 export const ZMcpListWorkflowsInput = z
   .object({
@@ -142,20 +138,20 @@ export type TMcpTestWorkflowInput = z.infer<typeof ZMcpTestWorkflowInput>;
 
 // --- Mutations ---
 
-// Reuse the v3 create contract verbatim: workspaceId, name, optional description, and the full
-// workflow definition graph. Workflows are always created as drafts (enable makes them live).
+// The v3 create contract with the strict definition: workspaceId, name, optional description, and the
+// full workflow definition graph. Workflows are always created as drafts (enable makes them live).
 //
-// No `.strict()` here, unlike its siblings: `ZCreateWorkflowInput` is already a `z.strictObject`, so it
+// No `.strict()` here, unlike its siblings: `ZCreateWorkflowInputStrict` is already a `z.strictObject`, so it
 // would add nothing - and Zod 4's `.strict()` returns a clone that drops `.describe()`, which would
 // silently strip the contract's own "Creates a draft workflow." description from what `tools/list`
 // advertises.
-export const ZMcpCreateWorkflowInput = ZCreateWorkflowInput;
+export const ZMcpCreateWorkflowInput = ZCreateWorkflowInputStrict;
 export type TMcpCreateWorkflowInput = z.infer<typeof ZMcpCreateWorkflowInput>;
 
 export const ZMcpPatchWorkflowInput = z
   .object({
     workflowId: z.cuid2().describe("Workflow ID to update."),
-    data: ZPatchWorkflowInput.describe(
+    data: ZPatchWorkflowInputStrict.describe(
       "Partial update. Provided top-level fields replace that whole subtree; definition edits are only accepted while draft or disabled."
     ),
   })

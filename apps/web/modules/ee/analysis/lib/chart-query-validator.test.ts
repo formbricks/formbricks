@@ -573,7 +573,7 @@ describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-
     ]);
   });
 
-  test(`holds a query to ${MAX_ANSWER_RULES} answer rules, nested ones included, naming the limit`, () => {
+  test(`holds a query to ${MAX_ANSWER_RULES} answer rules, nested ones included, naming the number`, () => {
     const rules = (count: number) =>
       Array.from({ length: count }, () => condition(ANSWER, "equals", ["q_delivery:opt_late"]));
 
@@ -587,7 +587,7 @@ describe("validateChartQuery: a dataset's embedded data and answer filters (ENG-
       expect.objectContaining({
         name: "query.filters",
         code: "limit_exceeded",
-        reason: expect.stringContaining("MAX_ANSWER_RULES"),
+        reason: `At most ${MAX_ANSWER_RULES} answer filters are allowed in one query, nested ones included.`,
       }),
     ]);
   });

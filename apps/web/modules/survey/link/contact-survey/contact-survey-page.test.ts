@@ -9,9 +9,13 @@ import { getExistingContactResponse, getResponseBySingleUseId } from "@/modules/
 import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
 import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
-import { ContactSurveyPage } from "./page";
+import { getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
+import { ContactSurveyPage, generateMetadata } from "./page";
 
 vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
+// The real generic metadata below loads the env through its imports.
+vi.mock("@/lib/env", () => ({ env: {} }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/utils/locale", () => ({ findMatchingLocale: vi.fn(), getAcceptedLanguages: vi.fn() }));
 vi.mock("@/lingodotdev/server", () => ({ getTranslate: vi.fn() }));
 vi.mock("@/modules/ee/contacts/lib/contact-survey-link", () => ({ verifyContactSurveyToken: vi.fn() }));
@@ -28,8 +32,10 @@ vi.mock("@/modules/survey/link/lib/workspace", () => ({
   getWorkspaceContextForLinkSurvey: vi.fn(),
   getWorkspaceById: vi.fn(),
 }));
-vi.mock("@/modules/survey/link/metadata", () => ({
-  getGenericSurveyMetadata: vi.fn(),
+vi.mock("@/modules/survey/link/metadata", async (importOriginal) => ({
+  // The real generic metadata, so the tests below see what an invalid or expired token sends.
+  getGenericSurveyMetadata: (await importOriginal<typeof import("@/modules/survey/link/metadata")>())
+    .getGenericSurveyMetadata,
   getMetadataForContactSurvey: vi.fn(),
 }));
 
@@ -129,5 +135,47 @@ describe("ContactSurveyPage single-use response handoff", () => {
         singleUseResponse: { id: "contact-response-1", finished: false },
       })
     );
+  });
+});
+
+// A personal link that ends up public must not be indexed, even when its token no longer names a survey
+// (ENG-7436).
+describe("ContactSurveyPage metadata", () => {
+  const noIndexRules = {
+    index: false,
+    follow: true,
+    googleBot: { index: false, follow: true, noimageindex: true },
+  };
+  const props = {
+    params: Promise.resolve({ jwt: "contact-token" }),
+    searchParams: Promise.resolve({}),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getAcceptedLanguages).mockResolvedValue([]);
+  });
+
+  test.each(["invalid_token", "token_expired"])(
+    "asks search engines not to index the generic page for a token rejected as %s",
+    async (issue) => {
+      vi.mocked(verifyContactSurveyToken).mockReturnValue({
+        ok: false,
+        error: { type: "bad_request", details: [{ field: "token", issue }] },
+      });
+
+      const metadata = await generateMetadata(props);
+
+      expect(metadata).toMatchObject({ title: "Survey", robots: noIndexRules });
+      expect(getMetadataForContactSurvey).not.toHaveBeenCalled();
+    }
+  );
+
+  test("asks search engines not to index the generic page when verifying the token throws", async () => {
+    vi.mocked(verifyContactSurveyToken).mockImplementation(() => {
+      throw new Error("boom");
+    });
+
+    expect((await generateMetadata(props)).robots).toEqual(noIndexRules);
   });
 });

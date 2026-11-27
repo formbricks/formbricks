@@ -158,7 +158,10 @@ export const getChartApiErrorMessage = (error: unknown, fallback: string): strin
   if (!(error instanceof V3ApiError))
     return error instanceof Error && error.message ? error.message : fallback;
   const firstReason = error.invalid_params?.[0]?.reason;
-  return firstReason ? `${error.detail} ${firstReason}` : error.detail || fallback;
+  if (!firstReason) return error.detail || fallback;
+  // Two sentences: a detail without its own full stop ("The chart query is not valid") gets one.
+  const detail = /[.!?]$/.test(error.detail) ? error.detail : `${error.detail}.`;
+  return `${detail} ${firstReason}`;
 };
 
 export type TChartWriteInput = {

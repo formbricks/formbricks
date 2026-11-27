@@ -3,7 +3,10 @@ import { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError, TooManyRequestsError, ValidationError } from "@formbricks/types/errors";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
-import { requireUserManagementAccess } from "@/app/api/internal/lib/organization-access";
+import {
+  USER_MANAGEMENT_NOT_ALLOWED_DETAIL,
+  requireUserManagementAccess,
+} from "@/app/api/internal/lib/organization-access";
 import type { TRequestContext } from "@/app/api/internal/lib/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { rateLimitedResponse } from "@/app/api/v3/lib/operation-rate-limit";
@@ -18,6 +21,7 @@ import {
 import { can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { isUserManagementDisabled } from "@/lib/membership/user-management-floor";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getUser } from "@/lib/user/service";
 import { loggableError } from "@/lib/utils/loggable-error";
@@ -94,9 +98,9 @@ const refuseTeamAdminInvite = (
 /**
  * The capability half of "may this person send this invite", through the central interface. Owners and
  * managers invite as the organization: the user-management floor, then `organization.manage`. A team admin
- * invites into their own teams: `team.manage` on each distinct named team, one at a time, stopping at the
- * first refusal, so the number of authorization decisions is bounded by the schema's team cap rather than
- * fanning out.
+ * invites into their own teams unless user management is disabled: `team.manage` on each distinct named
+ * team, one at a time, stopping at the first refusal, so the number of authorization decisions is bounded
+ * by the schema's team cap rather than fanning out.
  */
 async function refuseInviterCapability(
   context: TRequestContext,
@@ -157,8 +161,8 @@ async function sendInviteEmailBestEffort(
 /**
  * Who may send this one invite, in the action's order: billing only on Cloud, a member of the organization,
  * then either an owner or manager (the floor, `organization.manage` and the role rules) or a team admin
- * (`team.manage` per team and their own rules), and the role management licence for anything but a
- * team-less Owner invite. `null` to go ahead.
+ * (not while user management is disabled, then `team.manage` per team and their own rules), and the role
+ * management licence for anything but a team-less Owner invite. `null` to go ahead.
  */
 async function refuseSingleInvite(
   context: TRequestContext,
@@ -176,6 +180,12 @@ async function refuseSingleInvite(
   if (!callerMembership) return problemForbidden(requestId, undefined, instance);
 
   const isOrgOwnerOrManager = callerMembership.role === "owner" || callerMembership.role === "manager";
+  // Anyone else could only invite as a team admin, decided by `team.manage` rather than the floor's role
+  // ranking; `disabled` switches user management off for them too (ENG-7376), with the floor's own refusal,
+  // before the team lookup.
+  if (!isOrgOwnerOrManager && isUserManagementDisabled()) {
+    return problemForbidden(requestId, USER_MANAGEMENT_NOT_ALLOWED_DETAIL, instance);
+  }
   // Owners and managers skip the team lookup: they invite as the organization.
   const adminTeamIds = isOrgOwnerOrManager ? [] : await getTeamsWhereUserIsAdmin(userId, organizationId);
   if (!isOrgOwnerOrManager && adminTeamIds.length === 0) {
@@ -234,9 +244,9 @@ async function persistSingleInvite(
 /**
  * `POST /api/internal/invites?organizationId=`: invite one person. Owners and managers above the
  * user-management floor invite with any role the role rules let them give; a team admin invites Members
- * into teams they administer. Roles other than Owner, or any team, need the role management licence. Spends
- * one recipient of the shared invite budget, handed back if the invite isn't created. The email is
- * best-effort: the invite already exists and can be shared by link.
+ * into teams they administer, unless user management is disabled. Roles other than Owner, or any team,
+ * need the role management licence. Spends one recipient of the shared invite budget, handed back if the
+ * invite isn't created. The email is best-effort: the invite already exists and can be shared by link.
  */
 export async function createInviteOperation({
   organizationId,

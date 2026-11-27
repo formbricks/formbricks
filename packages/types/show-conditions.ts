@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ZId } from "./common";
 import { MAX_UNIQUE_PAGES, isShowConditionGroup } from "./show-conditions-evaluate";
+import type { TVisitUtm } from "./visit";
 
 export const SHOW_CONDITION_DEVICE_TYPES = ["phone", "tablet", "desktop"] as const;
 export type TShowConditionDeviceType = (typeof SHOW_CONDITION_DEVICE_TYPES)[number];
@@ -110,6 +111,12 @@ export interface TVisitSnapshot {
   visitedUrls: string[];
   /** Every different path of the visit, first seen first, up to `MAX_UNIQUE_PAGES`. Visited URL reads this. */
   uniquePaths: string[];
+  /**
+   * The UTM parameters of the latest page of this visit whose URL carried any (usually the landing
+   * page), so a survey on a later, untagged page still records the campaign (ENG-7430). Absent when
+   * no page of the visit carried one. Optional because an older SDK does not send it.
+   */
+  utm?: TVisitUtm;
 }
 
 export interface TDeviceInfo {

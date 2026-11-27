@@ -7,9 +7,11 @@ import {
   formatRetentionNotice,
   formatRetentionPeriod,
   formatRetentionRunTime,
+  getArchiveSurveyWarning,
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
   getRetentionPolicySummary,
+  getSurveyExemptionEnd,
   getSurveyRetentionDueWarning,
   getSurveyRetentionExemptLines,
   getSurveyRetentionLines,
@@ -288,5 +290,130 @@ describe("survey retention copy", () => {
         formatDate
       )
     ).toBeNull();
+  });
+});
+
+describe("getSurveyExemptionEnd", () => {
+  const now = new Date("2030-06-01T00:00:00.000Z");
+  const exemption = (
+    until: string,
+    rest: { policy?: "responses" | "surveys"; revokedAt?: string | null } = {}
+  ) => ({
+    id: `clexm_${until}`,
+    surveyId: "clsrv",
+    surveyName: "Site visit",
+    workspaceId: "clwsp",
+    policy: rest.policy ?? ("surveys" as const),
+    until,
+    source: "manual" as const,
+    reason: "Audit",
+    createdBy: null,
+    createdAt: "2030-01-01T00:00:00.000Z",
+    revokedAt: rest.revokedAt ?? null,
+  });
+
+  test("is null without an exemption", () => {
+    expect(getSurveyExemptionEnd([], now)).toBeNull();
+  });
+
+  test("is the end of an active exemption, whatever its policy", () => {
+    expect(getSurveyExemptionEnd([exemption("2031-03-31T00:00:00.000Z")], now)).toBe(
+      "2031-03-31T00:00:00.000Z"
+    );
+    expect(getSurveyExemptionEnd([exemption("2031-03-31T00:00:00.000Z", { policy: "responses" })], now)).toBe(
+      "2031-03-31T00:00:00.000Z"
+    );
+  });
+
+  test("ignores a revoked exemption", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [exemption("2031-03-31T00:00:00.000Z", { revokedAt: "2030-05-01T00:00:00.000Z" })],
+        now
+      )
+    ).toBeNull();
+  });
+
+  test("ignores an expired exemption, and one ending exactly now", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [exemption("2030-05-31T23:59:59.999Z"), exemption("2030-06-01T00:00:00.000Z")],
+        now
+      )
+    ).toBeNull();
+  });
+
+  test("is the latest end when several are active", () => {
+    expect(
+      getSurveyExemptionEnd(
+        [
+          exemption("2031-03-31T00:00:00.000Z"),
+          exemption("2031-06-30T00:00:00.000Z", { policy: "responses" }),
+          exemption("2032-01-01T00:00:00.000Z", { revokedAt: "2030-01-01T00:00:00.000Z" }),
+        ],
+        now
+      )
+    ).toBe("2031-06-30T00:00:00.000Z");
+  });
+});
+
+describe("getArchiveSurveyWarning", () => {
+  const echo = ((key: string, values?: Record<string, unknown>) =>
+    values
+      ? `${key.split(".").pop()} ${JSON.stringify(values)}`
+      : (key.split(".").pop() as string)) as unknown as TFunction;
+  const formatDate = (iso: string) => iso.slice(0, 10);
+  const now = new Date("2030-06-01T00:00:00.000Z");
+  const exemption = (until: string, revokedAt: string | null = null) => ({
+    id: `clexm_${until}`,
+    surveyId: "clsrv",
+    surveyName: "Site visit",
+    workspaceId: "clwsp",
+    policy: "surveys" as const,
+    until,
+    source: "manual" as const,
+    reason: "Audit",
+    createdBy: null,
+    createdAt: "2030-01-01T00:00:00.000Z",
+    revokedAt,
+  });
+  const loaded = (exemptions: ReturnType<typeof exemption>[], isError = false) => ({
+    data: { governed: true, policies: [], exemptions },
+    isError,
+  });
+
+  test("names the latest end for a held survey", () => {
+    expect(
+      getArchiveSurveyWarning(
+        loaded([exemption("2031-03-31T00:00:00.000Z"), exemption("2031-06-30T00:00:00.000Z")]),
+        now,
+        echo,
+        formatDate
+      )
+    ).toBe('archive_survey_warning_exempt {"date":"2031-06-30"}');
+  });
+
+  test("keeps today's text with no exemption, or only a revoked or expired one", () => {
+    expect(getArchiveSurveyWarning(loaded([]), now, echo, formatDate)).toBe("archive_survey_warning");
+    expect(
+      getArchiveSurveyWarning(
+        loaded([
+          exemption("2031-03-31T00:00:00.000Z", "2030-05-01T00:00:00.000Z"),
+          exemption("2030-05-31T00:00:00.000Z"),
+        ]),
+        now,
+        echo,
+        formatDate
+      )
+    ).toBe("archive_survey_warning");
+  });
+
+  test("keeps today's text while loading, and after a failed refetch that kept an older answer", () => {
+    expect(getArchiveSurveyWarning({ data: undefined, isError: false }, now, echo, formatDate)).toBe(
+      "archive_survey_warning"
+    );
+    expect(
+      getArchiveSurveyWarning(loaded([exemption("2031-03-31T00:00:00.000Z")], true), now, echo, formatDate)
+    ).toBe("archive_survey_warning");
   });
 });

@@ -145,6 +145,37 @@ const getHoldingExemption = (
       TRetentionExemption | undefined
     >((longest, exemption) => (!longest || exemption.until > longest.until ? exemption : longest), undefined);
 
+/**
+ * When the exemptions holding a survey from the archive purge end (ENG-3991): the latest `until` among
+ * those still active at `now`, whatever the policy. Revocation stamps `revokedAt` with the current time,
+ * so an exemption is active exactly when it is unrevoked and `until` is after `now`, the same rule
+ * `listActiveSurveyRetentionExemptions` applies. Null when none holds the survey, so the archive purge
+ * deletes it 30 days after archiving.
+ */
+export const getSurveyExemptionEnd = (exemptions: readonly TRetentionExemption[], now: Date): string | null =>
+  getHoldingExemption(
+    exemptions.filter((exemption) => !exemption.revokedAt && Date.parse(exemption.until) > now.getTime()),
+    "surveys"
+  )?.until ?? null;
+
+/**
+ * The archive dialog's deletion warning (ENG-3991): the exemption copy with its end date for a held
+ * survey, today's text otherwise. Today's text too while the retention loads or after it fails, even
+ * when a failed refetch keeps an older answer, so the warning never blocks archiving.
+ */
+export const getArchiveSurveyWarning = (
+  retention: Readonly<{ data: TSurveyRetention | undefined; isError: boolean }>,
+  now: Date,
+  t: TFunction,
+  formatDate: (iso: string) => string
+): string => {
+  const exemptionEnd =
+    retention.data && !retention.isError ? getSurveyExemptionEnd(retention.data.exemptions, now) : null;
+  return exemptionEnd
+    ? t("workspace.surveys.archive_survey_warning_exempt", { date: formatDate(exemptionEnd) })
+    : t("workspace.surveys.archive_survey_warning");
+};
+
 /** One policy's line for a survey: what it does next and when, or that the survey is exempt. */
 const describeSurveyRetentionPlan = (
   retention: TSurveyRetention,

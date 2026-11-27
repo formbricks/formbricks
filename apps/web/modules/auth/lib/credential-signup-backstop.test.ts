@@ -17,16 +17,24 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: v
 const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
 
-const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
+const constantsOverrides = vi.hoisted(() => ({
+  SIGNUP_ENABLED: true,
+  SETUP_TOKEN: undefined as string | undefined,
+}));
 vi.mock("@/lib/constants", () => ({
+  ENCRYPTION_KEY: "0".repeat(64), // read at load by lib/crypto, which the setup-token check uses
   get SIGNUP_ENABLED() {
     return constantsOverrides.SIGNUP_ENABLED;
+  },
+  get SETUP_TOKEN() {
+    return constantsOverrides.SETUP_TOKEN;
   },
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
   constantsOverrides.SIGNUP_ENABLED = true;
+  constantsOverrides.SETUP_TOKEN = undefined;
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(isBootstrapAdminSignup).mockReturnValue(false);
@@ -106,6 +114,19 @@ describe("enforceCredentialSignupBackstop", () => {
 
       expect(await enforceCredentialSignupBackstop("admin@example.com")).toEqual({
         data: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin },
+      });
+    });
+
+    // ENG-7313: this hook has no form and therefore no way to present SETUP_TOKEN. The sign-up route
+    // checks the token before it reaches here; any other in-process caller is refused like a closed
+    // instance rather than allowed through on freshness alone.
+    test("refuses the fresh-instance exception when SETUP_TOKEN is configured", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+
+      await expect(enforceCredentialSignupBackstop("admin@example.com")).rejects.toMatchObject({
+        status: "FORBIDDEN",
+        body: { code: SIGNUP_DISABLED_ERROR_CODE },
       });
     });
 

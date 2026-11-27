@@ -543,6 +543,9 @@ async function deleteData(): Promise<void> {
     "account",
     "user",
     "organization",
+    // Instance-level marker with no foreign keys (ENG-7313); a leaked row would make a cleared dev
+    // database look set up and lock the setup flow.
+    "instanceSetup",
   ];
 
   for (const model of deleteOrder) {

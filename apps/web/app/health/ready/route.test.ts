@@ -12,7 +12,7 @@ vi.mock("@/lib/env", () => ({
 }));
 vi.mock("@/lib/jobs/config", () => ({ getJobsWorkerBootstrapConfig: () => ({ enabled: fixtures.workers }) }));
 beforeEach(() => {
-  prisma.$queryRaw.mockResolvedValue([{ ready: true }]);
+  prisma.$queryRaw.mockResolvedValue([{ bootstrap_constraint: true, instance_setup_table: true }]);
   fixtures.mode = "online";
   fixtures.workers = true;
   prisma.onlineUpgradeState.findUnique.mockResolvedValue({ completedPhases: ["prepare"] } as never);
@@ -40,7 +40,13 @@ test("missing preparation and draining replicas stay outside endpoints", async (
 });
 
 test("requires a valid unique bootstrap index even with a preparation checkpoint", async () => {
-  prisma.$queryRaw.mockResolvedValue([{ ready: false }]);
+  prisma.$queryRaw.mockResolvedValue([{ bootstrap_constraint: false, instance_setup_table: true }]);
+  expect((await GET()).status).toBe(503);
+});
+// ENG-7313: every page that asks whether the instance is fresh reads the setup marker, so a pod that
+// starts before that migration must stay outside the load balancer.
+test("requires the instance setup marker table even with a valid bootstrap index", async () => {
+  prisma.$queryRaw.mockResolvedValue([{ bootstrap_constraint: true, instance_setup_table: false }]);
   expect((await GET()).status).toBe(503);
 });
 test("fails closed on catalog errors", async () => {

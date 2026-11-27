@@ -139,7 +139,14 @@ deployment:
     # is the last X-Forwarded-For entry. Pinned here rather than relying on the code default (also 1) so
     # the assumption is visible next to the ingress it describes. Raise it if you put further proxies —
     # a CDN, a corporate load balancer — in front of the ingress; setting it higher than the real chain
-    # lets callers spoof their address by prepending entries.
+    # lets callers spoof their address by prepending entries. It also assumes every request comes through the
+    # ingress: a client that reaches the app another way (service.type NodePort or LoadBalancer, hostNetwork)
+    # writes the header itself, even when a proxy also sits in front. Keep the Service on ClusterIP and
+    # hostNetwork off, or block direct access so only the proxies reach the app. ClusterIP keeps outside
+    # clients off, but any pod can still call the Service: if in-cluster workloads are not trusted, add a
+    # NetworkPolicy that admits only the trusted proxies, including the ingress controller. "0" stops the
+    # spoofing but makes every client one address, so one client can use up the sign-in limits for everyone:
+    # a stopgap.
     TRUSTED_PROXY_HOP_COUNT: "1"
 
   # Additional pod volumes and app container mounts. These are useful for custom CA bundles and
@@ -1035,7 +1042,7 @@ redis:
   image:
     repository: "valkey/valkey"
     tag: ""
-    digest: "sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd"
+    digest: "sha256:169567d6288e5f08aa141847c0c3e0864a32e727682ca6f052a20567c7103ef8"
     pullPolicy: IfNotPresent
   architecture: standalone
   commonConfiguration: |-

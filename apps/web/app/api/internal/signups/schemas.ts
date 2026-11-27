@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SETUP_TOKEN_MAX_LENGTH } from "@formbricks/types/instance";
 import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { EMAILED_TOKEN_MAX } from "@/app/api/internal/lib/limits";
 import { IS_TURNSTILE_CONFIGURED } from "@/lib/constants";
@@ -23,6 +24,8 @@ export const ZSignupBody = z
     email: ZUserEmail,
     password: ZUserPassword,
     inviteToken: z.string().max(EMAILED_TOKEN_MAX).optional(),
+    // The optional `SETUP_TOKEN` (ENG-7313); only read when the sign-up is the fresh-instance exception.
+    setupToken: z.string().max(SETUP_TOKEN_MAX_LENGTH).optional(),
     userLocale: ZUserLocale.optional(),
     turnstileToken: z.string().max(TURNSTILE_TOKEN_MAX).optional(),
     subscribeToSecurityUpdates: z.boolean().optional(),

@@ -1,6 +1,6 @@
-import type { TResponseUpdate } from "@formbricks/types/responses";
+import { type TResponseUpdate, normalizeCountryCode } from "@formbricks/types/responses";
 import type { TVisitSnapshot } from "@formbricks/types/show-conditions";
-import { VISIT_URLS_SEPARATOR } from "@formbricks/types/visit";
+import { type TVisitUtm, UTM_PARAMS, VISIT_URLS_SEPARATOR, readUtmParams } from "@formbricks/types/visit";
 
 /**
  * The `meta` the renderer contributes to a response: the browser-runtime context it can observe,
@@ -61,14 +61,6 @@ const readCount = (read: () => number | null | undefined): number | undefined =>
 const compact = (meta: Record<string, string | number | undefined>): TWebSurveyMeta =>
   Object.fromEntries(Object.entries(meta).filter(([, value]) => value !== undefined));
 
-const UTM_PARAMS = [
-  ["utm_source", "utmSource"],
-  ["utm_medium", "utmMedium"],
-  ["utm_campaign", "utmCampaign"],
-  ["utm_term", "utmTerm"],
-  ["utm_content", "utmContent"],
-] as const;
-
 /**
  * The **page** group: everything whose meaning comes from `location` describing a host page the
  * respondent navigated to. Gated on `isWebEnvironment` — see {@link createWebSurveyMetaSnapshot}.
@@ -85,11 +77,6 @@ export const readPageContextMeta = (): TWebSurveyMeta => {
     }
   })();
 
-  const utm: Record<string, string | undefined> = {};
-  for (const [param, key] of UTM_PARAMS) {
-    utm[key] = readString(() => searchParams?.get(param));
-  }
-
   return compact({
     // `url` and `source` predate this snapshot and keep their existing meaning; they are captured
     // here so the *whole* client-side meta is frozen together at display, rather than half of it
@@ -98,7 +85,8 @@ export const readPageContextMeta = (): TWebSurveyMeta => {
     source: readString(() => searchParams?.get("source")),
     pagePath: readString(() => window.location.pathname),
     pageReferrer: readString(() => document.referrer),
-    ...utm,
+    // The same rule the web SDK keeps the landing campaign by: trimmed, and an empty value is absent.
+    ...readUtmParams(searchParams?.toString() ?? ""),
   });
 };
 
@@ -139,6 +127,86 @@ const readVisitContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta
   });
 };
 
+const readRawCountry = (
+  hiddenFieldsRecord: Record<string, unknown> | undefined,
+  isLinkSurvey: boolean
+): unknown => {
+  const bagKey = Object.keys(hiddenFieldsRecord ?? {}).find((key) => key.toLowerCase() === "country");
+  if (bagKey !== undefined) return hiddenFieldsRecord?.[bagKey];
+  if (!isLinkSurvey) return undefined;
+  return readString(() => new URL(window.location.href).searchParams.get("country"));
+};
+
+/**
+ * The respondent's country, when the host set it explicitly — for surveys behind no CDN that reports
+ * one, or when the host simply knows better than an IP guess. The ingest routes prefer it over the CDN
+ * header. Two inputs, checked in this order:
+ *
+ * - `country` in the bag the host handed over (`setEmbeddedData`, `track({ hiddenFields })`, the mobile
+ *   SDKs), matched case-insensitively like every other bag key.
+ * - On a link survey, `?country=` on the survey's own URL. Only there: an app survey's page URL is the
+ *   customer's page, where `?country=` may well be a shop filter rather than a statement about the
+ *   respondent.
+ *
+ * Only a two-letter ISO code is kept (`DE`, `us` → `US`). Anything else is dropped with a warning, so
+ * the CDN value still applies and the developer learns why theirs did not.
+ *
+ * A survey that declares its own `country` field, or a question with that id, keeps the name: the value
+ * fills that field as before (say, a target market rather than where the respondent is), so it must not
+ * also become the respondent's country. `shadowingNames` is `listShadowingNames` for the survey.
+ */
+export const readExplicitCountry = ({
+  hiddenFieldsRecord,
+  isLinkSurvey,
+  shadowingNames,
+}: {
+  hiddenFieldsRecord: Record<string, unknown> | undefined;
+  isLinkSurvey: boolean;
+  shadowingNames: readonly string[];
+}): string | undefined => {
+  if (shadowingNames.some((name) => name.toLowerCase() === "country")) return undefined;
+
+  const raw = readRawCountry(hiddenFieldsRecord, isLinkSurvey);
+  if (raw === undefined || raw === null) return undefined;
+
+  const country = normalizeCountryCode(raw);
+  if (country === undefined) {
+    console.warn(
+      `Formbricks: "country" must be a two-letter country code such as "DE", so ${JSON.stringify(raw)} was ignored.`
+    );
+  }
+  return country;
+};
+
+const hasUtm = (meta: TWebSurveyMeta): boolean => UTM_PARAMS.some(([, key]) => meta[key] !== undefined);
+
+/**
+ * The campaign the visit arrived with (ENG-7430), kept by the web SDK because the page the survey
+ * shows on is often not the one the visitor landed on. Only the five UTM keys are read, each as
+ * defensively as the rest: the SDK and this renderer are cached separately, so `visit.utm` may be
+ * missing (an older SDK) or not the shape this version expects.
+ */
+const readVisitUtmMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta => {
+  const utm: TVisitUtm = {};
+  for (const [, key] of UTM_PARAMS) {
+    utm[key] = readString(() => visit?.utm?.[key]);
+  }
+  return compact(utm);
+};
+
+/**
+ * The page group, with the visit's campaign standing in when the page itself carries none.
+ *
+ * The page's own UTM parameters win as a whole set, so a response never mixes two campaigns and a
+ * survey on a tagged page records exactly what it did before. Only a page without any falls back to
+ * the visit's, which is how a visitor who landed with `?utm_campaign=…` and answers two pages later
+ * still has the campaign on the response. `url` and `pagePath` stay the page the survey shows on.
+ */
+const readAttributedPageContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta => {
+  const page = readPageContextMeta();
+  return hasUtm(page) ? page : { ...page, ...readVisitUtmMeta(visit) };
+};
+
 /**
  * **Snapshot at display, then freeze.**
  *
@@ -166,12 +234,15 @@ const readVisitContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta
  */
 export const createWebSurveyMetaSnapshot = (
   isWebEnvironment: boolean,
-  visit?: TVisitSnapshot
+  visit?: TVisitSnapshot,
+  country?: string
 ): (() => TWebSurveyMeta) => {
   const snapshot: TWebSurveyMeta = {
-    ...(isWebEnvironment ? readPageContextMeta() : {}),
+    ...(isWebEnvironment ? readAttributedPageContextMeta(visit) : {}),
     ...readDeviceContextMeta(),
     ...readVisitContextMeta(visit),
+    // From `readExplicitCountry`, frozen with the rest: the host's value at display is the answer.
+    ...(country === undefined ? {} : { country }),
   };
   return () => snapshot;
 };

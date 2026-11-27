@@ -529,6 +529,26 @@ describe("getChartApiErrorMessage", () => {
     expect(getChartApiErrorMessage(error, "fallback")).toBe("The chart query is not valid. Unknown field.");
   });
 
+  test("ends a detail without a full stop before the reason, so the two read as two sentences", () => {
+    // The chart query validator's problem detail carries no full stop (`refuseChartQuery`).
+    const error = new V3ApiError({
+      status: 422,
+      detail: "The chart query is not valid",
+      invalid_params: [
+        { name: "query.filters", reason: "At most 5 answer filters are allowed in one query." },
+      ],
+    });
+    expect(getChartApiErrorMessage(error, "fallback")).toBe(
+      "The chart query is not valid. At most 5 answer filters are allowed in one query."
+    );
+    const asked = new V3ApiError({
+      status: 422,
+      detail: "Is this query valid?",
+      invalid_params: [{ name: "query", reason: "No." }],
+    });
+    expect(getChartApiErrorMessage(asked, "fallback")).toBe("Is this query valid? No.");
+  });
+
   test("uses the detail alone, or the fallback when the problem has none", () => {
     expect(getChartApiErrorMessage(new V3ApiError({ status: 403, detail: "Forbidden." }), "fb")).toBe(
       "Forbidden."

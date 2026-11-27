@@ -48,8 +48,6 @@ interface Walked {
   open: string[];
   /** Object nodes advertising `additionalProperties: true`/a schema — a `z.record`, legitimate if listed. */
   freeForm: string[];
-  /** Where each `$defs` entry is referenced from, so a hoisted node's real reachability can be checked. */
-  refs: { def: string; at: string }[];
 }
 
 /**
@@ -71,10 +69,6 @@ function collectObjectNodes(node: unknown, path: string, walked: Walked): void {
 
   const schema = node as Record<string, unknown>;
 
-  if (typeof schema.$ref === "string") {
-    walked.refs.push({ def: schema.$ref.replace("#/$defs/", ""), at: path });
-  }
-
   if (schema.type === "object" || schema.properties) {
     if (schema.additionalProperties === undefined) {
       walked.open.push(path);
@@ -90,8 +84,7 @@ function collectObjectNodes(node: unknown, path: string, walked: Walked): void {
       }
     } else if (key === "$defs") {
       // Keyed by definition name, not by this path: a `$defs` entry is not reachable *here*, it is reachable
-      // wherever something `$ref`s it. `walked.refs` is what recovers that, so an exclusion can be checked
-      // against where the node really sits instead of waving every hoisted node through.
+      // wherever something `$ref`s it.
       for (const [childKey, childValue] of Object.entries(value as Record<string, unknown>)) {
         collectObjectNodes(childValue, `${DEFS_PREFIX}${childKey}`, walked);
       }
@@ -106,7 +99,7 @@ function collectObjectNodes(node: unknown, path: string, walked: Walked): void {
 }
 
 function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
-  const walked: Walked = { open: [], freeForm: [], refs: [] };
+  const walked: Walked = { open: [], freeForm: [] };
   const json = z.toJSONSchema(schema, {
     // `io: "input"` matches how the tool schemas are advertised — the same conversion the SDK performs.
     io: "input",
@@ -114,9 +107,7 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
     // Inline plain reuse instead of hoisting it into `$defs`, so a sub-schema that merely appears twice
     // still reports the path it is reachable from. It does NOT eliminate `$defs`: a *recursive* schema has
     // to be a `$ref` whatever this is set to, and the workflow if/else condition group is exactly that — so
-    // one hoisted entry survives and the workflow test below has to check where it is referenced from
-    // rather than excusing `$defs` wholesale. This setting shrinks that problem to the recursive case; it
-    // does not remove it.
+    // one hoisted entry survives, and the walker checks it under `$defs` like any other node.
     reused: "inline",
   });
   collectObjectNodes(json, name, walked);
@@ -149,17 +140,6 @@ const allExports: [string, unknown][] = Object.entries({
 const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => entry[1] instanceof z.ZodType);
 
 /**
- * The two tools whose input embeds the shared workflow `definition`, which is still open at every level
- * below `definition` itself.
- *
- * Not fixable at this layer: `ZWorkflowDefinition` lives in `packages/workflows` and is parsed by the v3
- * Workflows REST route and posted by the workflow builder, so making it strict is a v3 API change with its
- * own blast radius rather than part of an MCP migration. Tracked as ENG-2437; when that lands, delete this
- * list and the test below it — the general case above then covers these two as well.
- */
-const SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION = ["ZMcpCreateWorkflowInput", "ZMcpPatchWorkflowInput"];
-
-/**
  * The locale-keyed text maps of a creative's `content` (`CREATIVE_TEXTS`): `content` is `anyOf` the types'
  * shapes in that list's order, and a step that can be null is itself an `anyOf` whose first branch it is.
  */
@@ -170,6 +150,22 @@ const creativeTextMapPaths = (content: string): string[] =>
       return `${content}.anyOf|${typeIndex}.${steps.join(".")}`;
     })
   );
+
+/**
+ * A workflow definition's builder `ui` metadata (`.catchall(z.unknown())`): the builder stores its own
+ * keys there (`color`, `zoom`), and an agent patching a workflow it read sends them back. One per trigger
+ * type, per step type (the action union first, then If/else, Filter and Switch), and the definition's own.
+ */
+const workflowDefinitionUiPaths = (definition: string): string[] => [
+  `${definition}.nodes[].anyOf|0.oneOf|0.ui`,
+  `${definition}.nodes[].anyOf|0.oneOf|1.ui`,
+  `${definition}.nodes[].anyOf|1.ui`,
+  `${definition}.nodes[].anyOf|2.ui`,
+  `${definition}.nodes[].anyOf|3.ui`,
+  `${definition}.trigger.anyOf|0.oneOf|0.ui`,
+  `${definition}.trigger.anyOf|0.oneOf|1.ui`,
+  `${definition}.ui`,
+];
 
 /**
  * Every field that may legitimately accept an arbitrary nested shape: the survey/workflow document payloads
@@ -218,59 +214,21 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   ZMcpCreateCreativeFields: creativeTextMapPaths("ZMcpCreateCreativeFields.content"),
   ZMcpCreateCreativeInput: creativeTextMapPaths("ZMcpCreateCreativeInput.content"),
   ZMcpPatchCreativeInput: creativeTextMapPaths("ZMcpPatchCreativeInput.data.content"),
+  // Everything else in the definition is strict (ENG-2437).
+  ZMcpCreateWorkflowInput: workflowDefinitionUiPaths("ZMcpCreateWorkflowInput.definition"),
+  ZMcpPatchWorkflowInput: workflowDefinitionUiPaths("ZMcpPatchWorkflowInput.data.definition"),
 };
 
 describe("MCP tool input schemas reject undeclared arguments (ENG-2256)", () => {
-  const generalCase = allSchemas.filter(([name]) => !SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION.includes(name));
-
-  test.each(generalCase)("%s has no open structured object at any depth", (name, schema) => {
+  test.each(allSchemas)("%s has no open structured object at any depth", (name, schema) => {
     expect(classifyObjectNodes(name, schema).open).toEqual([]);
   });
 
-  test.each(generalCase)("%s widens only where a free-form payload is expected", (name, schema) => {
+  test.each(allSchemas)("%s widens only where a free-form payload is expected", (name, schema) => {
     expect(classifyObjectNodes(name, schema).freeForm.sort()).toEqual(
       (EXPECTED_FREE_FORM_PATHS[name] ?? []).slice().sort()
     );
   });
-
-  test.each(allSchemas.filter(([name]) => SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION.includes(name)))(
-    "%s is open only inside the shared workflow definition",
-    (name, schema) => {
-      const { open, refs } = classifyObjectNodes(name, schema);
-
-      /**
-       * A `$defs` entry is only excusable if every reference to it sits inside `definition`. `reused:
-       * "inline"` above removes plain reuse from `$defs`, but a *recursive* schema still has to be a `$ref`
-       * — that is what the workflow if/else condition group is — so one hoisted entry survives and needs
-       * checking rather than waving through. Excluding `$defs` unconditionally would hide a future open node
-       * that is reachable from a top-level argument, since `$defs` is where the emitter puts anything
-       * referenced twice, definition-related or not.
-       */
-      const reachedOnlyViaDefinition = (path: string): boolean => {
-        if (!path.startsWith(DEFS_PREFIX)) return false;
-        const def = path.slice(DEFS_PREFIX.length).split(/[.[|{]/)[0];
-        const referencedFrom = refs.filter((ref) => ref.def === def).map((ref) => ref.at);
-
-        return (
-          referencedFrom.length > 0 &&
-          referencedFrom.every((at) => at.includes(".definition") || at.startsWith(DEFS_PREFIX))
-        );
-      };
-
-      // The known gap is bounded: it must stay confined to the `definition` subtree. A new open object on a
-      // *top-level* tool argument is a new bug and fails here.
-      const outsideDefinition = open.filter(
-        (path) => !path.includes(".definition") && !reachedOnlyViaDefinition(path)
-      );
-
-      expect(outsideDefinition).toEqual([]);
-      // Guards the premise of the exclusion itself: when the shared definition becomes strict this empties,
-      // and both this test and the exclusion list above should be deleted. Counted inside the `definition`
-      // subtree specifically — a bare `open.length` could be held above zero by an unrelated open node
-      // elsewhere, and would quietly stop being a tripwire.
-      expect(open.filter((path) => path.includes(".definition"))).not.toEqual([]);
-    }
-  );
 
   test("advertises strictness as additionalProperties: false, not merely as a Zod flag", () => {
     // The failure mode this rules out: strictness that exists in Zod but is lost in the JSON Schema the
