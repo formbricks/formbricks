@@ -6,44 +6,42 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
 import {
+  SSLACCEPT_CONFLICT_MESSAGE,
   type TConnectionUrlParts,
   hasConflictingValues,
   joinConnectionUrl,
   lastParam,
-  rawQueryString,
   splitConnectionUrl,
 } from "./connection-url";
+import {
+  PrismaCliTlsConfigError,
+  TLS_PARAMS,
+  assertPgReadsTlsAlike,
+  trimConnectionUrl,
+} from "./tls-url-guards";
 
-// The Prisma CLI's schema engine, which runs `prisma migrate deploy`, does not speak libpq's TLS settings:
-// it reads only sslmode=disable|prefer|require, turns any other sslmode (verify-ca, verify-full) into
-// prefer, ignores sslrootcert, ssl and sslnegotiation, and checks the server certificate only under
-// sslaccept=strict. Its own CA parameter, sslcert, loads just the first certificate of a PEM bundle. Left
-// alone, a DATABASE_URL that asks for verify-full (ENG-7337) or ssl=true (ENG-7464) migrates over an
-// unverified connection while the app's pg connections verify it. This translates the request into the
-// settings the CLI does honour, so migrations are never weaker than the app:
+export { PrismaCliTlsConfigError } from "./tls-url-guards";
+
+// The Prisma CLI's schema engine, which runs `prisma migrate deploy`, reads only sslmode=disable|prefer|require
+// (verify-ca and verify-full become prefer), sslaccept (it checks certificates only under strict) and sslcert
+// (an extra trusted root, first PEM only). Left alone, a URL with verify-full (ENG-7337) or ssl=true (ENG-7464)
+// migrates unverified while the app's pg verifies. This translates the URL so migrations are never weaker:
 //
-// - verify-ca, verify-full, sslrootcert=system, and a root certificate in the URL under any sslmode that uses
-//   TLS become sslmode=require&sslaccept=strict. Strict always checks the host name too, so verify-ca is
-//   enforced as verify-full: Prisma has no CA-only mode, and failing closed beats silently skipping the check.
-// - Without an sslmode in the URL, the parameters node-postgres reads as a TLS request count as one: ssl=true|1,
-//   sslrootcert, sslcert or sslkey verify (pg verifies all of them against its CA store), ssl=no-verify
-//   requires TLS, and ssl=0 disables it. Any other ssl value is rejected: pg reads even ssl=false as verified
-//   TLS. sslnegotiation=direct, which Prisma cannot negotiate, makes migrations verify too (pg-connection-string
-//   2.14 reads it as verified TLS; older versions ignore it).
-// - The root certificate reaches OpenSSL as SSL_CERT_FILE, which loads the whole bundle, with SSL_CERT_DIR
-//   pointed at an empty directory so the OS store is not trusted next to it. Without one, the CLI trusts
-//   the OS store. Plain sslmode=require (or prefer) stays unverified, as in libpq, although the app's pg 8
-//   connections verify it.
+// - verify-ca, verify-full, sslrootcert=system, and a URL sslrootcert under any sslmode that uses TLS become
+//   sslmode=require&sslaccept=strict, which also checks the host name: Prisma has no CA-only mode.
+// - Without a URL sslmode, what pg reads as a TLS request counts: ssl=true|1, sslrootcert, sslcert or sslkey
+//   verify, ssl=no-verify requires TLS, ssl=0 disables it, and other ssl values (pg reads even ssl=false as
+//   verified TLS) are rejected. sslnegotiation=direct, which Prisma cannot negotiate, raises the floor to verify.
+// - The root certificate reaches OpenSSL as SSL_CERT_FILE (the whole bundle) with an empty SSL_CERT_DIR;
+//   without one the CLI trusts the OS store. Plain sslmode=require or prefer stays unverified, as in libpq.
 // - PGSSLMODE and PGSSLROOTCERT apply when the URL does not set the parameter, as in libpq. pg ignores
-//   PGSSLMODE once the URL holds any TLS parameter, so there PGSSLMODE may make migrations stricter but never
-//   weaker: one that would is rejected.
-// - An explicit sslaccept is the operator's own Prisma setting and is kept, but a verifying sslmode still
-//   becomes require so the connection cannot fall back to plaintext. A migration-only MIGRATE_DATABASE_URL
-//   with sslaccept=accept_invalid_certs is the escape hatch that keeps the app's connections verified; it
+//   PGSSLMODE once the URL has TLS settings, so there it may make migrations stricter, and one that would
+//   weaken them is rejected.
+// - An explicit sslaccept is kept, but a verifying sslmode still becomes require, so nothing falls back to
+//   plaintext. sslaccept=accept_invalid_certs in a migration-only MIGRATE_DATABASE_URL is the escape hatch; it
 //   logs a warning when it turns off a check the URL asks for.
-// - pg and this module must read the same TLS parameters, so an empty one, a conflicting repeated sslaccept,
-//   a percent-encoded TLS parameter name, a TLS value pg would decode differently, or a control character
-//   (which WHATWG URL parsing deletes) is rejected.
+// - Empty TLS settings, a conflicting repeated sslaccept, and anything tls-url-guards finds pg would read
+//   differently are rejected.
 
 const DISABLE = "disable";
 const REQUIRE = "require";
@@ -63,9 +61,6 @@ const SSL_MODES = new Set([
 const SYSTEM_ROOT_CERT = "system";
 const ACCEPT_INVALID_CERTS = "accept_invalid_certs";
 
-// Every query parameter pg, libpq or Prisma reads as a TLS setting.
-const TLS_PARAMS = ["ssl", "sslmode", "sslrootcert", "sslcert", "sslkey", "sslaccept", "sslnegotiation"];
-const TLS_PARAM_NAMES = new Set(TLS_PARAMS);
 // node-postgres' ssl parameter, as the sslmode it amounts to. pg reads every other non-empty value as verified TLS.
 const SSL_PARAM_MODES = new Map([
   ["true", VERIFY_FULL],
@@ -77,14 +72,6 @@ const SSL_NEGOTIATIONS = new Set(["postgres", "direct"]);
 // Parameters with which pg verifies the server whatever ssl says: it builds an ssl object, which defaults to
 // rejectUnauthorized.
 const PG_VERIFYING_PARAMS = ["sslrootcert", "sslcert", "sslkey"];
-
-/** A DATABASE_URL TLS setting the Prisma CLI cannot be made to honour. Its message never holds the URL. */
-export class PrismaCliTlsConfigError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "PrismaCliTlsConfigError";
-  }
-}
 
 export interface TPrismaCliTls {
   /** The URL to hand the Prisma CLI. */
@@ -111,75 +98,6 @@ const isReadableFile = (filePath: string): boolean => {
 const nonEmpty = (value: string | null | undefined): string | undefined =>
   value === null || value === undefined || value === "" ? undefined : value;
 
-// pg-connection-string's parse() re-encodes the whole URL with encodeURI when it holds a space or a malformed
-// % escape, then restores only escapes of two decimal digits. A name or value escaped with a hex letter then
-// reaches pg still escaped ("ssl%6Dode"), while Prisma and this module decode it ("sslmode"). The tests check
-// this against pg-connection-string itself.
-const PG_REENCODE_TRIGGER = / |%[^a-f0-9]|%[a-f0-9][^a-f0-9]/i;
-
-/** The query parameters as pg-connection-string reads them, when that can differ from URLSearchParams. */
-const pgQueryParams = (databaseUrl: string): URLSearchParams | undefined => {
-  // pg reads a URL that starts with "/" as a socket path with no query; Prisma does not accept that form.
-  if (databaseUrl.startsWith("/") || !PG_REENCODE_TRIGGER.test(databaseUrl)) return undefined;
-  let reencoded: string;
-  try {
-    reencoded = encodeURI(databaseUrl).replace(/%25(\d\d)/g, "%$1");
-  } catch {
-    throw new PrismaCliTlsConfigError("The database URL is not well-formed text; pg cannot read it.");
-  }
-  return splitConnectionUrl(reencoded).params;
-};
-
-const sameValues = (left: string[], right: string[]): boolean =>
-  left.length === right.length && left.every((value, index) => value === right[index]);
-
-/** Rejects TLS parameters that pg would read differently from Prisma and this module. */
-const assertPgReadsTlsAlike = (databaseUrl: string, params: URLSearchParams): void => {
-  for (const segment of rawQueryString(databaseUrl).split("&")) {
-    const rawName = segment.split("=", 1)[0];
-    if (!rawName.includes("%")) continue;
-    const [name] = new URLSearchParams(segment).keys();
-    if (TLS_PARAM_NAMES.has(name)) {
-      throw new PrismaCliTlsConfigError(
-        `A TLS parameter name in the database URL is percent-encoded, which pg may not decode; write it as ${name}.`
-      );
-    }
-  }
-
-  const pgParams = pgQueryParams(databaseUrl);
-  if (pgParams === undefined) return;
-  for (const name of TLS_PARAMS) {
-    if (!sameValues(params.getAll(name), pgParams.getAll(name))) {
-      throw new PrismaCliTlsConfigError(
-        `The app's database driver reads ${name} in the database URL differently from the migrations, because ` +
-          `the URL holds a space or a malformed % escape. Encode spaces as %20, and write ${name} without % escapes.`
-      );
-    }
-  }
-};
-
-// WHATWG URL parsing, which pg-connection-string and Prisma's url crate both follow, trims leading and trailing C0
-// controls and spaces and deletes tabs and newlines anywhere, so "ss\tl=true" reaches them as ssl=true.
-const isEdgeWhitespace = (code: number): boolean => code <= 0x20;
-const isControlCharacter = (code: number): boolean => code <= 0x1f || code === 0x7f;
-
-/** Trims the URL as WHATWG parsing does, and rejects control characters it would delete or keep inside it. */
-const trimUrl = (databaseUrl: string): string => {
-  let start = 0;
-  let end = databaseUrl.length;
-  while (start < end && isEdgeWhitespace(databaseUrl.charCodeAt(start))) start += 1;
-  while (end > start && isEdgeWhitespace(databaseUrl.charCodeAt(end - 1))) end -= 1;
-  const trimmed = databaseUrl.slice(start, end);
-  for (let index = 0; index < trimmed.length; index += 1) {
-    if (isControlCharacter(trimmed.charCodeAt(index))) {
-      throw new PrismaCliTlsConfigError(
-        "The database URL holds a tab, newline or other control character; remove it."
-      );
-    }
-  }
-  return trimmed;
-};
-
 interface TTlsRequest {
   sslAccept: string | null;
   sslMode?: string;
@@ -188,33 +106,39 @@ interface TTlsRequest {
   rootCertInUrl: boolean;
 }
 
+const assertKnownSslMode = (sslMode: string | undefined, source: string): void => {
+  if (sslMode !== undefined && !SSL_MODES.has(sslMode)) {
+    throw new PrismaCliTlsConfigError(
+      `Unsupported sslmode in ${source}; use one of ${[...SSL_MODES].join(", ")}.`
+    );
+  }
+};
+
 /** Rejects TLS values neither pg nor Prisma reads the same way, so the two cannot disagree on them. */
 const assertKnownTlsValues = (params: URLSearchParams, urlMode: string | undefined): void => {
   for (const name of TLS_PARAMS) {
     // libpq rejects an empty sslmode; pg reads every empty TLS value as unset, while Prisma reads some of them.
     if (params.getAll(name).includes("")) {
-      throw new PrismaCliTlsConfigError(`${name} is empty in DATABASE_URL; give it a value or remove it.`);
+      throw new PrismaCliTlsConfigError(
+        `${name} is empty in the database URL; give it a value or remove it.`
+      );
     }
   }
   if (hasConflictingValues(params, "sslaccept")) {
-    throw new PrismaCliTlsConfigError(
-      "DATABASE_URL sets sslaccept more than once with different values; keep only one."
-    );
+    throw new PrismaCliTlsConfigError(SSLACCEPT_CONFLICT_MESSAGE);
   }
-  if (urlMode !== undefined && !SSL_MODES.has(urlMode)) {
-    throw new PrismaCliTlsConfigError(
-      `Unsupported sslmode in DATABASE_URL; use one of ${[...SSL_MODES].join(", ")}.`
-    );
-  }
+  assertKnownSslMode(urlMode, "the database URL");
   const ssl = lastParam(params, "ssl");
   if (ssl !== null && !SSL_PARAM_MODES.has(ssl)) {
     throw new PrismaCliTlsConfigError(
-      "Unsupported ssl in DATABASE_URL; use ssl=true, or better sslmode=verify-full."
+      "Unsupported ssl in the database URL; use ssl=true, or better sslmode=verify-full."
     );
   }
   const negotiation = lastParam(params, "sslnegotiation");
   if (negotiation !== null && !SSL_NEGOTIATIONS.has(negotiation)) {
-    throw new PrismaCliTlsConfigError("Unsupported sslnegotiation in DATABASE_URL; use postgres or direct.");
+    throw new PrismaCliTlsConfigError(
+      "Unsupported sslnegotiation in the database URL; use postgres or direct."
+    );
   }
 };
 
@@ -234,18 +158,14 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
   assertKnownTlsValues(params, urlMode);
 
   const envMode = nonEmpty(env.PGSSLMODE);
-  if (envMode !== undefined && !SSL_MODES.has(envMode)) {
-    throw new PrismaCliTlsConfigError(
-      `Unsupported sslmode "${envMode}" in PGSSLMODE; use one of ${[...SSL_MODES].join(", ")}.`
-    );
-  }
+  assertKnownSslMode(envMode, "PGSSLMODE");
   const urlRootCert = lastParam(params, "sslrootcert") ?? undefined;
   const sslRootCert = urlRootCert ?? nonEmpty(env.PGSSLROOTCERT);
 
   // libpq: sslrootcert=system defaults to verify-full and rejects any weaker sslmode.
   const configuredMode = urlMode ?? envMode;
   if (sslRootCert === SYSTEM_ROOT_CERT && configuredMode !== undefined && configuredMode !== VERIFY_FULL) {
-    const source = urlMode === undefined ? "PGSSLMODE" : "DATABASE_URL";
+    const source = urlMode === undefined ? "PGSSLMODE" : "the database URL";
     throw new PrismaCliTlsConfigError(
       `sslrootcert=system requires sslmode=verify-full, but ${source} sets sslmode=${configuredMode}.`
     );
@@ -262,7 +182,7 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
   // Direct negotiation starts with a TLS handshake. Prisma cannot negotiate that way, so the handshake it does
   // make must at least be verified. Whether pg reads sslnegotiation depends on its version, so this only ever
   // raises the floor and never rejects the environment's mode.
-  if (lastParam(params, "sslnegotiation") === "direct" && protection(merged) < 2) {
+  if (lastParam(params, "sslnegotiation") === "direct" && protection(merged) < VERIFIED) {
     return { ...merged, sslMode: VERIFY_FULL };
   }
   return merged;
@@ -280,7 +200,7 @@ const mergeEnvMode = (
   const fromEnv = protection({ ...request, sslMode: envMode });
   if (fromEnv < fromUrl) {
     throw new PrismaCliTlsConfigError(
-      `PGSSLMODE=${envMode} would make migrations weaker than the TLS that the other settings in DATABASE_URL ` +
+      `PGSSLMODE=${envMode} would make migrations weaker than the TLS that the other settings in the database URL ` +
         "ask for; set sslmode in DATABASE_URL instead."
     );
   }
@@ -303,10 +223,15 @@ const requestsVerification = ({ sslMode, sslRootCert, rootCertInUrl }: TTlsReque
   return rootCertInUrl ? sslMode !== DISABLE && sslMode !== NO_VERIFY : sslMode === REQUIRE;
 };
 
-/** How well a request protects the connection: 0 allows plaintext, 1 requires TLS, 2 also verifies the server. */
-const protection = (request: TTlsRequest): number => {
-  if (requestsVerification(request)) return 2;
-  return request.sslMode === undefined || request.sslMode === DISABLE ? 0 : 1;
+// How well a request protects the connection, in increasing order.
+const PLAINTEXT_ALLOWED = 0;
+const TLS_REQUIRED = 1;
+const VERIFIED = 2;
+type TProtection = typeof PLAINTEXT_ALLOWED | typeof TLS_REQUIRED | typeof VERIFIED;
+
+const protection = (request: TTlsRequest): TProtection => {
+  if (requestsVerification(request)) return VERIFIED;
+  return request.sslMode === undefined || request.sslMode === DISABLE ? PLAINTEXT_ALLOWED : TLS_REQUIRED;
 };
 
 const resolveRootCertFile = (
@@ -361,9 +286,10 @@ export const resolvePrismaCliTls = (
   env: NodeJS.ProcessEnv = process.env,
   fileExists: (filePath: string) => boolean = isReadableFile
 ): TPrismaCliTls => {
-  const databaseUrl = trimUrl(rawDatabaseUrl);
+  const databaseUrl = trimConnectionUrl(rawDatabaseUrl);
   const parts = splitConnectionUrl(databaseUrl);
-  assertPgReadsTlsAlike(databaseUrl, parts.params);
+  // pg reads the raw URL: a space at its edge alone switches pg-connection-string to its re-encoding path.
+  assertPgReadsTlsAlike(rawDatabaseUrl, parts.params);
   const request = readTlsRequest(parts.params, env);
   const { sslAccept } = request;
 

@@ -45,3 +45,7 @@ export const lastParam = (params: URLSearchParams, name: string): string | null 
 /** Whether a repeated query parameter holds different values, so reading only the last one hides a conflict. */
 export const hasConflictingValues = (params: URLSearchParams, name: string): boolean =>
   new Set(params.getAll(name)).size > 1;
+
+/** Why a URL that repeats sslaccept with different values is refused, by the app and by the migrations alike. */
+export const SSLACCEPT_CONFLICT_MESSAGE =
+  "The database URL sets sslaccept more than once with different values; keep only one.";
