@@ -49,6 +49,7 @@ import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./p
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import {
+  V3SurveyTargetingChangedError,
   areV3SurveyTargetingFiltersEqual,
   assertV3OwnSegmentNotNestedElsewhere,
   assertV3SurveyTargetingFilterReferences,
@@ -303,11 +304,12 @@ export function assertV3SurveyPrecondition(
 async function resolveUpdateMiss(
   currentSurvey: TSurvey,
   precondition: TV3SurveyWritePrecondition | undefined,
-  cause: Error
+  cause: Error,
+  expectedSegmentId?: string
 ): Promise<Error> {
   const row = await prisma.survey.findFirst({
     where: { id: currentSurvey.id, workspaceId: currentSurvey.workspaceId },
-    select: { updatedAt: true, archivedAt: true },
+    select: { updatedAt: true, archivedAt: true, segmentId: true },
   });
 
   if (!row) {
@@ -318,6 +320,9 @@ async function resolveUpdateMiss(
   }
   if (precondition) {
     return new V3SurveyStaleError(precondition.expectedUpdatedAt, row.updatedAt, "write");
+  }
+  if (expectedSegmentId && row.segmentId !== expectedSegmentId) {
+    return new V3SurveyTargetingChangedError();
   }
 
   // Live, unarchived, unconditional — and the UPDATE still missed it. Not a state this code can explain.
@@ -480,6 +485,10 @@ export async function executeV3SurveyPatch(params: {
         id: currentSurvey.id,
         archivedAt: null,
         ...(precondition ? { updatedAt: precondition.expectedUpdatedAt } : {}),
+        // ENG-7269: a targeting write goes to the segment the survey had at the read. The survey must
+        // still be on it, or another save moved it after that write and the PATCH would report targeting
+        // it no longer has; the miss rolls the segment write back.
+        ...(segmentFilterWrite ? { segmentId: segmentFilterWrite.segmentId } : {}),
       },
       data,
       // Narrow: the survey this returns would describe the Embedded Data rows before the reconcile
@@ -600,7 +609,7 @@ export async function executeV3SurveyPatch(params: {
       // reconcile and trigger writes are `*Many`/`create`, and the re-read runs inside the
       // transaction that just updated the row, so it cannot miss.
       if (error.code === "P2025") {
-        throw await resolveUpdateMiss(currentSurvey, precondition, error);
+        throw await resolveUpdateMiss(currentSurvey, precondition, error, segmentFilterWrite?.segmentId);
       }
       throw new DatabaseError(error.message);
     }

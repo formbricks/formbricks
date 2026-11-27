@@ -28,6 +28,7 @@ import { V3SurveyArchivedError, V3SurveyStaleError, executeV3SurveyPatch, patchV
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import {
+  V3SurveyTargetingChangedError,
   areV3SurveyTargetingFiltersEqual,
   assertV3OwnSegmentNotNestedElsewhere,
   resolveV3ContactsEntitlement,
@@ -124,6 +125,8 @@ vi.mock("./targeting", async () => ({
   // The real refusal: patch maps it by class, so a stand-in would hide a wrong mapping.
   sharedSegmentTargetingError: (await vi.importActual<typeof import("./targeting")>("./targeting"))
     .sharedSegmentTargetingError,
+  V3SurveyTargetingChangedError: (await vi.importActual<typeof import("./targeting")>("./targeting"))
+    .V3SurveyTargetingChangedError,
   V3_CONTACTS_NOT_ENABLED_MESSAGE: "Contact targeting is not enabled.",
 }));
 
@@ -1606,11 +1609,37 @@ describe("patchV3Survey", () => {
         },
         tx
       );
-      expect(tx.survey.update).toHaveBeenCalled();
+      // ENG-7269: the survey must still be on the segment the targeting was written to.
+      expect(tx.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ segmentId: "clsg1234567890123456789012" }),
+        })
+      );
       expect(prisma.survey.update).not.toHaveBeenCalled();
       // The Embedded Data reconcile rides the same transaction — never the global client.
       expect(tx.surveyEmbeddedData.findMany).toHaveBeenCalled();
       expect(prisma.surveyEmbeddedData.findMany).not.toHaveBeenCalled();
+    });
+
+    test("answers a survey moved to another segment after the targeting write with 409 (ENG-7269)", async () => {
+      vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
+      // The survey UPDATE misses its `segmentId` guard: another save moved the survey meanwhile.
+      vi.mocked(prisma.survey.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("no rows", { code: "P2025", clientVersion: "7" })
+      );
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue({
+        updatedAt: appCurrentSurvey.updatedAt,
+        archivedAt: null,
+        segmentId: "clsgshared0000000000000001",
+      } as never);
+
+      await expect(
+        patchV3Survey(
+          appCurrentSurvey,
+          { targeting: { filters: attributeFilters } },
+          { requestId: "req_app_moved", organizationId: "org_1" }
+        )
+      ).rejects.toBeInstanceOf(V3SurveyTargetingChangedError);
     });
 
     test("refuses a targeting change while another segment nests the survey's own segment (ENG-7269)", async () => {
