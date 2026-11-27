@@ -181,10 +181,14 @@ DATABASE_URL=postgresql://formbricks:<password>@db.example.com:5432/formbricks?s
   a check, and `ssl=0` turns TLS off. Migrations also verify with `sslnegotiation=direct`, which the app ignores. Any other `ssl` value or an empty TLS
   setting stops the migrations, and `sslaccept` given twice with different values stops the app too. Prefer
   `sslmode=verify-full`, which both read the same way.
-- `PGSSLMODE` applies only when the URL has no TLS settings; the app ignores it otherwise. Migrations then refuse
+- The app ignores `PGSSLMODE` once the URL has TLS settings (other than `sslnegotiation`). Migrations then refuse
   a `PGSSLMODE` that would weaken what the URL asks for.
-- Write TLS setting names without `%` escapes, and encode spaces in the URL as `%20`. A space or a malformed `%`
-  escape makes the app read escaped TLS settings differently from the migrations, so the migrations stop. So does
+- Migrations don't pass a client certificate (`sslcert`, `sslkey`) to the database: the migration tool would
+  trust `sslcert` as a CA instead. They keep `sslcert` only as their CA, when the URL sets `sslaccept` and neither
+  `sslrootcert` nor `sslkey`.
+- Write TLS setting names without `%` escapes, and encode spaces in the URL as `%20`. A space (also one at the end
+  of the URL) or a malformed `%` escape makes the app read TLS settings differently from the migrations, so the
+  migrations stop. So does
   a tab, newline or other control character inside the URL.
 
 If the migrations stop with Prisma error `P1011` while the app connects fine, the migration tool could not verify
