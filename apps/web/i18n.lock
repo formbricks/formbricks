@@ -4310,6 +4310,12 @@ checksums:
     workspace/surveys/edit/flow/or: 7b133c38bec0d5ee23cc6bcf9a8de50b
     workspace/surveys/edit/flow/otherwise_go_to: 47900c4b6c4fc9c40c4cdc947d8ac44f
     workspace/surveys/edit/flow/picture_n: c47b8227f4342cb3c221b18c4c1609c0
+    workspace/surveys/edit/flow/preselect_answer: 0fd43668d9a273d0db65dd3263a2d668
+    workspace/surveys/edit/flow/preselect_answer_in: 416ae5289b30e37cc708c26e0669ab81
+    workspace/surveys/edit/flow/preselect_answer_no_questions: 2dc4f4dc28f898a3a10bb17050e9e0e8
+    workspace/surveys/edit/flow/preselect_answer_options: bd983255472218ef77a85234de4f3a72
+    workspace/surveys/edit/flow/preselect_answer_question: 2378af92fe53b17ff54ff59d2129c52c
+    workspace/surveys/edit/flow/preselect_answer_value: 143faa6db8f8ed1249bc98aaed23641b
     workspace/surveys/edit/flow/question_column: 0576462ce60d4263d7c482463fcc9547
     workspace/surveys/edit/flow/read_only: 9109fd6e72125af271d41181f1f35dd2
     workspace/surveys/edit/flow/read_only_hint: f46c8476ae565bb9c8d718448d8f797b
@@ -4978,6 +4984,7 @@ checksums:
     workspace/surveys/export/logic/jump_to: fc2226d7e4b6362646cbbc063bd5b2c4
     workspace/surveys/export/logic/mark_low_quality: 739472d846bbd9637d9619c7703fd8fb
     workspace/surveys/export/logic/or: 7b133c38bec0d5ee23cc6bcf9a8de50b
+    workspace/surveys/export/logic/preselect_answer: 7425ad0a1415eb48e57bbe9168ababd9
     workspace/surveys/export/logic/question: 9f482f027ffafe2254f4e3961f939b61
     workspace/surveys/export/logic/question_named: 18389c1429ed24d44da8ba2167db67e4
     workspace/surveys/export/logic/question_row: 61b4e50bcf002c4be20ed57833a0cd05
