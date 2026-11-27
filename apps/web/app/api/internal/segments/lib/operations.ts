@@ -1,5 +1,5 @@
 import "server-only";
-import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TSegment, type TSegmentUpdateInput, ZSegmentFilters } from "@formbricks/types/segment";
 import { forbidOnRefusal, refusalResponse } from "@/app/api/internal/lib/refusal";
 import type { TRequestContext } from "@/app/api/internal/lib/types";
@@ -36,6 +36,7 @@ import {
   assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter,
+  isPrivateSegmentOfHiddenSurvey,
   restoreHiddenSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "@/modules/ee/contacts/segments/lib/segment-errors";
@@ -251,6 +252,10 @@ export async function updateSegmentOperation({
 
     oldObject = await getSegment(segmentId);
     const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
+    // ENG-7556: a private segment is its survey's targeting, and the answer carries its filters.
+    if (await isPrivateSegmentOfHiddenSurvey(oldObject, actor)) {
+      throw new ResourceNotFoundError("segment", segmentId);
+    }
     const data: TSegmentUpdateInput = body.filters
       ? {
           ...body,

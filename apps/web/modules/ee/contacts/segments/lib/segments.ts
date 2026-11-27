@@ -1,7 +1,7 @@
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type SegmentWhereInput } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
@@ -153,10 +153,21 @@ export const getSegmentsByIds = async (
 export const ALL_SEGMENT_SURVEY_REFS: Prisma.SurveyWhereInput = Object.freeze({});
 
 /**
+ * ENG-7556: a private segment is its survey's targeting, so it is the viewer's to read only when they see
+ * every survey it is attached to, and at least one: an orphan has no survey to vouch for it. Fails closed,
+ * like `isPrivateSegmentOfHiddenSurvey`, its twin for a segment already read.
+ */
+const privateSegmentOfVisibleSurveys = (visibleSurveyWhere: Prisma.SurveyWhereInput): SegmentWhereInput => ({
+  isPrivate: true,
+  AND: [{ surveys: { some: {} } }, { surveys: { every: visibleSurveyWhere } }],
+});
+
+/**
  * @param visibleSurveyWhere ENG-3282: the `Survey` clause each segment's `activeSurveys` /
  *   `inactiveSurveys` are read through. Required, so no page can forget it and ship restricted survey
  *   names and ids to the browser: pass `getUserVisibleSurveyWhere(...)` for anything a viewer sees, and
- *   `ALL_SEGMENT_SURVEY_REFS` only where the result stays on the server.
+ *   `ALL_SEGMENT_SURVEY_REFS` only where the result stays on the server. ENG-7556: it also scopes the
+ *   private segments, which are their surveys' targeting (`privateSegmentOfVisibleSurveys`).
  */
 export const getSegments = reactCache(
   async (
@@ -164,15 +175,15 @@ export const getSegments = reactCache(
     visibleSurveyWhere: Prisma.SurveyWhereInput
   ): Promise<TSegmentWithSurveyRefs[]> => {
     validateInputs([workspaceId, ZId]);
+    const isScoped = Object.keys(visibleSurveyWhere).length > 0;
     try {
       const segments = await prisma.segment.findMany({
-        where: {
-          workspaceId,
-        },
-        select:
-          Object.keys(visibleSurveyWhere).length > 0
-            ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
-            : selectSegment,
+        where: isScoped
+          ? { workspaceId, OR: [{ isPrivate: false }, privateSegmentOfVisibleSurveys(visibleSurveyWhere)] }
+          : { workspaceId },
+        select: isScoped
+          ? { ...selectSegment, surveys: { ...selectSegment.surveys, where: visibleSurveyWhere } }
+          : selectSegment,
       });
 
       if (!segments) {
