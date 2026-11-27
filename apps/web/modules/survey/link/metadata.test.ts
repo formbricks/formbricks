@@ -46,6 +46,11 @@ describe("link-survey metadata", () => {
   const mockOgTitle = "Test Survey | Formbricks";
   const mockDescription = "Please complete this survey.";
   const mockOgImageUrl = "https://example.com/custom-image.png";
+  const noIndexRules = {
+    index: false,
+    follow: true,
+    googleBot: { index: false, follow: true, noimageindex: true },
+  };
   const answeredWith = (finished: boolean) =>
     vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }));
 
@@ -461,7 +466,7 @@ describe("link-survey metadata", () => {
       expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
     });
 
-    test("names a public survey, without the /s canonical or robots rules", async () => {
+    test("names a public survey with the /s robots rules, but without its canonical URL", async () => {
       const survey = contactSurvey();
       vi.mocked(getSurveyWithMetadata).mockResolvedValue(survey);
 
@@ -481,7 +486,35 @@ describe("link-survey metadata", () => {
           description: mockDescription,
           images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
         },
+        robots: noIndexRules,
       });
     });
+
+    // A personal link that ends up public must not be indexed any more than an /s link (ENG-7436).
+    test.each([
+      ["a public survey", () => contactSurvey()],
+      ["a draft survey", () => contactSurvey({ status: "draft" })],
+      [
+        "a single-use survey opened without its link",
+        () => contactSurvey({ singleUse: { enabled: true, isEncrypted: false } }),
+      ],
+    ])("asks search engines not to index %s, like /s", async (_label, survey) => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(survey());
+
+      const contact = await getMetadataForContactSurvey({ surveyId: mockSurveyId });
+
+      expect(contact.robots).toEqual(noIndexRules);
+      expect(contact.alternates).toBeUndefined();
+    });
+
+    test("asks search engines not to index a survey that can't be loaded", async () => {
+      vi.mocked(getSurveyWithMetadata).mockRejectedValue(new DatabaseError("down"));
+
+      expect((await getMetadataForContactSurvey({ surveyId: mockSurveyId })).robots).toEqual(noIndexRules);
+    });
+  });
+
+  test("the generic metadata asks search engines not to index the page", () => {
+    expect(getGenericSurveyMetadata().robots).toEqual(noIndexRules);
   });
 });
