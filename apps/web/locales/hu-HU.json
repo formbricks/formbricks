@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Bármikor helyreállíthatja a következő 30 napon belül.",
       "archive_survey_description_in_progress": "Azonnal le fogja állítani a válaszok gyűjtését.",
       "archive_survey_warning": "Ez a kérdőív és az összes válasza véglegesen törlésre kerül 30 nap után.",
+      "archive_survey_warning_exempt": "Ez a felmérés {date} napjáig adatmegőrzési mentességben részesül. A mentesség lejártát követő 30 nap elteltével a felmérés és az összes hozzá tartozó válasz véglegesen törlésre kerül.",
       "archiving_survey": "Kérdőív archiválása…",
       "change_status": "Állapot megváltoztatása",
       "completed_responses": "Befejezve",

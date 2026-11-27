@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Você pode restaurá-la a qualquer momento nos próximos 30 dias.",
       "archive_survey_description_in_progress": "Ela vai parar de coletar respostas imediatamente.",
       "archive_survey_warning": "Esta pesquisa e todas as suas respostas serão excluídas permanentemente após 30 dias.",
+      "archive_survey_warning_exempt": "Esta pesquisa tem uma isenção de retenção de dados até {date}. Ela e todas as respostas dela serão excluídas permanentemente 30 dias após o fim da isenção.",
       "archiving_survey": "Arquivando pesquisa...",
       "change_status": "Alterar status",
       "completed_responses": "Concluídas",

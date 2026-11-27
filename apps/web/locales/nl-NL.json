@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Je kunt het binnen 30 dagen weer herstellen.",
       "archive_survey_description_in_progress": "Het stopt onmiddellijk met het verzamelen van reacties.",
       "archive_survey_warning": "Deze enquête en alle bijbehorende reacties worden na 30 dagen definitief verwijderd.",
+      "archive_survey_warning_exempt": "Voor deze enquête geldt een uitzondering op de bewaartermijn tot {date}. De enquête en alle bijbehorende reacties worden 30 dagen nadat de uitzondering is verlopen definitief verwijderd.",
       "archiving_survey": "Enquête wordt gearchiveerd...",
       "change_status": "Status wijzigen",
       "completed_responses": "Voltooid",

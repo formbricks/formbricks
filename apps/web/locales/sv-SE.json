@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Du kan återställa den när som helst inom de kommande 30 dagarna.",
       "archive_survey_description_in_progress": "Den kommer att sluta samla in svar omedelbart.",
       "archive_survey_warning": "Denna undersökning och alla dess svar kommer att raderas permanent efter 30 dagar.",
+      "archive_survey_warning_exempt": "Den här enkäten har ett undantag från datalagring till och med {date}. Den och alla dess svar raderas permanent 30 dagar efter att undantaget upphör.",
       "archiving_survey": "Arkiverar undersökning...",
       "change_status": "Ändra status",
       "completed_responses": "Slutförda",

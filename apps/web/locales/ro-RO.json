@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Poți să-l restaurezi oricând în următoarele 30 de zile.",
       "archive_survey_description_in_progress": "Va opri colectarea răspunsurilor imediat.",
       "archive_survey_warning": "Acest sondaj și toate răspunsurile sale vor fi șterse definitiv după 30 de zile.",
+      "archive_survey_warning_exempt": "Acest sondaj beneficiază de o derogare de la păstrarea datelor până la {date}. Sondajul și toate răspunsurile sale vor fi șterse definitiv la 30 de zile după încheierea derogării.",
       "archiving_survey": "Se arhivează sondajul...",
       "change_status": "Schimbă status",
       "completed_responses": "Finalizate",

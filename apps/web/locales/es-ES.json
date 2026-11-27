@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Puedes restaurarla en cualquier momento dentro de los próximos 30 días.",
       "archive_survey_description_in_progress": "Dejará de recopilar respuestas inmediatamente.",
       "archive_survey_warning": "Esta encuesta y todas sus respuestas se eliminarán permanentemente después de 30 días.",
+      "archive_survey_warning_exempt": "Esta encuesta tiene una exención de conservación de datos hasta el {date}. Tanto la encuesta como todas sus respuestas se eliminarán de forma permanente 30 días después de que finalice la exención.",
       "archiving_survey": "Archivando encuesta...",
       "change_status": "Cambiar estado",
       "completed_responses": "Completadas",

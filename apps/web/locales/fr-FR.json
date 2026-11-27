@@ -4111,6 +4111,7 @@
       "archive_survey_description": "Tu pourras le restaurer à tout moment dans les 30 prochains jours.",
       "archive_survey_description_in_progress": "Il cessera immédiatement de collecter des réponses.",
       "archive_survey_warning": "Ce sondage et toutes ses réponses seront définitivement supprimés après 30 jours.",
+      "archive_survey_warning_exempt": "Cette enquête bénéficie d'une dérogation de conservation des données jusqu'au {date}. Elle et toutes ses réponses seront définitivement supprimées 30 jours après la fin de cette dérogation.",
       "archiving_survey": "Archivage du sondage...",
       "change_status": "Changer le statut",
       "completed_responses": "Terminés",
