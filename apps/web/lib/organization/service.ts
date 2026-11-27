@@ -173,28 +173,68 @@ export const getOrganization = reactCache(async (organizationId: string): Promis
   }
 });
 
+const insertOrganization = async (
+  client: Prisma.TransactionClient | typeof prisma,
+  organizationInput: TOrganizationCreateInput
+): Promise<TOrganization> => {
+  const organization = await client.organization.create({
+    data: {
+      ...organizationInput,
+      billing: {
+        create: getDefaultOrganizationBilling(),
+      },
+    },
+    select,
+  });
+
+  return mapOrganization(organization);
+};
+
+/** The security trail for a created organization; written once the row is committed. */
+const logOrganizationCreated = (organization: TOrganization): void => {
+  logger.warn(
+    { securityEvent: "organization.created", organizationId: organization.id },
+    "Organization created"
+  );
+};
+
 export const createOrganization = async (
   organizationInput: TOrganizationCreateInput
 ): Promise<TOrganization> => {
   try {
     validateInputs([organizationInput, ZOrganizationCreateInput]);
+    const organization = await insertOrganization(prisma, organizationInput);
+    logOrganizationCreated(organization);
+    return organization;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
 
-    const organization = await prisma.organization.create({
-      data: {
-        ...organizationInput,
-        billing: {
-          create: getDefaultOrganizationBilling(),
-        },
-      },
-      select,
+    throw error;
+  }
+};
+
+/** One lock for every claim of an instance's only organization; see {@link createOrganizationIfNoneExists}. */
+const FIRST_ORGANIZATION_LOCK = "instance:first-organization";
+
+/**
+ * Create the instance's first organization, or nothing if one already exists: `null` then. The check and the
+ * insert run in one transaction under an advisory lock, so two concurrent claims on a single-organization
+ * instance cannot both pass an "are there no organizations yet?" check and leave it with two (ENG-7313).
+ */
+export const createOrganizationIfNoneExists = async (
+  organizationInput: TOrganizationCreateInput
+): Promise<TOrganization | null> => {
+  try {
+    validateInputs([organizationInput, ZOrganizationCreateInput]);
+    const organization = await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${FIRST_ORGANIZATION_LOCK}))`;
+      if (await tx.organization.findFirst({ select: { id: true } })) return null;
+      return insertOrganization(tx, organizationInput);
     });
-
-    logger.warn(
-      { securityEvent: "organization.created", organizationId: organization.id },
-      "Organization created"
-    );
-
-    return mapOrganization(organization);
+    if (organization) logOrganizationCreated(organization);
+    return organization;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

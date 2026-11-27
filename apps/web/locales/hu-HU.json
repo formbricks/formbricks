@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "A kétlépcsős bejelentkezés itt nem fejezhető be",
       "oauth_signup_not_allowed_description": "A személyazonosság-szolgáltatója bejelentkeztette Önt, de ez a Formbricks-példány nem úgy van beállítva, hogy ilyen módon új fiókokat hozzon létre. Kérjen meg egy adminisztrátort, hogy hívja meg Önt, majd próbálja meg újra.",
       "oauth_signup_not_allowed_title": "Nem sikerült létrehoznunk a fiókját",
-      "please_verify_your_email_to_continue": "Ellenőrizze az e-mail-címét. Küldtünk Önnek egy ellenőrzési hivatkozást.",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Adminisztrátor létrehozása",
+      "setup_token": "Beállítási token",
+      "setup_token_invalid": "A beállítási token helytelen.",
+      "setup_token_needs_email_sign_up": "Ez a példány telepítési tokent igényel, amelyet kizárólag az e-mail-címmel történő regisztráció képes továbbítani, az e-mail-címmel történő regisztráció azonban ki van kapcsolva. Kérjük, távolítsa el az EMAIL_AUTH_DISABLED beállítást mindaddig, amíg a rendszergazda létre nem jön, majd állítsa be újra, hogy az e-mail-címmel történő regisztráció ismét ki legyen kapcsolva.",
       "this_user_has_all_the_power": "Ez a felhasználó rendelkezik az összes jogosultsággal."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Ez a csomagváltás ütközik a fiókján szereplő másik pénznemben történő számlázással. Kérjük, lépjen kapcsolatba az ügyfélszolgálattal a csomag váltásához.",
         "billing_interval_toggle": "Számlázási időköz",
         "cancel_at_period_end": "Megszakítás az időszak végén",
+        "card_declined": "Az Ön bankkártyáját elutasították. Kérjük, használjon másik bankkártyát, vagy forduljon bankjához.",
+        "card_expired": "Az Ön bankkártyája lejárt. Kérjük, frissítse azt a „Kártyaadatok és számlák kezelése” menüpontban, majd próbálja meg újra.",
+        "card_insufficient_funds": "Az Ön bankkártyáján nincs elegendő fedezet. Kérjük, használjon másik bankkártyát, vagy próbálkozzon később újra.",
         "card_payment_method_required": "A jelenlegi csomagjáról való váltáshoz kártyát kell fizetési módként megadnia. Kérjük, adjon hozzá egy kártyát, majd próbálja újra.",
         "comparison_addon": "Kiegészítő",
         "comparison_best_for": "Legjobb ehhez",

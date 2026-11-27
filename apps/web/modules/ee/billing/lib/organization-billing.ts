@@ -18,6 +18,7 @@ import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { BILLING_SYNC_LOCK_TTL_MS, acquireOrganizationBillingLock } from "./billing-lock";
+import { getCardRefusalReason } from "./card-refusal";
 import { buildFreeTrialEndParams, getFreeTrialEndUnix, hasFreeTrialFallback } from "./free-trial-end";
 import {
   type TStandardCloudPlan,
@@ -830,23 +831,12 @@ const previewFullConversionChargeCents = async (
   return { amountDue: preview.amount_due, currency: preview.currency };
 };
 
-// Codes meaning the card needs cardholder authentication off-session. error_if_incomplete rolls the
-// update back (no PaymentIntent survives to confirm), so the only useful action is a distinct error.
-const CARD_AUTHENTICATION_ERROR_CODES = new Set([
-  "authentication_required",
-  "subscription_payment_intent_requires_action",
-]);
-
-const toTrialConversionError = (error: unknown): unknown => {
-  const code = (error as { code?: string } | null)?.code;
-  const declineCode = (error as { decline_code?: string } | null)?.decline_code;
-  if (
-    (code && CARD_AUTHENTICATION_ERROR_CODES.has(code)) ||
-    (declineCode && CARD_AUTHENTICATION_ERROR_CODES.has(declineCode))
-  ) {
-    return new OperationNotAllowedError("card_authentication_required");
-  }
-  return error;
+// A charge Stripe refused for a card-level reason becomes a refusal the billing page names (3D Secure,
+// declined, insufficient funds, expired) instead of a generic failure (ENG-2170). Off-session 3D Secure
+// matters most under error_if_incomplete: the update rolls back, so no PaymentIntent survives to confirm.
+const toCardRefusalError = (error: unknown): unknown => {
+  const refusalReason = getCardRefusalReason(error);
+  return refusalReason ? new OperationNotAllowedError(refusalReason) : error;
 };
 
 const updateSubscriptionItemsImmediately = async (
@@ -890,7 +880,7 @@ const updateSubscriptionItemsImmediately = async (
   //
   // Trade-off: a card needing off-session 3DS also errors here (the update rolls back before the
   // browser can confirm, leaving no PaymentIntent) — translated into a distinct error via
-  // toTrialConversionError so the UI can ask for a non-3DS card.
+  // toCardRefusalError so the UI can ask for a non-3DS card.
   //
   // Clearing cancel_at in this same update is what makes the purchase stick: the free trial is set to
   // cancel at trial_end (buildFreeTrialEndParams), and a decline rolls the whole update back, so a failed
@@ -910,7 +900,7 @@ const updateSubscriptionItemsImmediately = async (
         ...intentRequestOptions(idempotencyKey, "subscription-items")
       );
     } catch (error) {
-      throw toBillingCurrencyConflictError(toTrialConversionError(error));
+      throw toBillingCurrencyConflictError(toCardRefusalError(error));
     }
     return { clientSecret: null, requiresAction: false };
   }
@@ -928,7 +918,7 @@ const updateSubscriptionItemsImmediately = async (
       ...intentRequestOptions(idempotencyKey, "subscription-items")
     )
     .catch((error: unknown) => {
-      throw toBillingCurrencyConflictError(error);
+      throw toBillingCurrencyConflictError(toCardRefusalError(error));
     });
 
   const invoiceId =
@@ -1535,7 +1525,7 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
       { error, organizationId, canceledSubscriptionId: subscription.id, targetPlan },
       "Legacy subscription canceled but replacement failed"
     );
-    throw toBillingCurrencyConflictError(error);
+    throw toBillingCurrencyConflictError(toCardRefusalError(error));
   }
 
   // A paid invoice still carries a confirmation secret, so only an incomplete subscription needs action.

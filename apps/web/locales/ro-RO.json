@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Autentificarea în doi pași nu poate fi finalizată aici",
       "oauth_signup_not_allowed_description": "Furnizorul tău de identitate te-a autentificat, dar această instanță Formbricks nu este configurată să creeze conturi noi în acest mod. Roagă un administrator să te invite, apoi încearcă din nou.",
       "oauth_signup_not_allowed_title": "Nu am putut crea contul tău",
-      "please_verify_your_email_to_continue": "Te rugăm să îți verifici adresa de e-mail. Ți-am trimis un link de verificare.",
       "use_a_backup_code": "Folosiți un cod de rezervă"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Creare Administrator",
+      "setup_token": "Token de configurare",
+      "setup_token_invalid": "Tokenul de configurare este incorect.",
+      "setup_token_needs_email_sign_up": "Această instanță necesită un token de configurare, pe care îl poate transmite doar înregistrarea prin e-mail, iar înregistrarea prin e-mail este dezactivată. Elimină setarea EMAIL_AUTH_DISABLED până când există administratorul, apoi setează-o din nou pentru a dezactiva la loc înregistrarea prin e-mail.",
       "this_user_has_all_the_power": "Acest utilizator are toată puterea."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Această schimbare de plan intră în conflict cu facturarea într-o altă monedă pe contul tău. Te rugăm să contactezi echipa de suport pentru a schimba planurile.",
         "billing_interval_toggle": "Interval de facturare",
         "cancel_at_period_end": "Anulează la sfârșitul perioadei",
+        "card_declined": "Cardul tău a fost respins. Folosește un alt card sau contactează banca ta.",
+        "card_expired": "Cardul tău a expirat. Actualizează-l din „Gestionează detaliile cardului și facturile” și încearcă din nou.",
+        "card_insufficient_funds": "Cardul tău nu are fonduri suficiente. Folosește un alt card sau încearcă din nou mai târziu.",
         "card_payment_method_required": "Pentru a schimba planul actual, ai nevoie de un card ca metodă de plată. Te rugăm să adaugi un card și să încerci din nou.",
         "comparison_addon": "Supliment",
         "comparison_best_for": "Ideal pentru",

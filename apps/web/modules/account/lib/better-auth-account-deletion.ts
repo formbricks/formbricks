@@ -7,6 +7,7 @@ import { deleteUserOrganizationRelationships } from "@/lib/authzed/organization-
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { deleteUserTeamRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { markInstanceSetupCompleted } from "@/lib/instance/service";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
@@ -63,6 +64,11 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
       message: ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
     });
   }
+
+  // ENG-7313: the instance has been set up, since this user exists. Record it before the user can go, so the
+  // last account's deletion can never leave the instance looking fresh, even if the marker write at sign-up
+  // failed. Idempotent; a failure here fails the deletion rather than risk re-opening setup.
+  await markInstanceSetupCompleted();
 
   await requestEmailAuditErasureBeforeUserDeletion(user.id, user.email);
 

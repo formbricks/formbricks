@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Inloggning med tvåfaktorsautentisering kan inte slutföras här",
       "oauth_signup_not_allowed_description": "Din identitetsleverantör loggade in dig, men denna Formbricks-instans är inte konfigurerad för att skapa nya konton på detta sätt. Be en administratör att bjuda in dig och försök sedan igen.",
       "oauth_signup_not_allowed_title": "Vi kunde inte skapa ditt konto",
-      "please_verify_your_email_to_continue": "Verifiera din e-postadress. Vi har skickat en verifieringslänk till dig.",
       "use_a_backup_code": "Använd en reservkod"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Skapa administratör",
+      "setup_token": "Installationstoken",
+      "setup_token_invalid": "Installationstoken är felaktig.",
+      "setup_token_needs_email_sign_up": "Den här instansen kräver en installationstoken, som bara kan skickas med vid registrering via e-post, och e-postregistreringen är avstängd. Ta bort inställningen EMAIL_AUTH_DISABLED tills administratören har skapats och ställ sedan in den igen för att stänga av e-postregistreringen på nytt.",
       "this_user_has_all_the_power": "Denna användare har all makt."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Den här planändringen är i konflikt med fakturering i en annan valuta på ditt konto. Kontakta supporten för att byta plan.",
         "billing_interval_toggle": "Faktureringsintervall",
         "cancel_at_period_end": "Avsluta vid periodens slut",
+        "card_declined": "Ditt kort nekades. Använd ett annat kort eller kontakta din bank.",
+        "card_expired": "Ditt kort har gått ut. Uppdatera det via ”Hantera kortuppgifter och fakturor” och försök igen.",
+        "card_insufficient_funds": "Det finns inte tillräckligt med pengar på ditt kort. Använd ett annat kort eller försök igen senare.",
         "card_payment_method_required": "För att byta från din nuvarande plan behöver du ett kort som betalningsmetod. Lägg till ett kort och försök igen.",
         "comparison_addon": "Tillägg",
         "comparison_best_for": "Bäst för",

@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Não é possível concluir aqui o início de sessão com dois fatores",
       "oauth_signup_not_allowed_description": "O teu fornecedor de identidade autenticou-te, mas esta instância do Formbricks não está configurada para criar novas contas desta forma. Pede a um administrador para te convidar e tenta novamente.",
       "oauth_signup_not_allowed_title": "Não conseguimos criar a tua conta",
-      "please_verify_your_email_to_continue": "Verifica o teu endereço de e-mail. Enviámos-te um link de verificação.",
       "use_a_backup_code": "Usa um código de backup"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Criar Administrador",
+      "setup_token": "Token de configuração",
+      "setup_token_invalid": "O token de configuração está incorreto.",
+      "setup_token_needs_email_sign_up": "Esta instância requer um token de configuração, que só o registo por email consegue transmitir, e o registo por email está desativado. Remova a definição de EMAIL_AUTH_DISABLED até o administrador existir e, depois, defina-a novamente para voltar a desativar o registo por email.",
       "this_user_has_all_the_power": "Este utilizador tem todo o poder."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Esta alteração de plano está em conflito com a faturação noutra moeda na tua conta. Por favor, contacta o suporte para mudar de plano.",
         "billing_interval_toggle": "Intervalo de faturação",
         "cancel_at_period_end": "Cancelar no fim do período",
+        "card_declined": "O teu cartão foi recusado. Utiliza outro cartão ou contacta o teu banco.",
+        "card_expired": "O teu cartão expirou. Atualiza-o em “Gerir dados do cartão e faturas” e tenta novamente.",
+        "card_insufficient_funds": "O teu cartão não tem saldo suficiente. Utiliza outro cartão ou tenta novamente mais tarde.",
         "card_payment_method_required": "Mudar do teu plano atual requer um cartão como método de pagamento. Por favor, adiciona um cartão e tenta novamente.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",

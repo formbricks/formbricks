@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { makeQueryClient } from "@/modules/api/lib/query-client";
+import { EMBEDDING_POLL_INTERVAL_MS } from "../lib/gate";
 import { useTaxonomyFields } from "./use-taxonomy-fields";
 
 function createWrapper(queryClient: QueryClient) {
@@ -60,6 +62,57 @@ describe("useTaxonomyFields", () => {
       "/api/v3/unify-feedback/taxonomy/fields?workspaceId=w&directoryId=d",
       expect.objectContaining({ method: "GET", cache: "no-store" })
     );
+  });
+
+  // ENG-2254: the last good answer still shows records waiting for embeddings, so before, a 401 or 403 kept
+  // the interval going for as long as the tab stayed open.
+  test.each([401, 403])("stops polling on a %i under the house query client", async (status) => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const fetchMock = vi.mocked(global.fetch);
+      fetchMock
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              data: {
+                fields: [
+                  {
+                    tenant_id: "d",
+                    source_type: "survey",
+                    source_id: "",
+                    field_id: "q1",
+                    record_count: 800,
+                    embedding_count: 200,
+                  },
+                ],
+                unavailable: false,
+              },
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } }
+          )
+        )
+        .mockImplementation(
+          async () =>
+            new Response(JSON.stringify({ title: "Refused", status, detail: "refused" }), {
+              status,
+              headers: { "Content-Type": "application/problem+json" },
+            })
+        );
+
+      const { result } = renderHook(() => useTaxonomyFields({ workspaceId: "w", directoryId: "d" }), {
+        wrapper: createWrapper(makeQueryClient()),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      await vi.advanceTimersByTimeAsync(EMBEDDING_POLL_INTERVAL_MS + 1000);
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("stays idle (no fetch) when directoryId is empty", () => {

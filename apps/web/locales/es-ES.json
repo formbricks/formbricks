@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "No se puede completar aquí el inicio de sesión en dos pasos",
       "oauth_signup_not_allowed_description": "Tu proveedor de identidad te autenticó correctamente, pero esta instancia de Formbricks no está configurada para crear nuevas cuentas de esta manera. Pide a un administrador que te invite y luego inténtalo de nuevo.",
       "oauth_signup_not_allowed_title": "No pudimos crear tu cuenta",
-      "please_verify_your_email_to_continue": "Verifica tu dirección de correo electrónico. Te hemos enviado un enlace de verificación.",
       "use_a_backup_code": "Usar un código de respaldo"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Crear administrador",
+      "setup_token": "Token de configuración",
+      "setup_token_invalid": "El token de configuración es incorrecto.",
+      "setup_token_needs_email_sign_up": "Esta instancia requiere un token de configuración, que solo se puede enviar mediante el registro por correo electrónico, y el registro por correo electrónico está desactivado. Elimina EMAIL_AUTH_DISABLED hasta que exista el administrador y, después, vuelve a establecerla para desactivar de nuevo el registro por correo electrónico.",
       "this_user_has_all_the_power": "Este usuario tiene todo el poder."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Este cambio de plan entra en conflicto con la facturación en otra moneda de tu cuenta. Por favor, contacta con soporte para cambiar de plan.",
         "billing_interval_toggle": "Intervalo de facturación",
         "cancel_at_period_end": "Cancelar al finalizar el período",
+        "card_declined": "Tu tarjeta ha sido rechazada. Usa otra tarjeta o ponte en contacto con tu banco.",
+        "card_expired": "Tu tarjeta ha caducado. Actualízala en «Gestionar datos de la tarjeta y facturas» e inténtalo de nuevo.",
+        "card_insufficient_funds": "Tu tarjeta no tiene fondos suficientes. Usa otra tarjeta o inténtalo de nuevo más tarde.",
         "card_payment_method_required": "Para cambiar de tu plan actual necesitas añadir una tarjeta como método de pago. Por favor, añade una tarjeta e inténtalo de nuevo.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",

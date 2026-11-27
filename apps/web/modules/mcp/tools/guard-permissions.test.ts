@@ -450,14 +450,14 @@ describe("registerMcpTool — the connection's grant", () => {
     const handler = vi.fn();
     registerMcpTool(
       asServer(server),
-      "delete_survey",
-      { ...CONFIG, audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" } },
+      "archive_survey",
+      { ...CONFIG, audit: { action: "archived", targetType: "survey", targetIdArg: "surveyId" } },
       [{ permission: "surveys", level: "write" }],
       asHandler(handler)
     );
 
     const result = await tools
-      .get("delete_survey")!
+      .get("archive_survey")!
       .handler(
         { surveyId: "clsur00000000000000000001" },
         { http: { authInfo: withGrant({ surveys: "read" }) } }

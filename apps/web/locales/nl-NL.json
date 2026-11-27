@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Inloggen met tweestapsverificatie kan hier niet worden voltooid",
       "oauth_signup_not_allowed_description": "Je identiteitsprovider heeft je ingelogd, maar deze Formbricks-instantie is niet ingesteld om op deze manier nieuwe accounts aan te maken. Vraag een beheerder om je uit te nodigen en probeer het daarna opnieuw.",
       "oauth_signup_not_allowed_title": "We konden je account niet aanmaken",
-      "please_verify_your_email_to_continue": "Verifieer je e-mailadres. We hebben je een verificatielink gestuurd.",
       "use_a_backup_code": "Gebruik een back-upcode"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Beheerder aanmaken",
+      "setup_token": "Installatietoken",
+      "setup_token_invalid": "Het installatietoken is onjuist.",
+      "setup_token_needs_email_sign_up": "Deze instance vereist een setuptoken, dat alleen via registratie met e-mail kan worden doorgegeven, en registratie met e-mail is uitgeschakeld. Verwijder EMAIL_AUTH_DISABLED totdat de beheerder bestaat en stel de variabele daarna opnieuw in om registratie met e-mail weer uit te schakelen.",
       "this_user_has_all_the_power": "Deze gebruiker heeft alle macht."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Deze planwijziging conflicteert met facturering in een andere valuta op je account. Neem contact op met support om van plan te wisselen.",
         "billing_interval_toggle": "Factureringsinterval",
         "cancel_at_period_end": "Opzeggen aan het einde van de periode",
+        "card_declined": "Je kaart is geweigerd. Gebruik een andere kaart of neem contact op met je bank.",
+        "card_expired": "Je kaart is verlopen. Werk de gegevens bij via “Kaartgegevens en facturen beheren” en probeer het opnieuw.",
+        "card_insufficient_funds": "Er staat onvoldoende saldo op je kaart. Gebruik een andere kaart of probeer het later opnieuw.",
         "card_payment_method_required": "Om over te stappen van je huidige abonnement heb je een kaart als betaalmethode nodig. Voeg een kaart toe en probeer het opnieuw.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Het beste voor",

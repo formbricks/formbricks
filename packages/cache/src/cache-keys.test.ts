@@ -71,6 +71,13 @@ describe("@formbricks/cache cacheKeys", () => {
       });
     });
 
+    describe("integration namespace", () => {
+      test("should create a Google Sheets write-lock key scoped to the spreadsheet", () => {
+        const key = createCacheKey.integration.googleSheetWriteLock("1AbC-dEf_123");
+        expect(key).toBe("fb:integration:google-sheets:1AbC-dEf_123:write-lock");
+      });
+    });
+
     describe("license namespace", () => {
       test("should create license status key", () => {
         const key = createCacheKey.license.status("org-123");

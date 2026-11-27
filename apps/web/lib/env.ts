@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
 import { AI_MAX_TIMEOUT_MULTIPLIER } from "@formbricks/types/ai-timeout";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
+import { SETUP_TOKEN_MAX_LENGTH, SETUP_TOKEN_MIN_LENGTH } from "@formbricks/types/instance";
 import { throwEnvValidationError } from "./env-validation-error";
 
 const ZActiveAIProvider = z.enum(AI_PROVIDERS);
@@ -779,6 +780,29 @@ const parsedEnv = createEnv({
     PASSWORD_HIBP_CHECK_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: z.coerce.number().int().min(5).max(120).optional().default(30),
+    // Blank counts as unset, so `SETUP_TOKEN=` in an env file keeps the open setup instead of failing boot.
+    // Compared as given, never trimmed: leading or trailing whitespace fails boot instead, because the
+    // single-line setup field can never send it (a Secret made with `echo` carries a trailing newline).
+    // The bounds are shared with the sign-up request schema, so a configured token can always be presented.
+    SETUP_TOKEN: z.preprocess(
+      emptyStringToUndefined,
+      z
+        .string()
+        .min(SETUP_TOKEN_MIN_LENGTH, {
+          error: `SETUP_TOKEN must be at least ${SETUP_TOKEN_MIN_LENGTH} characters (generate one with \`openssl rand -hex 16\`)`,
+        })
+        .max(SETUP_TOKEN_MAX_LENGTH, {
+          error: `SETUP_TOKEN must be at most ${SETUP_TOKEN_MAX_LENGTH} characters`,
+        })
+        .refine((token) => token.trim() === token, {
+          error:
+            "SETUP_TOKEN must not start or end with whitespace (a trailing newline from `echo` is a common cause)",
+        })
+        .refine((token) => !/[\r\n]/.test(token), {
+          error: "SETUP_TOKEN must not contain line breaks (the setup form is a single-line field)",
+        })
+        .optional()
+    ),
     PRIVACY_URL: z
       .url()
       .optional()
@@ -1015,6 +1039,7 @@ const parsedEnv = createEnv({
     PASSWORD_HIBP_CHECK_DISABLED: process.env.PASSWORD_HIBP_CHECK_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: process.env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES,
+    SETUP_TOKEN: process.env.SETUP_TOKEN,
     PRIVACY_URL: process.env.PRIVACY_URL,
     RATE_LIMITING_DISABLED: process.env.RATE_LIMITING_DISABLED,
     ENVOY_RATE_LIMITING_ENABLED: process.env.ENVOY_RATE_LIMITING_ENABLED,

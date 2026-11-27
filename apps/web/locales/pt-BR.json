@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Não é possível concluir o login de dois fatores aqui",
       "oauth_signup_not_allowed_description": "Seu provedor de identidade fez seu login, mas esta instância do Formbricks não está configurada para criar novas contas dessa forma. Peça a um administrador para convidar você e então tente novamente.",
       "oauth_signup_not_allowed_title": "Não conseguimos criar sua conta",
-      "please_verify_your_email_to_continue": "Verifique seu endereço de e-mail. Enviamos um link de verificação para você.",
       "use_a_backup_code": "Usar um código de backup"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Criar Administrador",
+      "setup_token": "Token de configuração",
+      "setup_token_invalid": "O token de configuração está incorreto.",
+      "setup_token_needs_email_sign_up": "Esta instância exige um token de configuração, que só pode ser enviado pelo cadastro por e-mail, e o cadastro por e-mail está desativado. Remova a definição de EMAIL_AUTH_DISABLED até que o administrador exista e, depois, defina-a novamente para desativar o cadastro por e-mail outra vez.",
       "this_user_has_all_the_power": "Esse usuário tem todo o poder."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Esta mudança de plano entra em conflito com a cobrança em outra moeda na sua conta. Entre em contato com o suporte para trocar de plano.",
         "billing_interval_toggle": "Intervalo de cobrança",
         "cancel_at_period_end": "Cancelar ao final do período",
+        "card_declined": "Seu cartão foi recusado. Use outro cartão ou entre em contato com o seu banco.",
+        "card_expired": "Seu cartão expirou. Atualize-o em “Gerenciar dados do cartão e faturas” e tente novamente.",
+        "card_insufficient_funds": "Seu cartão não tem saldo suficiente. Use outro cartão ou tente novamente mais tarde.",
         "card_payment_method_required": "Para mudar do seu plano atual, você precisa adicionar um cartão como forma de pagamento. Por favor, adicione um cartão e tente novamente.",
         "comparison_addon": "Complemento",
         "comparison_best_for": "Ideal para",

@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "無法在此完成兩步驟驗證登入",
       "oauth_signup_not_allowed_description": "你的身分提供者已成功驗證,但這個 Formbricks 實例未設定以此方式建立新帳號。請要求管理員邀請你,然後再試一次。",
       "oauth_signup_not_allowed_title": "我們無法建立你的帳號",
-      "please_verify_your_email_to_continue": "請驗證您的電子郵件地址。我們已向您發送了一個驗證連結。",
       "use_a_backup_code": "使用備份碼"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "建立管理員",
+      "setup_token": "設定權杖",
+      "setup_token_invalid": "設定權杖不正確。",
+      "setup_token_needs_email_sign_up": "此執行個體需要設定權杖，而只有透過電子郵件註冊才能提供該權杖，但目前電子郵件註冊已關閉。請先取消設定 EMAIL_AUTH_DISABLED，待管理員帳號建立後，再重新設定該變數，即可再次關閉電子郵件註冊。",
       "this_user_has_all_the_power": "此使用者擁有所有權限。"
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "此方案變更與你帳戶上的其他幣別帳單衝突。請聯絡客服以切換方案。",
         "billing_interval_toggle": "帳單週期",
         "cancel_at_period_end": "在週期結束時取消",
+        "card_declined": "你的信用卡遭拒絕。請改用其他信用卡，或聯絡你的發卡銀行。",
+        "card_expired": "你的信用卡已過期。請透過「管理信用卡資料與發票」更新後再試一次。",
+        "card_insufficient_funds": "你的信用卡餘額不足。請改用其他信用卡，或稍後再試一次。",
         "card_payment_method_required": "從目前方案切換需要以信用卡作為付款方式。請新增信用卡後再試一次。",
         "comparison_addon": "附加功能",
         "comparison_best_for": "最適合",

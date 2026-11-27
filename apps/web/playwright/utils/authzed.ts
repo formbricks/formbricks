@@ -41,9 +41,16 @@ const getTenantIds = async (userId: string): Promise<string[]> => {
  * letters are skipped because they will never be delivered.
  */
 export const waitForAuthzedProjection = async (userId: string): Promise<void> => {
+  await waitForAuthzedOutbox(await getTenantIds(userId));
+};
+
+/**
+ * Waits until every outbox row enqueued so far that names one of `ids` has been delivered to SpiceDB.
+ * {@link waitForAuthzedProjection} is this for a user's whole tenant; a seeded API key waits on its own id.
+ */
+export const waitForAuthzedOutbox = async (ids: string[]): Promise<void> => {
   // The column default is the database's local CURRENT_TIMESTAMP, so take the cutoff from the same clock.
   const [{ cutoff }] = await prisma.$queryRaw<{ cutoff: Date }[]>`SELECT LOCALTIMESTAMP(3) AS cutoff`;
-  const ids = await getTenantIds(userId);
   const deadline = Date.now() + TIMEOUT_MS;
 
   for (;;) {
@@ -58,7 +65,7 @@ export const waitForAuthzedProjection = async (userId: string): Promise<void> =>
     if (pending === 0) return;
     if (Date.now() >= deadline) {
       throw new Error(
-        `${pending} AuthZed projection outbox rows for this user's tenant are still undelivered after ` +
+        `${pending} AuthZed projection outbox rows for these ids are still undelivered after ` +
           `${TIMEOUT_MS / 1000}s. Is the outbox worker running? CI starts ` +
           "apps/web/scripts/authzed-ci-outbox-worker.ts (see ENG-2958)."
       );

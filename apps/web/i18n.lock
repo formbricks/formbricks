@@ -73,7 +73,6 @@ checksums:
     auth/login/oauth_second_factor_unavailable_title: feaba4c3c7933fcafbab42ffe9bcc69c
     auth/login/oauth_signup_not_allowed_description: a03f3faa0668235bcf6f91b861d1df4a
     auth/login/oauth_signup_not_allowed_title: 8afe5de3881de0b4c5d8893ac9ff4a87
-    auth/login/please_verify_your_email_to_continue: 2ac048d93a4ec24950404a0c5fbfcd3a
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
     auth/oauth/access/all_hint: c1270b19103dca8170db5ca4bcc3e88e
@@ -939,6 +938,9 @@ checksums:
     setup/organization/create/no_membership_found_description: ba067dacf419041c8bcdb51ee6b0125b
     setup/organization/create/title: b021d3fcb90cccd0c516ed144fb16d58
     setup/signup/create_administrator: e5b7e90150ebecf18a248f50a011bb7f
+    setup/signup/setup_token: 4caba14b8765e528884c1d9de67427de
+    setup/signup/setup_token_invalid: 9582398c0fe6ea31a816bdade8b0b016
+    setup/signup/setup_token_needs_email_sign_up: 2008142a40682de7c5d1ec592addcb91
     setup/signup/this_user_has_all_the_power: 1af3a7367d412d17f0f16c0e104b3520
     templates/address: 5a9a8bc26f90d84c90105690a2eb23a1
     templates/address_description: e45b92c5cfff59ae7381e8bfb43b173f
@@ -3259,6 +3261,9 @@ checksums:
     workspace/settings/billing/billing_currency_conflict: 4893a1a8f2a3eb5bda0dedfbbfae6ec3
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
+    workspace/settings/billing/card_declined: 9f4a6e88eb76b144f797a2161ef55029
+    workspace/settings/billing/card_expired: c79e4cc9e59d6a2c535ededa82f69850
+    workspace/settings/billing/card_insufficient_funds: dacabe76d30eb06df047815e7eb4ca29
     workspace/settings/billing/card_payment_method_required: dcbbca2348a137392d05292f18da8e87
     workspace/settings/billing/comparison_addon: 4f35a82638402eb9dcb31e00be8997be
     workspace/settings/billing/comparison_best_for: f08508c34b7d27068257186ad96c77f2

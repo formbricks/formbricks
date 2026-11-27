@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "İki aşamalı giriş burada tamamlanamıyor",
       "oauth_signup_not_allowed_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneği bu şekilde yeni hesap oluşturacak şekilde ayarlanmamış. Bir yöneticiden seni davet etmesini iste, ardından tekrar dene.",
       "oauth_signup_not_allowed_title": "Hesabını oluşturamadık",
-      "please_verify_your_email_to_continue": "Lütfen e-posta adresinizi doğrulayın. Size bir doğrulama bağlantısı gönderdik.",
       "use_a_backup_code": "Yedek kod kullan"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Yönetici Oluştur",
+      "setup_token": "Kurulum belirteci",
+      "setup_token_invalid": "Kurulum belirteci hatalı.",
+      "setup_token_needs_email_sign_up": "Bu örnek bir kurulum jetonu gerektiriyor, bunu yalnızca e-posta ile kayıt taşıyabiliyor ve e-posta ile kayıt kapalı. Yönetici hesabı oluşturulana kadar EMAIL_AUTH_DISABLED ayarını kaldır, ardından e-posta ile kaydı yeniden kapatmak için bu ayarı tekrar tanımla.",
       "this_user_has_all_the_power": "Bu kullanıcı tüm yetkilere sahiptir."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Bu plan değişikliği, hesabındaki farklı para birimiyle yapılan faturalandırmayla çakışıyor. Plan değiştirmek için lütfen destek ekibiyle iletişime geç.",
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
+        "card_declined": "Kartın reddedildi. Lütfen farklı bir kart kullan veya bankanla iletişime geç.",
+        "card_expired": "Kartının süresi dolmuş. Lütfen “Kart bilgilerini ve faturaları yönet” bölümünden kartını güncelle ve tekrar dene.",
+        "card_insufficient_funds": "Kartında yeterli bakiye yok. Lütfen farklı bir kart kullan veya daha sonra tekrar dene.",
         "card_payment_method_required": "Mevcut planından geçiş yapmak için ödeme yöntemi olarak bir kart gerekiyor. Lütfen bir kart ekle ve tekrar dene.",
         "comparison_addon": "Eklenti",
         "comparison_best_for": "En uygun",

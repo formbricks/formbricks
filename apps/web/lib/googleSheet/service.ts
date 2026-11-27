@@ -1,7 +1,10 @@
 import "server-only";
 import { google } from "googleapis";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { createCacheKey } from "@formbricks/cache";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { ZString } from "@formbricks/types/common";
 import {
   AuthenticationError,
@@ -14,6 +17,7 @@ import {
   TIntegrationGoogleSheets,
   ZIntegrationGoogleSheets,
 } from "@formbricks/types/integration/google-sheet";
+import { cache } from "@/lib/cache";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
@@ -26,6 +30,7 @@ import {
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
 import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
 
@@ -47,6 +52,68 @@ const runSheetsWrite = (invoke: (callback: (err: Error | null) => void) => void)
     });
   });
 
+/** Reads the header row (row 1) of the integration's sheet, with the same callback wrapping as the writes. */
+const readHeaderRow = (
+  invoke: (
+    callback: (err: Error | null, res?: { data?: { values?: unknown[][] | null } } | null) => void
+  ) => void
+): Promise<string[]> =>
+  new Promise((resolve, reject) => {
+    invoke((err, res) => {
+      if (err) {
+        reject(new UnknownError(`Error while reading the header row: ${err.message}`));
+        return;
+      }
+      const firstRow = res?.data?.values?.[0] ?? [];
+      resolve(firstRow.map((cell) => (cell === null || cell === undefined ? "" : String(cell))));
+    });
+  });
+
+/**
+ * ENG-3907: the elements a response carries differ between responses (each contact's own attribute set,
+ * computed variables a response never captured), so writing them positionally under a header rewritten
+ * from the latest response relabels every earlier row. Instead the sheet's existing header row is kept as
+ * is, labels it does not have yet are appended to its end, and each value is placed under its own label.
+ * A label that occurs more than once (e.g. two questions with the same headline) is matched by occurrence:
+ * the second "Name" in this response goes under the second "Name" column.
+ */
+export const alignRowToHeaders = (
+  existingHeaders: string[],
+  elements: string[],
+  responses: string[]
+): { headers: string[]; row: string[]; headersChanged: boolean } => {
+  const headers = [...existingHeaders];
+  const columnsByLabel = new Map<string, number[]>();
+  headers.forEach((label, index) => {
+    const columns = columnsByLabel.get(label) ?? [];
+    columns.push(index);
+    columnsByLabel.set(label, columns);
+  });
+
+  const occurrences = new Map<string, number>();
+  const placements: { column: number; value: string }[] = [];
+  elements.forEach((label, index) => {
+    const occurrence = occurrences.get(label) ?? 0;
+    occurrences.set(label, occurrence + 1);
+    const columns = columnsByLabel.get(label) ?? [];
+    let column = columns[occurrence];
+    if (column === undefined) {
+      column = headers.length;
+      headers.push(label);
+      columns.push(column);
+      columnsByLabel.set(label, columns);
+    }
+    placements.push({ column, value: responses[index] ?? "" });
+  });
+
+  const row: string[] = new Array(headers.length).fill("");
+  placements.forEach(({ column, value }) => {
+    row[column] = value;
+  });
+
+  return { headers, row, headersChanged: headers.length !== existingHeaders.length };
+};
+
 /** A, B, ... Z, AA, AB ... for a zero-based column index. */
 const columnLetters = (index: number): string => {
   let letters = "";
@@ -59,6 +126,127 @@ const columnLetters = (index: number): string => {
 /** The header row the integration writes at `A1`, e.g. `A1:E1` for five columns. */
 const getHeaderRowRange = (columnCount: number): string =>
   `A1:${columnLetters(Math.max(columnCount, 1) - 1)}1`;
+
+/**
+ * The lease a holder renews every `SHEET_WRITE_LOCK_RENEW_MS` while it writes. A crashed holder stops
+ * renewing, so its lock frees the sheet within this time.
+ */
+const SHEET_WRITE_LOCK_TTL_MS = 30_000;
+const SHEET_WRITE_LOCK_RENEW_MS = 10_000;
+/**
+ * A holder stops writing once less than this is left of its last confirmed lease. A renewal that fails (Redis
+ * unreachable) confirms nothing, so after two missed renewals the holder writes nothing more, while the lock
+ * still has this long before another writer can take it.
+ */
+const SHEET_WRITE_LOCK_SAFETY_MS = 10_000;
+/** How long a write waits for another one on the same spreadsheet before it goes ahead without the lock. */
+const SHEET_WRITE_LOCK_WAIT_MS = 30_000;
+const SHEET_WRITE_LOCK_POLL_MS = 200;
+
+/** Deletes the lock only while it still holds this writer's token, so an expired lock taken over stays. */
+const RELEASE_LOCK_SCRIPT = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) end return 0`;
+/** Extends the lease only while it still holds this writer's token; returns 0 once another writer has it. */
+const RENEW_LOCK_SCRIPT = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("PEXPIRE", KEYS[1], ARGV[2]) end return 0`;
+
+/** Called before each sheet write; throws once this writer has lost the lock to another one. */
+type TAssertLockHeld = () => void;
+
+/** Returns when the acquired lease expires at the latest, or `null` when the write goes ahead without it. */
+const acquireSpreadsheetWriteLock = async (
+  lockKey: string,
+  token: string,
+  spreadsheetId: string
+): Promise<number | null> => {
+  const deadline = Date.now() + SHEET_WRITE_LOCK_WAIT_MS;
+  for (;;) {
+    // Taken before the request, so the lease is never assumed to run longer than it does.
+    const requestedAt = Date.now();
+    const locked = await cache.tryLock(lockKey, token, SHEET_WRITE_LOCK_TTL_MS);
+    if (!locked.ok) {
+      logger.warn({ spreadsheetId }, "Google Sheets write lock unavailable; writing without it");
+      return null;
+    }
+    if (locked.data) return requestedAt + SHEET_WRITE_LOCK_TTL_MS;
+    if (Date.now() >= deadline) {
+      logger.warn(
+        { spreadsheetId },
+        "Timed out waiting for the Google Sheets write lock; writing without it"
+      );
+      return null;
+    }
+    await new Promise((resolve) => setTimeout(resolve, SHEET_WRITE_LOCK_POLL_MS));
+  }
+};
+
+const runLockScript = (script: string, lockKey: string, args: string[]): Promise<unknown> =>
+  cache.runRedisOperation((redis) => redis.eval(script, { keys: [lockKey], arguments: args }));
+
+/**
+ * ENG-3907: `writeData` reads the header row, may extend it, then appends a row placed by that header. Two
+ * response-pipeline jobs writing to one spreadsheet at once (several workers or replicas) could both read
+ * the same header, and the later header write would drop the label the earlier one added. The whole
+ * sequence therefore runs under a Redis lock per spreadsheet, whose lease the holder renews while it
+ * writes. Before each sheet write, `assertLockHeld` throws if a renewal found another writer holding the lock,
+ * or if no renewal has been confirmed recently enough to leave `SHEET_WRITE_LOCK_SAFETY_MS` of the lease
+ * (renewals keep failing), so a stale header snapshot is not written over another writer's. Google Sheets
+ * has no conditional write, so a request already sent when the lease lapses still lands.
+ * Without Redis, or after waiting `SHEET_WRITE_LOCK_WAIT_MS`, the write goes ahead unserialized: a failed
+ * Sheets write is logged, not retried, so refusing would drop the response from the sheet.
+ */
+const withSpreadsheetWriteLock = async <T>(
+  spreadsheetId: string,
+  write: (assertLockHeld: TAssertLockHeld) => Promise<T>
+): Promise<T> => {
+  const lockKey = createCacheKey.integration.googleSheetWriteLock(spreadsheetId);
+  const token = randomUUID();
+  const acquiredLeaseEnd = await acquireSpreadsheetWriteLock(lockKey, token, spreadsheetId);
+  if (acquiredLeaseEnd === null) return await write(() => {});
+
+  let leaseEnd = acquiredLeaseEnd;
+  let lost = false;
+  const renewal = setInterval(() => {
+    const requestedAt = Date.now();
+    runLockScript(RENEW_LOCK_SCRIPT, lockKey, [token, String(SHEET_WRITE_LOCK_TTL_MS)])
+      .then((renewed) => {
+        if (renewed === 1) leaseEnd = Math.max(leaseEnd, requestedAt + SHEET_WRITE_LOCK_TTL_MS);
+        else lost = true;
+      })
+      .catch((error: unknown) => {
+        // Confirms nothing: the lease keeps its last known end, which assertLockHeld checks.
+        logger.warn(
+          { error: loggableError(error), spreadsheetId },
+          "Could not renew the Google Sheets write lock"
+        );
+      });
+  }, SHEET_WRITE_LOCK_RENEW_MS);
+  renewal.unref?.();
+
+  const assertLockHeld: TAssertLockHeld = () => {
+    if (lost) {
+      throw new UnknownError("Lost the Google Sheets write lock to another writer; nothing more was written");
+    }
+    if (Date.now() >= leaseEnd - SHEET_WRITE_LOCK_SAFETY_MS) {
+      throw new UnknownError(
+        "Could not renew the Google Sheets write lock in time; nothing more was written"
+      );
+    }
+  };
+
+  try {
+    return await write(assertLockHeld);
+  } finally {
+    clearInterval(renewal);
+    try {
+      await runLockScript(RELEASE_LOCK_SCRIPT, lockKey, [token]);
+    } catch (error) {
+      // The lock expires on its own after SHEET_WRITE_LOCK_TTL_MS; the write's outcome stands.
+      logger.warn(
+        { error: loggableError(error), spreadsheetId },
+        "Could not release the Google Sheets write lock"
+      );
+    }
+  }
+};
 
 export const writeData = async (
   integrationData: TIntegrationGoogleSheets,
@@ -76,44 +264,54 @@ export const writeData = async (
   try {
     const authClient = await authorize(integrationData);
     const sheets = google.sheets({ version: "v4", auth: authClient });
-    const responsesMapped = {
-      values: [
-        responses.map((response) =>
-          response.length > GOOGLE_SHEET_MESSAGE_LIMIT
-            ? truncateText(response, GOOGLE_SHEET_MESSAGE_LIMIT)
-            : response
-        ),
-      ],
-    };
-
-    const element = { values: [elements] };
-    await runSheetsWrite((callback) =>
-      sheets.spreadsheets.values.update(
-        {
-          spreadsheetId: spreadsheetId,
-          range: "A1",
-          valueInputOption: "RAW",
-          requestBody: element,
-        },
-        callback
-      )
+    const truncatedResponses = responses.map((response) =>
+      response.length > GOOGLE_SHEET_MESSAGE_LIMIT
+        ? truncateText(response, GOOGLE_SHEET_MESSAGE_LIMIT)
+        : response
     );
 
-    // ENG-4050: `append` looks for the "table" at `range` and writes below its last row. Anchored on
-    // `A2`, a response whose first answer was empty (e.g. a Statement / CTA first) left `A2` blank, so
-    // the next append found no table there and wrote over row 2 — the sheet only ever kept the latest
-    // response. The header row, just written above, always carries the table, so anchor on it.
-    await runSheetsWrite((callback) =>
-      sheets.spreadsheets.values.append(
-        {
-          spreadsheetId: spreadsheetId,
-          range: getHeaderRowRange(elements.length),
-          valueInputOption: "RAW",
-          requestBody: responsesMapped,
-        },
-        callback
-      )
-    );
+    await withSpreadsheetWriteLock(spreadsheetId, async (assertLockHeld) => {
+      const existingHeaders = await readHeaderRow((callback) =>
+        sheets.spreadsheets.values.get({ spreadsheetId, range: "1:1" }, callback)
+      );
+      const { headers, row, headersChanged } = alignRowToHeaders(
+        existingHeaders,
+        elements,
+        truncatedResponses
+      );
+
+      if (headersChanged) {
+        assertLockHeld();
+        await runSheetsWrite((callback) =>
+          sheets.spreadsheets.values.update(
+            {
+              spreadsheetId: spreadsheetId,
+              range: "A1",
+              valueInputOption: "RAW",
+              requestBody: { values: [headers] },
+            },
+            callback
+          )
+        );
+      }
+
+      // ENG-4050: `append` looks for the "table" at `range` and writes below its last row. Anchored on
+      // `A2`, a response whose first answer was empty (e.g. a Statement / CTA first) left `A2` blank, so
+      // the next append found no table there and wrote over row 2 — the sheet only ever kept the latest
+      // response. The header row, kept or just written above, always carries the table, so anchor on it.
+      assertLockHeld();
+      await runSheetsWrite((callback) =>
+        sheets.spreadsheets.values.append(
+          {
+            spreadsheetId: spreadsheetId,
+            range: getHeaderRowRange(headers.length),
+            valueInputOption: "RAW",
+            requestBody: { values: [row] },
+          },
+          callback
+        )
+      );
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

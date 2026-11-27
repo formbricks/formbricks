@@ -1,7 +1,8 @@
-import { getOAuthState } from "better-auth/api";
+import { APIError, getOAuthState } from "better-auth/api";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE, TooManyRequestsError } from "@formbricks/types/errors";
+import { markInstanceSetupCompleted } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
@@ -60,6 +61,7 @@ vi.mock("@/modules/auth/lib/credential-signup-backstop", () => ({
 }));
 
 vi.mock("@/lib/constants", () => ({ WEBAPP_URL: "http://localhost:3000" }));
+vi.mock("@/lib/instance/service", () => ({ markInstanceSetupCompleted: vi.fn(async () => undefined) }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
@@ -92,6 +94,7 @@ beforeEach(() => {
     locale: "en-US",
   } as never);
   vi.mocked(startSsoRecovery).mockResolvedValue("/auth/verification-requested?x=1");
+  vi.mocked(markInstanceSetupCompleted).mockResolvedValue(undefined);
 });
 
 describe("getSsoProviderFromContext", () => {
@@ -343,6 +346,36 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       attributionProperties: {},
     });
     expect(identifyPostHogPerson).toHaveBeenCalledWith("u1", { email: "a@b.com", name: undefined });
+  });
+
+  test("records the instance as set up when it creates the first SSO user of a fresh instance (ENG-7313)", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({ ...provisionDecision, wasFreshInstance: true });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(markInstanceSetupCompleted).toHaveBeenCalledTimes(1);
+    expect(provisionSsoUserMemberships).toHaveBeenCalled();
+  });
+
+  test("does not touch the setup marker for any other SSO sign-up", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision(provisionDecision);
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
+  });
+
+  test("still provisions when recording the setup marker fails", async () => {
+    vi.mocked(markInstanceSetupCompleted).mockRejectedValue(new Error("db down"));
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({ ...provisionDecision, wasFreshInstance: true });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1" }),
+      "Failed to record that the instance is set up"
+    );
+    expect(provisionSsoUserMemberships).toHaveBeenCalled();
   });
 
   test("forwards useDefaultOrganization so the write phase find-or-creates the org (ENG-2089)", async () => {
@@ -759,6 +792,59 @@ describe("ssoRecoveryAfter", () => {
     });
     expect(startSsoRecovery).toHaveBeenCalledWith(expect.objectContaining({ callbackUrl: "" }));
     expect(redirect).toHaveBeenCalled();
+  });
+
+  /**
+   * ENG-2558: this handler runs in Better Auth's `hooks.after`, where anything that is not an APIError
+   * (a `ctx.redirect` is one) escapes to better-call's router and becomes a 500 with an empty body. The
+   * recovery start fails for ordinary operational reasons — SMTP down, the per-recipient cap on the
+   * recovery email reached by a user retrying sign-in, a missing secret — so each must land on the
+   * existing recovery-failure redirect instead.
+   */
+  describe("when starting recovery fails", () => {
+    const failureRedirect = "http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=";
+
+    test("redirects to the recovery-failure page when the recovery email cap is reached", async () => {
+      const error = new TooManyRequestsError("Maximum number of requests reached");
+      vi.mocked(startSsoRecovery).mockRejectedValue(error);
+      const redirect = vi.fn((url: string) => new APIError("FOUND", { message: `redirect:${url}` }));
+      const ctx = makeCtx({ redirect });
+
+      await runWithSsoRequestContext(async () => {
+        captureSsoIdentity({ email: "a@b.com", providerAccountId: "sub-1" });
+        await expect(ssoRecoveryAfter(ctx as never)).rejects.toBeInstanceOf(APIError);
+      });
+
+      expect(redirect).toHaveBeenCalledTimes(1);
+      expect(redirect).toHaveBeenCalledWith(
+        `${failureRedirect}${encodeURIComponent("http://localhost:3000/")}`
+      );
+      expect(loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: error.name, provider: "openid", userId: "u1" }),
+        expect.any(String)
+      );
+      // Name and frames only (`loggableError`): the message stays out of the log.
+      expect(JSON.stringify(loggerError.mock.calls)).not.toContain(error.message);
+    });
+
+    test("redirects to the recovery-failure page when the existing-user lookup fails", async () => {
+      const error = new Error("connection terminated");
+      vi.mocked(prisma.user.findUnique).mockRejectedValue(error);
+      const redirect = vi.fn((url: string) => new APIError("FOUND", { message: `redirect:${url}` }));
+      const ctx = makeCtx({ redirect });
+
+      await runWithSsoRequestContext(async () => {
+        captureSsoIdentity({ email: "a@b.com", providerAccountId: "sub-1" });
+        await expect(ssoRecoveryAfter(ctx as never)).rejects.toBeInstanceOf(APIError);
+      });
+
+      expect(startSsoRecovery).not.toHaveBeenCalled();
+      expect(redirect).toHaveBeenCalledWith("http://localhost:3000/auth/login?error=OAuthAccountNotLinked");
+      expect(loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", provider: "openid" }),
+        expect.any(String)
+      );
+    });
   });
 });
 

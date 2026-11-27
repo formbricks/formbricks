@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Die Zwei-Faktor-Anmeldung kann hier nicht abgeschlossen werden",
       "oauth_signup_not_allowed_description": "Dein Identity Provider hat dich angemeldet, aber diese Formbricks-Instanz ist nicht so eingerichtet, dass neue Konten auf diesem Weg erstellt werden können. Bitte einen Administrator, dich einzuladen, und versuche es dann erneut.",
       "oauth_signup_not_allowed_title": "Wir konnten dein Konto nicht erstellen",
-      "please_verify_your_email_to_continue": "Bitte bestätige deine E-Mail-Adresse. Wir haben dir einen Bestätigungslink gesendet.",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Administrator erstellen",
+      "setup_token": "Einrichtungs-Token",
+      "setup_token_invalid": "Das Einrichtungs-Token ist nicht korrekt.",
+      "setup_token_needs_email_sign_up": "Diese Instanz benötigt ein Setup-Token, das nur bei der Registrierung per E-Mail übermittelt werden kann – und die Registrierung per E-Mail ist deaktiviert. Entferne EMAIL_AUTH_DISABLED, bis das Administratorkonto existiert, und setze die Variable danach erneut, um die Registrierung per E-Mail wieder zu deaktivieren.",
       "this_user_has_all_the_power": "Dieser Nutzer hat alle Rechte."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Diese Tarifänderung steht im Konflikt mit einer Abrechnung in einer anderen Währung auf deinem Konto. Bitte kontaktiere den Support, um den Tarif zu wechseln.",
         "billing_interval_toggle": "Abrechnungsintervall",
         "cancel_at_period_end": "Am Ende des Zeitraums kündigen",
+        "card_declined": "Deine Karte wurde abgelehnt. Bitte verwende eine andere Karte oder wende dich an deine Bank.",
+        "card_expired": "Deine Karte ist abgelaufen. Bitte aktualisiere sie unter „Kartendaten & Rechnungen verwalten“ und versuche es erneut.",
+        "card_insufficient_funds": "Deine Karte ist nicht ausreichend gedeckt. Bitte verwende eine andere Karte oder versuche es später erneut.",
         "card_payment_method_required": "Um von deinem aktuellen Tarif zu wechseln, brauchst du eine Karte als Zahlungsmethode. Bitte füge eine Karte hinzu und versuche es erneut.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Am besten für",

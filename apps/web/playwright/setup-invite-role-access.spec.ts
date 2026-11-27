@@ -7,8 +7,8 @@ import { test } from "./lib/fixtures";
 // action takes no role input) but authorized managers as well, so a manager could navigate straight to
 // this route — nothing ties it to the moments after organization creation — and mint an owner, going
 // around the "managers can only invite users as members" rule enforced on the org settings invite
-// path. Both the page and the action are owner-only now. The owner test guards against a fix that
-// over-blocks and breaks the real onboarding step.
+// path. Both the page and the action are owner-only now. That an owner is still let in is asserted at
+// the authorization helper the page calls (`invite/lib/authorization.test.ts`).
 
 const setupOrgWithManager = async (users: UsersFixture) => {
   const owner = await users.create();
@@ -27,7 +27,6 @@ const setupOrgWithManager = async (users: UsersFixture) => {
   });
 
   return {
-    owner,
     manager,
     inviteUrl: `/setup/organization/${owner.organizationId}/invite`,
   };
@@ -42,14 +41,5 @@ test.describe("Setup invite role access (ENG-2169)", () => {
 
     await expect(page.getByTestId("error-code")).toHaveText("404");
     await expect(page.getByText("Invite your Organization members")).not.toBeVisible();
-  });
-
-  test("keeps the onboarding invite screen for the organization owner", async ({ page, users }) => {
-    const { owner, inviteUrl } = await setupOrgWithManager(users);
-
-    await owner.login();
-    await page.goto(inviteUrl, { waitUntil: "domcontentloaded" });
-
-    await expect(page.getByText("Invite your Organization members")).toBeVisible();
   });
 });

@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 import http from "http";
 import type { AddressInfo } from "net";
 import { prisma } from "@formbricks/database";
@@ -316,6 +316,16 @@ const VISIT_HOST_PAGE = `<!doctype html>
   </body>
 </html>`;
 
+/** Serves {@link VISIT_HOST_PAGE} at every path, on a free port. */
+const serveVisitHostPage = async (): Promise<{ server: http.Server; hostUrl: string }> => {
+  const server = http.createServer((_, res) => {
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(VISIT_HOST_PAGE);
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  return { server, hostUrl: `http://localhost:${(server.address() as AddressInfo).port.toString()}` };
+};
+
 const trackAction = (key: string) => {
   const sdk = (window as unknown as { formbricks?: { track: (actionKey: string) => Promise<unknown> } })
     .formbricks;
@@ -323,21 +333,12 @@ const trackAction = (key: string) => {
   return sdk.track(key);
 };
 
-test.describe("Show conditions and the visit (ENG-3926)", () => {
+test.describe("The visit: show conditions and attribution (ENG-3926, ENG-7430)", () => {
   let server: http.Server;
   let hostUrl: string;
 
   test.beforeAll(async () => {
-    server = http.createServer((_, res) => {
-      res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(VISIT_HOST_PAGE);
-    });
-    await new Promise<void>((resolve) => {
-      server.listen(0, () => {
-        hostUrl = `http://localhost:${(server.address() as AddressInfo).port.toString()}`;
-        resolve();
-      });
-    });
+    ({ server, hostUrl } = await serveVisitHostPage());
   });
 
   test.afterAll(async () => {
@@ -422,6 +423,81 @@ test.describe("Show conditions and the visit (ENG-3926)", () => {
           visitUrls: "/plans · /plans/compare",
           visitTimeOnSite: expect.any(Number),
         });
+      // Neither page carried a campaign, so none is invented (ENG-7430).
+      const { meta } = await prisma.response.findFirstOrThrow({
+        where: { surveyId: seeded.surveyId },
+        select: { meta: true },
+      });
+      for (const key of ["utmSource", "utmMedium", "utmCampaign", "utmTerm", "utmContent"]) {
+        expect(meta).not.toHaveProperty(key);
+      }
+    });
+  });
+
+  // `window.formbricks` exists before `setup()` has run, and setup is what records the page into the
+  // visit and patches `history.pushState`. Leaving the page earlier would leave it out of the visit, so
+  // wait for the patch, which setup adds after recording the page.
+  const waitForSetup = (page: Page) =>
+    page.waitForFunction(
+      () =>
+        Boolean((window as unknown as { formbricks?: unknown }).formbricks) &&
+        !String(window.history.pushState).includes("[native code]"),
+      null,
+      { timeout: 120000 }
+    );
+
+  const answerAndReadMeta = async (page: Page, surveyId: string) => {
+    const widget = page.locator("#formbricks-modal-container");
+    await expect(widget.getByRole("dialog")).toBeVisible();
+    await widget.getByRole("textbox").fill("Comparing plans");
+    await widget.getByRole("button", { name: "Finish" }).click();
+
+    let meta: unknown;
+    await expect
+      .poll(
+        async () => {
+          meta = (await prisma.response.findFirst({ where: { surveyId }, select: { meta: true } }))?.meta;
+          return meta;
+        },
+        { timeout: 15000 }
+      )
+      .toBeTruthy();
+    return meta as Record<string, unknown>;
+  };
+
+  test("a survey two pages after landing records the landing UTMs and the page it shows on", async ({
+    page,
+    users,
+  }) => {
+    const seeded = await seedAppSurvey(users);
+    await page.addInitScript((workspaceId) => {
+      (window as unknown as { __workspaceId: string }).__workspaceId = workspaceId;
+    }, seeded.workspaceId);
+
+    await test.step("land with a campaign, then load another page in full", async () => {
+      await page.goto(`${hostUrl}/?utm_source=newsletter&utm_campaign=oe2027&utm_medium=`);
+      await waitForSetup(page);
+      await page.goto(`${hostUrl}/plans?ref=nav`);
+      await waitForSetup(page);
+    });
+
+    await test.step("navigate inside the single-page app, then trigger the survey", async () => {
+      await page.evaluate(() => window.history.pushState({}, "", "/plans/compare?tab=price"));
+      await page.evaluate(trackAction, seeded.actionKey);
+    });
+
+    await test.step("the response has the landing campaign and the current page's address", async () => {
+      const meta = await answerAndReadMeta(page, seeded.surveyId);
+
+      expect(meta).toMatchObject({
+        utmSource: "newsletter",
+        utmCampaign: "oe2027",
+        url: `${hostUrl}/plans/compare?tab=price`,
+        pagePath: "/plans/compare",
+        visitUrls: "/ · /plans · /plans/compare",
+      });
+      // `utm_medium=` carried no value, and the visit never had a term or content.
+      for (const key of ["utmMedium", "utmTerm", "utmContent"]) expect(meta).not.toHaveProperty(key);
     });
   });
 });

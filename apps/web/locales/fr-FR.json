@@ -87,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Impossible de terminer la connexion à deux facteurs ici",
       "oauth_signup_not_allowed_description": "Ton fournisseur d'identité t'a authentifié, mais cette instance Formbricks n'est pas configurée pour créer de nouveaux comptes de cette façon. Demande à un administrateur de t'inviter, puis réessaye.",
       "oauth_signup_not_allowed_title": "Nous n'avons pas pu créer ton compte",
-      "please_verify_your_email_to_continue": "Veuillez vérifier votre adresse e-mail. Nous vous avons envoyé un lien de vérification.",
       "use_a_backup_code": "Utiliser un code de secours"
     },
     "oauth": {
@@ -1009,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Créer un administrateur",
+      "setup_token": "Jeton de configuration",
+      "setup_token_invalid": "Le jeton de configuration est incorrect.",
+      "setup_token_needs_email_sign_up": "Cette instance nécessite un jeton de configuration, que seule l'inscription par e-mail peut transmettre, et l'inscription par e-mail est désactivée. Supprime la variable EMAIL_AUTH_DISABLED jusqu'à ce que l'administrateur existe, puis redéfinis-la pour désactiver de nouveau l'inscription par e-mail.",
       "this_user_has_all_the_power": "Cet utilisateur a tout le pouvoir."
     }
   },
@@ -3388,6 +3390,9 @@
         "billing_currency_conflict": "Ce changement de forfait est en conflit avec la facturation dans une autre devise sur ton compte. Contacte l'assistance pour changer de forfait.",
         "billing_interval_toggle": "Intervalle de facturation",
         "cancel_at_period_end": "Annuler à la fin de la période",
+        "card_declined": "Ta carte a été refusée. Utilise une autre carte ou contacte ta banque.",
+        "card_expired": "Ta carte a expiré. Mets-la à jour via « Gérer les détails de la carte et les factures », puis réessaie.",
+        "card_insufficient_funds": "Le solde de ta carte est insuffisant. Utilise une autre carte ou réessaie plus tard.",
         "card_payment_method_required": "Pour changer de formule, tu dois ajouter une carte comme moyen de paiement. Ajoute une carte et réessaie.",
         "comparison_addon": "Module complémentaire",
         "comparison_best_for": "Idéal pour",

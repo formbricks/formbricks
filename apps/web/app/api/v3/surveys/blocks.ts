@@ -403,13 +403,31 @@ export function remapBlockInvalidParamPath(
       return prefix === undefined ? whole : `${prefix}${rest}`;
     });
 
+  /**
+   * The cyclic-logic reason numbers its block by position, "block <n> (name)", with `n` one-based and
+   * against the post-op array like the path it sits beside. Move `n` to the stored block's position,
+   * or name the request's own block by its `ops.<n>.block` path, so `name` and `reason` point at one
+   * block. The wording is `getV3SurveyCyclicLogicInvalidParams`'s (the editor's message), matched at
+   * the start so a block name that quotes it is left alone.
+   */
+  const remapBlockNumber = (text: string): string =>
+    text.replace(
+      /^(Conditional Logic: Cyclic logic detected in )block (\d+) \(/,
+      (whole, lead: string, number: string) => {
+        const prefix = blockPathByIndex.get(Number(number) - 1);
+        if (prefix === undefined) return whole;
+        const stored = /^blocks\.(\d+)$/.exec(prefix);
+        return stored ? `${lead}block ${Number(stored[1]) + 1} (` : `${lead}the block at ${prefix} (`;
+      }
+    );
+
   // `firstUsedAt` and `conflictsWith` are paths too — a duplicate-id report names both copies. Leaving
   // them in `blocks.<i>` coordinates while `name` moves to `ops.<n>` hands the caller a half-translated
   // pair it cannot resolve without a second GET.
   return {
     ...param,
     name: remap(param.name),
-    reason: remapWithin(param.reason),
+    reason: remapBlockNumber(remapWithin(param.reason)),
     ...(param.firstUsedAt === undefined ? {} : { firstUsedAt: remap(param.firstUsedAt) }),
     ...(param.conflictsWith === undefined ? {} : { conflictsWith: remap(param.conflictsWith) }),
   };
