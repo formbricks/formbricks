@@ -33,14 +33,15 @@ import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/
 import type { TLockedDashboardFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import { findUnknownEmbeddedFilterFields } from "./embedded-filter-fields";
-import type {
-  TV3DashboardCreateBody,
-  TV3DashboardDuplicateBody,
-  TV3DashboardFiltersBody,
-  TV3DashboardLayoutBody,
-  TV3DashboardListQuery,
-  TV3DashboardRenameBody,
-  TV3DashboardReplaceBody,
+import {
+  type TV3DashboardCreateBody,
+  type TV3DashboardDuplicateBody,
+  type TV3DashboardFiltersBody,
+  type TV3DashboardLayoutBody,
+  type TV3DashboardListQuery,
+  type TV3DashboardRenameBody,
+  type TV3DashboardReplaceBody,
+  findInvalidDashboardFilters,
 } from "./schemas";
 import { serializeV3Dashboard, serializeV3DashboardListItem } from "./serializers";
 import {
@@ -496,6 +497,28 @@ const refuseUnknownEmbeddedFilterFields = async ({
 };
 
 /**
+ * Filters that are well-shaped but do not fit the field catalog (a field outside it, an operator the field
+ * refuses, a repeated id, values past the picks budget), as the 422 naming each at `filters.<index>.<key>`;
+ * `null` when they all fit. Runs before anything is read or written (ENG-7061).
+ */
+const refuseFiltersOffCatalog = (
+  filters: readonly TLockedDashboardFilter[],
+  { requestId, instance }: TV3DashboardOperationContext
+): Response | null => {
+  const issues = findInvalidDashboardFilters(filters);
+  return issues.length === 0
+    ? null
+    : problemUnprocessableContent(requestId, "The dashboard filters are not valid", {
+        instance,
+        invalid_params: issues.map(({ path, message, code }) => ({
+          name: ["filters", ...path].join("."),
+          reason: message,
+          ...(code && { code }),
+        })),
+      });
+};
+
+/**
  * `PUT /api/v3/dashboards/{dashboardId}` → 200 `{ data }`: the name, every widget's place and, when sent,
  * the dashboard filters in one transaction, or nothing. Widgets left out are removed. A stale `updatedAt` answers 409 with the
  * current one in `details`.
@@ -508,6 +531,9 @@ export async function replaceV3Dashboard({
 }: TV3DashboardWriteContext & { dashboardId: string; body: TV3DashboardReplaceBody }): Promise<Response> {
   const { requestId, instance } = context;
   const log = logger.withContext({ requestId, dashboardId });
+
+  const invalidFilters = body.filters ? refuseFiltersOffCatalog(body.filters, context) : null;
+  if (invalidFilters) return invalidFilters;
 
   try {
     return await runDashboardReplace(
@@ -580,6 +606,9 @@ export async function setV3DashboardFilters({
 }: TV3DashboardWriteContext & { dashboardId: string; body: TV3DashboardFiltersBody }): Promise<Response> {
   const { requestId, instance } = context;
   const log = logger.withContext({ requestId, dashboardId });
+
+  const invalidFilters = refuseFiltersOffCatalog(body.filters, context);
+  if (invalidFilters) return invalidFilters;
 
   try {
     return await runDashboardReplace(
