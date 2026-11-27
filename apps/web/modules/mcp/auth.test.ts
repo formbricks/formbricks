@@ -1132,8 +1132,8 @@ describe("MCP OAuth access token audience binding", () => {
 });
 
 // Better Auth reshapes a failed JWKS load inside `verifyBearerToken` — a 403 becomes a bare
-// `Error("Jwks failed: Forbidden")`, an unreachable endpoint's `TypeError` is swallowed into a
-// `no token payload` 401 — so a hand-built rejection cannot show what production logs. Here the real
+// `Error("Jwks failed: Forbidden")`, an unreachable endpoint's `TypeError` becomes a
+// bare `Error("JWKS fetch failed")` — so a hand-built rejection cannot show what production logs. Here the real
 // `getJwks` and `verifyBearerToken` run against a live local endpoint.
 describe("MCP OAuth JWKS loading against the real Better Auth verifier", () => {
   const ISSUER = "https://app.example.com/api/auth";
@@ -1219,10 +1219,13 @@ describe("MCP OAuth JWKS loading against the real Better Auth verifier", () => {
   test.each([
     { failure: "a 403 from the JWKS endpoint", path: "/forbidden", errorName: "Error", errorCode: undefined },
     {
+      // Better Auth 1.7.16 catches the fetch `TypeError` itself, logs it to its own logger, and rethrows a
+      // bare `Error("JWKS fetch failed")` with no `cause`, so the refused-connection code no longer
+      // reaches us. `failureSource: "jwks_fetch"` still tells the operator which step failed.
       failure: "an unreachable JWKS endpoint",
       path: null,
-      errorName: "TypeError",
-      errorCode: "ECONNREFUSED",
+      errorName: "Error",
+      errorCode: undefined,
     },
     {
       failure: "a 200 that is not a key set",

@@ -78,8 +78,8 @@ describe("MCP OAuth resource initialization (real Postgres)", () => {
     await expect(auth.$context).resolves.toBeDefined();
     expect(await prisma.oauthResource.count()).toBe(0);
     expect(log).toHaveBeenCalledWith(
-      "warn",
-      "oauth-provider: resource seed failed during init; deferring to first resource access.",
+      "error",
+      "oauth-provider: could not seed `resources` at startup; retrying on first resource access.",
       seedError
     );
 

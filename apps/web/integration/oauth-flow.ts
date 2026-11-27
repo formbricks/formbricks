@@ -3,7 +3,7 @@ import { expect } from "vitest";
 import { prisma } from "@formbricks/database";
 import { auth } from "@/modules/auth/lib/auth";
 import { REVOCATION_CLOCK_SKEW_MS, oauthRevocationMarkKey } from "@/modules/auth/lib/oauth-revocation-marker";
-import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { redisSecondaryStorage } from "@/modules/auth/lib/secondary-storage";
 
 /**
@@ -40,8 +40,22 @@ export const signIn = async (
   return { cookie, userId: user.id };
 };
 
+/**
+ * Better Auth seeds the MCP resource once per auth instance, when the instance initialises, and `resetDb`
+ * truncates the table. A suite that resets after that seed has no resource left, and DCR then refuses the
+ * client with `invalid_target`: whether it does depends on how far the init got before the reset
+ * (the ENG-7314 suite failed once this way in a full run, and passed on the rerun). Re-seed atomically, as
+ * the instance's own seed may land at the same time.
+ */
+const ensureMcpResource = (): Promise<unknown> =>
+  prisma.oauthResource.createMany({
+    data: [{ identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] }],
+    skipDuplicates: true,
+  });
+
 /** Registers a public native client through DCR, as an MCP client does. */
 export const registerClient = async (clientName: string): Promise<string> => {
+  await ensureMcpResource();
   const response = await handle("/oauth2/register", {
     method: "POST",
     headers: { "content-type": "application/json" },

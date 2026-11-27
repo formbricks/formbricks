@@ -25,9 +25,10 @@ import { getSessionTokensByUserId } from "@/modules/auth/lib/auth-session-reposi
  * row on every request (ENG-3418), so the residual is Better Auth's endpoints only.
  *
  * Do not read that as "5 minutes of exposure": the window is bounded but what can be done inside it is
- * not. A still-cached session can complete an OAuth authorization through Better Auth's provider, and the
- * grant does not expire with the session. That is why the ENG-2557 strip revokes OAuth grants in its
- * transaction rather than relying on the sweep alone.
+ * not. A grant does not expire with the session, and the provider's authorize, consent and continue routes
+ * used to mint one from a still-cached session. Those three now read the session store instead
+ * (`oauth-grant-session-store.ts`, GHSA-fvxx-76fc-893x). The ENG-2557 strip still revokes OAuth grants in
+ * its transaction rather than relying on the sweep alone, for a grant minted before the revocation.
  *
  * One upstream wrinkle: `deleteSessions` prunes the per-token keys and the rows but does not rewrite the
  * `active-sessions-<userId>` index, so `auth.api.listSessions` keeps listing revoked sessions until their

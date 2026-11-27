@@ -54,6 +54,7 @@ import { revokeOAuthConsentBeforeHandler, revokeOAuthGrantsAfterPasswordReset } 
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { recordOAuthConsentWrites } from "./oauth-consent-writes";
+import { oauthGrantReadsSessionStoreBeforeHandler } from "./oauth-grant-session-store";
 import { boundOAuthRecordsBeforeHandler } from "./oauth-record-bounds";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthBaseUrl, getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
@@ -211,9 +212,10 @@ export const auth = betterAuth({
   //    the verified email-change flow.
   //  - `/link-social` and `/unlink-account` fight `accountLinking.enabled: false` and the verify-before-
   //    link recovery flow.
-  //  - `/oauth2/create-client`, `/update-client`, `/delete-client` and `/client/rotate-secret` (ENG-3253)
-  //    are the session-authenticated client CRUD. No screen calls them, and they skip the redirect
-  //    allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
+  //  - `/oauth2/create-client`, `/update-client`, `/delete-client`, `/client/rotate-secret` (ENG-3253) and
+  //    `/client/rotate-keys` (added in 1.7.10; upstream refuses it unless `allowClientKeyRotation` is set,
+  //    which we leave off, and it answers 404 here regardless) are the session-authenticated client CRUD.
+  //    No screen calls them, and they skip the redirect allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
   //    for its own `https` redirect URI, or repoint one with `update-client`, then phish a consent.
   //    Closed by path rather than with `clientPrivileges`, because the plugin also asserts that hook
   //    on `/oauth2/register` whenever a session cookie rides along, which would break MCP
@@ -243,6 +245,7 @@ export const auth = betterAuth({
     "/oauth2/update-client",
     "/oauth2/delete-client",
     "/oauth2/client/rotate-secret",
+    "/oauth2/client/rotate-keys",
   ],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
@@ -513,6 +516,10 @@ export const auth = betterAuth({
       // below (verify / sign-in vs consent). See better-auth-trust-device-gate.ts.
       const trustDevice = trustDeviceBeforeHandler(ctx);
       if (trustDevice) return trustDevice;
+      // GHSA-fvxx-76fc-893x: authorize, consent and continue read the session store, not the 5-minute cookie
+      // cache, so a revoked session mints no authorization code. Ahead of the consent hooks below, which read
+      // the session themselves. See oauth-grant-session-store.ts.
+      oauthGrantReadsSessionStoreBeforeHandler(ctx);
       // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
       // the provider writes the consent. See mcp-grant-consent.ts.
       requireValidMcpGrantOnConsentBeforeHandler(ctx);
