@@ -1,5 +1,5 @@
 import { type JSX } from "preact";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { applyIngestContract } from "@formbricks/types/embedded-data-ingest";
 import {
@@ -26,7 +26,7 @@ import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
-import { withOptionsShown } from "@formbricks/types/surveys/show-if";
+import { dropAnswers, withOptionsShown } from "@formbricks/types/surveys/show-if";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -47,13 +47,7 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
-import {
-  advanceFromBlock,
-  enterBlock,
-  getPageAnswers,
-  getPageVisibility,
-  startSurvey,
-} from "@/lib/block-flow";
+import { advanceFromBlock, enterBlock, getPageAnswers, getPageVisibility } from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getCardStartsWithMedia } from "@/lib/card-header";
 import { type TFinishOnLoad, getFinishOnLoadToSend, prepareResponseCreate } from "@/lib/finish-on-load";
@@ -80,9 +74,18 @@ import {
   patchSurveyProgressSnapshot,
   saveSurveyProgress,
 } from "@/lib/offline-storage";
+import {
+  type TPreselectionState,
+  addPreselections,
+  createPreselectionState,
+  openPage,
+  recordSubmit,
+  undoSubmit,
+} from "@/lib/preselection-state";
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { clearSignatureDrafts, createSignatureDraftStore } from "@/lib/signature-answer";
+import { startSurvey } from "@/lib/start-survey";
 import {
   getEntryBlockId,
   getPreviousBlockId,
@@ -585,6 +588,33 @@ export function Survey({
   const [entryNotShownStep, setEntryNotShownStep] = useState<TNotShownStep | null>(null);
   const isNavigatingBackRef = useRef(false);
   const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
+  /**
+   * Pre-select answer (ENG-7437): what rules pre-selected that no page opened with yet, what pages
+   * opened with that is not submitted yet, and one step per submit so Back undoes it
+   * (`preselection-state.ts`).
+   */
+  const preselectionRef = useRef<TPreselectionState>(createPreselectionState(startOutcome.preselections));
+  // A layout effect, so the page paints with its pre-selections; it runs before the page's own mount
+  // effect, whose URL prefill therefore wins, and it only fills questions without an answer.
+  useLayoutEffect(() => {
+    const block = localSurvey.blocks.find((candidate) => candidate.id === cardVisit.blockId);
+    if (!block) return;
+    // A block show-if hides is passed over unseen (the entry check below, on first mount): its
+    // pre-selections stay pending, so they never reach `responseData` or the rules after it.
+    const shown = getPageVisibility({
+      survey: localSurvey,
+      blockId: block.id,
+      responseData,
+      variables: currentVariables,
+      selectedLanguage,
+      reservedFieldValues: reservedValues,
+    }).shown;
+    if (!shown) return;
+    const opened = openPage(preselectionRef.current, block, responseData, selectedLanguage);
+    preselectionRef.current = opened.state;
+    if (Object.keys(opened.data).length > 0) setResponseData((prev) => ({ ...prev, ...opened.data }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per card visit, with the answers and language it opens with
+  }, [cardVisit]);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
@@ -816,6 +846,8 @@ export function Survey({
       setHistory(getRestorableHistory(localSurvey, progress.history));
       setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
       lowQualityFlagRef.current = resumeLowQualityFlag(progress.lowQualitySent);
+      // An entry written before pre-selections were stored restores with none, as its bundle had none.
+      preselectionRef.current = progress.preselections ?? createPreselectionState();
       setSelectedLanguage(progress.selectedLanguage);
 
       // Restore survey state from snapshot
@@ -1262,6 +1294,7 @@ export function Survey({
     if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
     // Travels with the first write, like the values the passed-over blocks set.
     if (entry.markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+    preselectionRef.current = addPreselections(preselectionRef.current, entry.preselections);
     // Sent by the finish-on-load effect below, once the display has settled.
     if (entry.finished) {
       setAllHiddenFinish({
@@ -1408,6 +1441,7 @@ export function Survey({
       optionsNotShown,
       markLowQuality,
       skippedBlockIds,
+      preselections,
     } = advanceFromBlock({
       survey: localSurvey,
       blockId,
@@ -1454,6 +1488,12 @@ export function Survey({
     // A rule marked the response Low quality (ENG-6933): this submit's write carries the flag. The
     // respondent sees nothing.
     if (markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+    // ENG-7437: the pages these questions are on open with them; this page's answers are now its own.
+    preselectionRef.current = recordSubmit(
+      preselectionRef.current,
+      currentBlock?.elements.map((element) => element.id) ?? [],
+      preselections
+    );
 
     void onResponseCreateOrUpdate({
       data: submittedData,
@@ -1482,6 +1522,7 @@ export function Survey({
         history: newHistory,
         notShownSteps: nextNotShownSteps,
         lowQualitySent: lowQualityFlagRef.current.sent,
+        preselections: preselectionRef.current,
         selectedLanguage,
         webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {
@@ -1531,6 +1572,12 @@ export function Survey({
       setHistory(history.slice(0, -1));
     }
     popVariableState();
+    // ENG-7437: undo what the last submit pre-selected, unless the respondent made it their own.
+    const undone = undoSubmit(preselectionRef.current, responseData);
+    preselectionRef.current = undone.state;
+    if (undone.dropElementIds.length > 0) {
+      setResponseData((prev) => dropAnswers(prev, undone.dropElementIds));
+    }
 
     // Revert required changes by the first element in the previous block
     const prevBlock = localSurvey.blocks.find((b) => b.id === prevBlockId);

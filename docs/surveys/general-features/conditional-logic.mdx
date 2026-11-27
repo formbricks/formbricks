@@ -18,7 +18,7 @@ Logic belongs to the block, not to a single question. You add and edit it on the
 
 ## Building a rule
 
-On the Flow tab, click `Add logic +` under a block, choose **Jump to**, **Set value** or **Mark response as Low quality**, and fill in the sentence: **If** … **Then** …. A Set value step always runs until you give it a condition with **Add a condition**.
+On the Flow tab, click `Add logic +` under a block, choose **Jump to**, **Set value**, **Pre-select answer** or **Mark response as Low quality**, and fill in the sentence: **If** … **Then** …. A Set value step always runs until you give it a condition with **Add a condition**.
 
 Click a rule's row to open it. The row above the editor reads the whole rule as a sentence, with the questions and fields it uses as chips:
 
@@ -54,11 +54,27 @@ Click a rule's row to open it. The row above the editor reads the whole rule as 
 
 * **Jump to**: send the respondent to a later block or to an ending instead of the next block. Its list offers **Next block** first, then the later **Blocks** by number and the **Endings** by name, each with the icon the Flow tab gives it.
 
+* **Pre-select answer**: open a later single select, multi select or free text question with an answer already given, for example *Always → Pre-select “Open/Pending” in “Inquiry status”*. See [Pre-select answer](#pre-select-answer).
+
 * **Mark response as Low quality**: mark the response Low quality when its answers are implausible, for example *If “hours” is greater than 112 → Mark response as Low quality*. See [Mark as low quality](#mark-as-low-quality).
 
 <Note>
   A rule can carry several actions. They run in the order they are listed.
 </Note>
+
+## Pre-select answer
+
+A **Pre-select answer** step opens a later question with an answer already given: the respondent sees it already picked, or already typed in, and can change it like any answer of their own.
+
+* **Single select**: pick the one option it opens with. **Multi select**: pick one or more. The **Other** option can't be pre-selected, because it needs the respondent's own text.
+* **Free text**: type the answer, a number when the question takes a number.
+* **Without a condition it always runs**, so every respondent sees the answer pre-selected. Add a condition to pre-select it only for some, for example *If “plan” equals “Business” → Pre-select “Yes” in “Need an invoice?”*. It also works in the [rules before the first question](/surveys/general-features/flow-tab#rules-before-the-first-question), with a URL parameter as its condition.
+* **Every language**: the step names the options, not their text, so a translated survey shows them in the respondent's language.
+* **Only submitted answers count.** The response stores what the respondent submits on that page. A question on a page they never see, because a rule jumped past it or it wasn't shown, stays unanswered.
+* **The respondent's own answer wins.** A question they already answered, because they went back or a [prefill link](/surveys/link-surveys/data-prefilling) answered it, keeps that answer.
+* **Back undoes it.** If the respondent goes back and changes the answer the condition read, a pre-selection they haven't changed or submitted is taken back, and comes back only if the condition still matches.
+
+Pre-select answer fills in a question. To store a value the respondent never sees, use **Set value** on an [Embedded Data](/surveys/general-features/variables) field instead.
 
 ## Mark as low quality
 
@@ -77,7 +93,7 @@ The last line of a block, under its rules and **Add logic**, is **Otherwise go t
 
 ## Several conditions in one rule
 
-The trash button beside a condition removes it, and its `⋮` button adds another condition below it, duplicates it, or wraps it in a **group**. Conditions are joined with `and` or `or`: pick one in the small select before the second condition, and the conditions after it repeat your choice. A group is how you mix the two without ambiguity — the same reason brackets exist in arithmetic — and it has its own `⋮` and its own `and`/`or`. Removing the last condition of a rule that jumps or requires an answer removes the rule; a rule that only sets values or marks the response Low quality stays and reads **Always**.
+The trash button beside a condition removes it, and its `⋮` button adds another condition below it, duplicates it, or wraps it in a **group**. Conditions are joined with `and` or `or`: pick one in the small select before the second condition, and the conditions after it repeat your choice. A group is how you mix the two without ambiguity — the same reason brackets exist in arithmetic — and it has its own `⋮` and its own `and`/`or`. Removing the last condition of a rule that jumps or requires an answer removes the rule; a rule that only sets values, pre-selects answers or marks the response Low quality stays and reads **Always**.
 
 ## Several rules in one block
 

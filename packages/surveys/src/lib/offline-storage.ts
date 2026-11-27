@@ -6,6 +6,7 @@ import {
 } from "@formbricks/types/responses";
 import { type TWebSurveyMeta } from "./browser-context";
 import { type TNotShownStep } from "./not-shown-record";
+import { type TPreselectionState } from "./preselection-state";
 
 const DB_NAME = "formbricks-offline";
 const DB_VERSION = 1;
@@ -48,6 +49,11 @@ export interface SurveyProgressEntry {
    * it again. Optional: entries written before it restore without it.
    */
   lowQualitySent?: boolean;
+  /**
+   * Pre-selections not shown yet, applied and undoable (ENG-7437), so a resumed session still opens a
+   * later page with what a rule pre-selected. Optional: entries written before it restore with none.
+   */
+  preselections?: TPreselectionState;
   selectedLanguage: string;
   surveyStateSnapshot: SerializedSurveyState;
   /**

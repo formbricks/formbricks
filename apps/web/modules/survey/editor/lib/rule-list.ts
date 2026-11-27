@@ -7,9 +7,11 @@ import type {
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
+import { START_LOGIC_ACTION_OBJECTIVES } from "@formbricks/types/surveys/start-logic-validation";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   createEmptyFormulaAction,
+  createEmptyPreselectAnswerAction,
   createEmptySetValueAction,
   duplicateLogicItem,
 } from "@/lib/surveyLogic/utils";
@@ -39,8 +41,15 @@ export const duplicateRule = (rules: TSurveyBlockLogic[], ruleIdx: number): TSur
   return next;
 };
 
-/** Actions that may run for everyone: setting a value and marking the response Low quality. */
-const ALWAYS_RUNNABLE = new Set<TSurveyBlockLogicActionObjective>(["calculate", "markLowQuality"]);
+/**
+ * Actions that may run for everyone: setting a value, marking the response Low quality and
+ * pre-selecting an answer (ENG-7437: an answer every respondent opens the question with).
+ */
+const ALWAYS_RUNNABLE = new Set<TSurveyBlockLogicActionObjective>([
+  "calculate",
+  "markLowQuality",
+  "preselectAnswer",
+]);
 
 /** Whether a rule may stand with no condition, shown as "Always runs" (ADR 0031). */
 export const canRuleAlwaysRun = (actions: TSurveyBlockLogicAction[]): boolean =>
@@ -82,11 +91,12 @@ export const updateRuleActions = (
 
 /**
  * What the Add logic menu starts a rule as: a jump rule, a Set value step (ENG-6935), which always
- * runs: its condition group is an empty `and` group (ADR 0031), or a Mark as low quality rule
- * (ENG-6933). A Set value that runs only sometimes is the same step with "Add a condition" used on it,
- * so the menu offers no separate calculation.
+ * runs: its condition group is an empty `and` group (ADR 0031), a Mark as low quality rule
+ * (ENG-6933), or a Pre-select answer step (ENG-7437), which also always runs until a condition is
+ * added. A Set value that runs only sometimes is the same step with "Add a condition" used on it, so
+ * the menu offers no separate calculation.
  */
-export type TNewRuleKind = "jump" | "setValue" | "markLowQuality";
+export type TNewRuleKind = "jump" | "setValue" | "markLowQuality" | "preselectAnswer";
 
 export interface TNewRuleOptions {
   /** The first condition, without an id. A Set value step has none. */
@@ -112,12 +122,17 @@ const createFirstAction = (
     // ENG-6933: complete as it is; the respondent sees nothing when it fires.
     case "markLowQuality":
       return { id: createId(), objective: "markLowQuality" };
+    case "preselectAnswer":
+      return createEmptyPreselectAnswerAction(createId());
     case "setValue":
       return storedAsExpression
         ? createEmptyFormulaAction(createId(), variableId)
         : createEmptySetValueAction(createId(), variableId);
   }
 };
+
+/** A new Set value or Pre-select answer step runs for everyone until a condition is added (ADR 0031). */
+const ALWAYS_RUNS_WHEN_NEW = new Set<TNewRuleKind>(["setValue", "preselectAnswer"]);
 
 export const createRule = (
   kind: TNewRuleKind,
@@ -130,7 +145,7 @@ export const createRule = (
     conditions: {
       id: createId(),
       connector: "and",
-      conditions: kind === "setValue" ? [] : [{ id: createId(), ...condition }],
+      conditions: ALWAYS_RUNS_WHEN_NEW.has(kind) ? [] : [{ id: createId(), ...condition }],
     },
     actions: [action],
   };
@@ -187,13 +202,14 @@ export const setStartRules = (survey: TSurvey, rules: TSurveyBlockLogic[]): TSur
 });
 
 /**
- * What a rule's actions may do where it runs: before the first question jump, set a value or mark the
- * response Low quality (ENG-6933, ENG-6952); a block's rules may also require an answer.
+ * What a rule's actions may do where it runs: before the first question jump, set a value, mark the
+ * response Low quality (ENG-6933, ENG-6952) or pre-select an answer (ENG-7437); a block's rules may
+ * also require an answer.
  */
 export const getAllowedActionObjectives = (scopeBlockIdx: number): TSurveyBlockLogicActionObjective[] =>
   scopeBlockIdx === START_SCOPE_BLOCK_IDX
-    ? ["calculate", "jumpToBlock", "markLowQuality"]
-    : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality"];
+    ? [...START_LOGIC_ACTION_OBJECTIVES]
+    : ["calculate", "requireAnswer", "jumpToBlock", "markLowQuality", "preselectAnswer"];
 
 /** What an action's choices depend on besides its list: whether the rule has no condition. */
 export interface TRuleShape {

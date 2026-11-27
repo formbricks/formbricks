@@ -25,6 +25,10 @@ import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
  *     Set value result stored, and trips "If hours > 112 → Mark as low quality".
  *  4. Results: the response card shows "Not shown", the summary counts "Not shown to 2", and the
  *     response is Low quality.
+ *
+ * ENG-7437: the "hours > 112" rule also pre-selects "Netflix + Prime Video" in "bundle". The first
+ * respondent never matches it and finds nothing pre-selected; the second finds it pre-selected, changes
+ * it, and the response stores the changed answer.
  */
 
 const LANGUAGE = "en-US";
@@ -42,6 +46,9 @@ const toV3Document = (value: unknown): unknown => {
   }
   return value;
 };
+
+/** ENG-7437: the fixture's "hours > 112" rule pre-selects this bundle. */
+const PRESELECTED_BUNDLE = "Netflix + Prime Video";
 
 /** The fixture as the body of `POST /api/v3/surveys`: the survey document, live, in a new workspace. */
 const toV3CreateBody = (workspaceId: string) => ({
@@ -252,6 +259,10 @@ test.describe("Survey flow @slow", () => {
 
       await choose(fav, "radio", "Netflix");
       await expect(appleReason).toBeHidden();
+      // "Heavy users" was skipped, so its "hours > 112" rule didn't match: nothing is pre-selected.
+      await expect(
+        overall.getByRole("radiogroup", { name: BUNDLE }).getByRole("radio", { name: PRESELECTED_BUNDLE })
+      ).not.toBeChecked();
 
       await overall.getByRole("button", { name: "Next" }).click();
       // The ending renders once the response write resolves; the first one of a run can be slow.
@@ -282,7 +293,11 @@ test.describe("Survey flow @slow", () => {
       await expect(fav.getByRole("radio", { name: "Apple TV+" })).toHaveCount(0);
       await expect(overall.getByText(APPLE_REASON)).toBeHidden();
       await choose(fav, "radio", "Netflix");
-      await choose(overall.getByRole("radiogroup", { name: BUNDLE }), "radio", "Netflix + Disney+");
+      // ENG-7437: "hours > 112" pre-selected a bundle; the respondent changes it.
+      const bundle = overall.getByRole("radiogroup", { name: BUNDLE });
+      await expect(bundle.getByRole("radio", { name: PRESELECTED_BUNDLE })).toBeChecked();
+      await choose(bundle, "radio", "Netflix + Disney+");
+      await expect(bundle.getByRole("radio", { name: PRESELECTED_BUNDLE })).not.toBeChecked();
       await overall.getByRole("textbox", { name: headline("email") }).fill(LOW_QUALITY_EMAIL);
       await overall.getByRole("button", { name: "Next" }).click();
 
@@ -311,6 +326,7 @@ test.describe("Survey flow @slow", () => {
             );
             return (
               response && {
+                bundle: (response.data as Record<string, unknown>).bundle,
                 outcome: response.outcome,
                 score: (response.variables as Record<string, unknown>)[ids.variables.score],
                 notShown: response.notShown,
@@ -320,6 +336,8 @@ test.describe("Survey flow @slow", () => {
           { timeout: 20000, message: "The low quality response should be stored" }
         )
         .toMatchObject({
+          // What the respondent changed the pre-selection to, not the pre-selection.
+          bundle: "Netflix + Disney+",
           outcome: "lowQuality",
           score: 100,
           notShown: {

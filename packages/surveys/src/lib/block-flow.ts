@@ -1,6 +1,7 @@
 import { buildEmbeddedLookup } from "@formbricks/types/embedded-data-resolver";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import type { TPreselections } from "@formbricks/types/surveys/preselect-answer";
 import {
   type TBlockVisibility,
   type TOptionsNotShown,
@@ -69,6 +70,12 @@ export interface TAdvanceFromBlockResult {
    * the respondent sees nothing.
    */
   markLowQuality: boolean;
+  /**
+   * Answers rules pre-selected on the way (ENG-7437), on this block or a block passed over, by
+   * question id. The caller adds them to what it already holds; a question's page opens with its
+   * pre-selection unless the respondent already answered it.
+   */
+  preselections: TPreselections;
 }
 
 type TSurveyBlock = TJsWorkspaceStateSurvey["blocks"][number];
@@ -151,6 +158,7 @@ interface TLogicOutcome {
   requiredQuestionIds: string[];
   variables: TResponseVariables;
   markLowQuality: boolean;
+  preselections: TPreselections;
 }
 
 const runBlockLogic = (
@@ -166,6 +174,7 @@ const runBlockLogic = (
   let jumpTarget: string | undefined;
   const requiredQuestionIds: string[] = [];
   let markLowQuality = false;
+  let preselections: TPreselections = {};
 
   for (const logic of block.logic ?? []) {
     if (!evaluateLogic(survey, data, variables, logic.conditions, selectedLanguage, embeddedValues)) {
@@ -181,10 +190,17 @@ const runBlockLogic = (
     requiredQuestionIds.push(...actions.requiredQuestionIds);
     variables = { ...variables, ...actions.calculations };
     markLowQuality ||= actions.markLowQuality;
+    preselections = { ...preselections, ...actions.preselections };
   }
 
-  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
-  return { jumpTarget: jumpTarget || block.logicFallback, requiredQuestionIds, variables, markLowQuality };
+  return {
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
+    jumpTarget: jumpTarget || block.logicFallback,
+    requiredQuestionIds,
+    variables,
+    markLowQuality,
+    preselections,
+  };
 };
 
 interface TSkipOutcome {
@@ -193,6 +209,7 @@ interface TSkipOutcome {
   variables: TResponseVariables;
   requiredQuestionIds: string[];
   markLowQuality: boolean;
+  preselections: TPreselections;
 }
 
 /**
@@ -214,6 +231,7 @@ const skipBlocksNotShown = (
   let answers = data;
   let current = target;
   let markLowQuality = false;
+  let preselections: TPreselections = {};
 
   for (;;) {
     const blockIndex = survey.blocks.findIndex((block) => block.id === current);
@@ -239,11 +257,12 @@ const skipBlocksNotShown = (
     variables = outcome.variables;
     requiredQuestionIds.push(...outcome.requiredQuestionIds);
     markLowQuality ||= outcome.markLowQuality;
+    preselections = { ...preselections, ...outcome.preselections };
     // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
     current = outcome.jumpTarget || survey.blocks[blockIndex + 1]?.id;
   }
 
-  return { target: current, skippedBlockIds, variables, requiredQuestionIds, markLowQuality };
+  return { target: current, skippedBlockIds, variables, requiredQuestionIds, markLowQuality, preselections };
 };
 
 /**
@@ -293,6 +312,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
   let variables: TResponseVariables;
   let requiredQuestionIds: string[] = [];
   let markLowQuality = false;
+  let preselections: TPreselections = {};
 
   let data: TResponseData = { ...input.responseData, ...input.submittedData };
   let submittedData = input.submittedData;
@@ -325,6 +345,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     variables = outcome.variables;
     requiredQuestionIds = outcome.requiredQuestionIds;
     markLowQuality = outcome.markLowQuality;
+    preselections = outcome.preselections;
   } else {
     // `blockId` is not a block. The caller returns early for an ending id or the "end" sentinel, so in
     // practice this is a block that no longer exists because the survey was edited after progress
@@ -364,6 +385,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     optionsNotShown,
     skippedBlockIds: skipped.skippedBlockIds,
     markLowQuality: markLowQuality || skipped.markLowQuality,
+    preselections: { ...preselections, ...skipped.preselections },
   };
 };
 
@@ -390,100 +412,6 @@ export const enterBlock = (input: Omit<TAdvanceFromBlockInput, "submittedData">)
     optionsNotShown: {},
     skippedBlockIds: skipped.skippedBlockIds,
     markLowQuality: skipped.markLowQuality,
+    preselections: skipped.preselections,
   };
-};
-
-export interface TStartSurveyInput {
-  survey: TJsWorkspaceStateSurvey;
-  /** The block a start-at link opens on, already resolved from its question id. */
-  startAtBlockId?: string;
-  /** What the survey loaded with: the hidden fields and URL parameters, after the ingest contract. */
-  responseData: TResponseData;
-  /** The computed fields, seeded with their defaults. */
-  variables: TResponseVariables;
-  selectedLanguage: string;
-  reservedFieldValues: Record<string, string | number>;
-}
-
-export interface TStartSurveyResult {
-  /**
-   * The first card the respondent sees: the ending of a screen-out, else the welcome card
-   * (`"start"`), else the block a rule jumped to, the start-at block or the first block.
-   */
-  firstCardId: string;
-  /** The block a rule jumped to, which the welcome card leads to; `undefined` without a jump. */
-  startBlockId: string | undefined;
-  /** True for a screen-out: the survey is over before it begins. */
-  finished: boolean;
-  /** The ending of a screen-out, for the response the survey creates at once. */
-  endingId: string | undefined;
-  variables: TResponseVariables;
-  /**
-   * A rule marked the response Low quality (ENG-6952). The caller sends `markLowQuality: true` with
-   * the response's first write: the first page's, or the finished response of a screen-out.
-   */
-  markLowQuality: boolean;
-}
-
-/**
- * How the survey starts (ENG-6932, P8): the rules before the first question (`survey.startLogic`)
- * run as soon as the survey loads, before the welcome card, and on start-at links too, so a
- * screener holds whichever way the respondent arrives.
- *
- * They are evaluated like block logic: the first rule that jumps wins and every matching rule's
- * calculations run. They read hidden fields, computed fields and reserved fields; there are no
- * answers yet. A jump to an ending is a screen-out: the respondent sees only that ending. A jump to
- * a block wins over a start-at link, and the welcome card (when there is one and no start-at link)
- * still shows first and leads there. Without a jump the survey starts exactly as it always did.
- * A rule may also mark the response Low quality (ENG-6952), say for a known-bad panel source: the
- * respondent carries on, or is screened out, as the rules decide, and sees nothing of the mark.
- */
-export const startSurvey = (input: TStartSurveyInput): TStartSurveyResult => {
-  const { survey, responseData, selectedLanguage, reservedFieldValues, startAtBlockId } = input;
-  const embeddedValues = buildEmbeddedLookup(survey, reservedFieldValues, responseData);
-
-  let variables = { ...input.variables };
-  let jumpTarget: string | undefined;
-  let markLowQuality = false;
-
-  for (const rule of survey.startLogic ?? []) {
-    if (!evaluateLogic(survey, responseData, variables, rule.conditions, selectedLanguage, embeddedValues)) {
-      continue;
-    }
-    // ENG-6935: a Set value step here reads the same language and reserved values as after a block.
-    const actions = performActions(survey, rule.actions, responseData, variables, {
-      selectedLanguage,
-      embeddedValues,
-    });
-    if (actions.jumpTarget && !jumpTarget) jumpTarget = actions.jumpTarget;
-    variables = { ...variables, ...actions.calculations };
-    markLowQuality ||= actions.markLowQuality;
-  }
-
-  // A stale target (a deleted block or ending) counts as no jump, as it does after a block.
-  const endingId = survey.endings.find((ending) => ending.id === jumpTarget)?.id;
-  if (endingId) {
-    return {
-      firstCardId: endingId,
-      startBlockId: undefined,
-      finished: true,
-      endingId,
-      variables,
-      markLowQuality,
-    };
-  }
-  const startBlockId = survey.blocks.find((block) => block.id === jumpTarget)?.id;
-
-  let firstCardId: string;
-  if (startBlockId) {
-    firstCardId = survey.welcomeCard.enabled && !startAtBlockId ? START_BLOCK_ID : startBlockId;
-  } else if (startAtBlockId) {
-    firstCardId = startAtBlockId;
-  } else if (survey.welcomeCard.enabled) {
-    firstCardId = START_BLOCK_ID;
-  } else {
-    firstCardId = survey.blocks[0]?.id ?? survey.endings[0]?.id ?? END_BLOCK_ID;
-  }
-
-  return { firstCardId, startBlockId, finished: false, endingId: undefined, variables, markLowQuality };
 };

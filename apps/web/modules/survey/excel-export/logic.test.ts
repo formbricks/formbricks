@@ -386,6 +386,35 @@ describe("createLogicRenderer: actions and fallback", () => {
     conditions: [{ id: createId(), leftOperand: onElement("score"), operator: "isSubmitted" }],
   };
 
+  // ENG-7437: the options by their labels in the default language, or the value as typed.
+  test("states a Pre-select answer with its options' labels, or its value", () => {
+    expect(
+      render(
+        blockWith([
+          {
+            conditions: always,
+            actions: [
+              {
+                id: createId(),
+                objective: "preselectAnswer",
+                target: "toppings",
+                value: { type: "choices", choiceIds: ["nuts", "cream"] },
+              },
+              {
+                id: createId(),
+                objective: "preselectAnswer",
+                target: "comment",
+                value: { type: "static", value: "none" },
+              },
+            ],
+          },
+        ])
+      )
+    ).toBe(
+      "If question “Headline of score” is submitted, then pre-select “Nuts”, “Cream” in question “Headline of toppings” and pre-select “none” in question “Headline of comment”."
+    );
+  });
+
   test("states every action of a rule, joined as a list", () => {
     expect(
       render(

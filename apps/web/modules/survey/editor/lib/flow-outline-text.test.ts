@@ -27,6 +27,10 @@ const t = ((key: string, options?: { blockNumber?: number; value?: string; field
   if (key === "workspace.surveys.edit.flow.append_value_to_field") {
     return `append ${options?.value} to ${options?.field}`;
   }
+  if (key === "workspace.surveys.edit.flow.preselect_answer_in") {
+    const { answer, question } = options as { answer?: string; question?: string };
+    return `Pre-select ${answer} in ${question}`;
+  }
   return key.split(".").pop();
 }) as never;
 
@@ -200,6 +204,30 @@ describe("describeAction", () => {
     });
   });
 
+  test("Pre-select answer names its options by label, or its value, and its question (ENG-7437)", () => {
+    const options: TSurveyBlockLogicAction = {
+      id: "a",
+      objective: "preselectAnswer",
+      target: "fav",
+      value: { type: "choices", choiceIds: ["prime", "netflix"] },
+    };
+    const value: TSurveyBlockLogicAction = {
+      id: "b",
+      objective: "preselectAnswer",
+      target: "email",
+      value: { type: "static", value: "a@b.co" },
+    };
+
+    expect(describeAction(options, surveyFlowFixture, t)).toMatchObject({
+      kind: "preselectAnswer",
+      answer: "“Prime Video”, “Netflix”",
+    });
+    expect(toPlainText(describeFirstStepParts([options], surveyFlowFixture, t))).toMatch(
+      /^Pre-select “Prime Video”, “Netflix” in “.+”$/
+    );
+    expect(describeAction(value, surveyFlowFixture, t)).toMatchObject({ answer: "“a@b.co”" });
+  });
+
   test("a Set value step reads as field = formula (ENG-6935)", () => {
     expect(describeAction(action(1, 1), surveyFlowFixture, t).label).toBe(
       "score = round(ifEmpty(@sat_netflix, 0) + ifEmpty(@sat_disney, 0) * 2, 1)"
@@ -342,7 +370,10 @@ describe("describeRuleSummary: the whole sentence, for the tooltip and the row's
     const lowQuality = surveyFlowFixture.blocks
       .flatMap((block) => block.logic ?? [])
       .find((item) => item.id === ids.lowQuality.rule);
-    expect(describeRuleSummary(lowQuality!, surveyFlowFixture, t)).toMatch(/→ mark_as_low_quality$/);
+    // ENG-7437: its Pre-select answer step follows, naming the option by its label.
+    expect(describeRuleSummary(lowQuality!, surveyFlowFixture, t)).toMatch(
+      /→ mark_as_low_quality · Pre-select “Netflix \+ Prime Video” in “.+”$/
+    );
   });
 
   test("a rule without conditions always runs", () => {

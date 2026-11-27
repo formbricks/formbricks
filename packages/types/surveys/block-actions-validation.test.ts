@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyBlockLogicAction } from "./blocks";
+import {
+  PRESELECT_ANSWER_MAX_CHOICES,
+  PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH,
+  PRESELECT_ANSWER_MAX_TEXT_LENGTH,
+} from "./preselect-answer";
 import { SURVEY_FLOW_FIXTURE_IDS, surveyFlowFixture } from "./test-fixtures/survey-flow-fixture";
 import { type TSurvey, ZSurvey } from "./types";
 
@@ -60,6 +65,14 @@ const jump = (target: string, id = "blockaction0000000000001"): TSurveyBlockLogi
   objective: "jumpToBlock",
   target,
 });
+
+const preselect = (target: string, value: unknown): TSurveyBlockLogicAction =>
+  ({
+    id: "blockaction0000000000001",
+    objective: "preselectAnswer",
+    target,
+    value,
+  }) as TSurveyBlockLogicAction;
 
 describe("block rule actions", () => {
   test("the rule used here is valid with a jump to an ending", () => {
@@ -275,5 +288,107 @@ describe("a condition's fixed value", () => {
       ["blocks", HEAVY_USERS, "logic", 0, "conditions"],
       "Static value is required"
     );
+  });
+
+  // ENG-7437: Pre-select answer, on the Concept block (block 4); "fav" and "email" are in block 5.
+  describe("Pre-select answer", () => {
+    const actionPath = [...rulePath, "actions", 0];
+
+    test("accepts an option of a later single select and a value in a later free text question", () => {
+      expect(
+        issuesOf(withConceptActions([preselect("fav", { type: "choices", choiceIds: ["prime"] })]))
+      ).toEqual([]);
+      expect(issuesOf(withConceptActions([preselect("email", { type: "static", value: "a@b.co" })]))).toEqual(
+        []
+      );
+    });
+
+    test("refuses a question in the rule's own block or an earlier one", () => {
+      expectIssue(
+        withConceptActions([preselect("concept", { type: "static", value: "x" })]),
+        [...actionPath, "target"],
+        "must target a question in a later block"
+      );
+      expectIssue(
+        withConceptActions([preselect("services", { type: "choices", choiceIds: ["netflix"] })]),
+        [...actionPath, "target"],
+        "must target a question in a later block"
+      );
+    });
+
+    test("refuses a question that doesn't exist", () => {
+      expectIssue(
+        withConceptActions([preselect("gone", { type: "static", value: "x" })]),
+        [...actionPath, "target"],
+        "Element ID gone does not exist"
+      );
+    });
+
+    test("refuses an answer that doesn't fit the question, at its value", () => {
+      expectIssue(
+        withConceptActions([preselect("fav", { type: "choices", choiceIds: ["netflix", "prime"] })]),
+        [...actionPath, "value"],
+        "exactly one option"
+      );
+      expectIssue(
+        withConceptActions([preselect("fav", { type: "choices", choiceIds: ["hbo"] })]),
+        [...actionPath, "value"],
+        "has no option hbo"
+      );
+    });
+
+    // CODING_STANDARDS "Input Limits": each cap at its boundary.
+    test("caps the options, an option id and a free text answer, and refuses a null character", () => {
+      const ok = (value: unknown, target = "email") =>
+        issuesOf(withConceptActions([preselect(target, value)])).filter(({ path }) =>
+          String(path).includes("value")
+        );
+      const atCap = "x".repeat(PRESELECT_ANSWER_MAX_TEXT_LENGTH);
+
+      expect(ok({ type: "static", value: atCap })).toEqual([]);
+      expect(ok({ type: "static", value: `${atCap}x` })[0]?.message).toContain(
+        `at most ${String(PRESELECT_ANSWER_MAX_TEXT_LENGTH)} characters`
+      );
+      expect(ok({ type: "static", value: "a\u0000b" })[0]?.message).toContain("null character");
+
+      const ids = (count: number) => Array.from({ length: count }, (_, idx) => `o${String(idx)}`);
+      const issuesFor = (choiceIds: string[]) =>
+        issuesOf(withConceptActions([preselect("fav", { type: "choices", choiceIds })]));
+      // At the cap the refinement looks the options up; one over, it names the limit.
+      expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES))).toContainEqual({
+        path: [...actionPath, "value"],
+        message: expect.stringContaining("exactly one option") as string,
+      });
+      expect(issuesFor(ids(PRESELECT_ANSWER_MAX_CHOICES + 1))).toEqual([
+        {
+          path: [...actionPath, "value"],
+          message: `Conditional Logic: At most ${String(PRESELECT_ANSWER_MAX_CHOICES)} options can be pre-selected.`,
+        },
+      ]);
+      const idOf = (length: number) => ["x".repeat(length)];
+      expect(issuesFor(idOf(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)).map(({ path }) => path)).toEqual([
+        [...actionPath, "value"],
+      ]);
+      expect(issuesFor(idOf(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH + 1))).toContainEqual({
+        path: [...actionPath, "value", "choiceIds", 0],
+        message: `Conditional Logic: An option id has at most ${String(PRESELECT_ANSWER_MAX_CHOICE_ID_LENGTH)} characters`,
+      });
+    });
+
+    test("refuses an empty answer and keys the value has no use for", () => {
+      expectIssue(
+        withConceptActions([preselect("fav", { type: "choices", choiceIds: [] })]),
+        [...actionPath, "value", "choiceIds"],
+        "Choose at least one option"
+      );
+      expectIssue(
+        withConceptActions([preselect("email", { type: "static", value: "" })]),
+        [...actionPath, "value", "value"],
+        "Enter the answer to pre-select"
+      );
+      expect(
+        issuesOf(withConceptActions([preselect("email", { type: "static", value: "x", label: "y" })])).length
+      ).toBeGreaterThan(0);
+    });
   });
 });

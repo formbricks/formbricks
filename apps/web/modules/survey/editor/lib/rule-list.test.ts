@@ -138,6 +138,20 @@ describe("new rules from the Add logic menu", () => {
     expect(rule.actions).toEqual([{ id: expect.any(String), objective: "markLowQuality" }]);
   });
 
+  test("a Pre-select answer step always runs and starts with no question or answer (ENG-7437)", () => {
+    const rule = createRule("preselectAnswer", { condition });
+
+    expect(rule.conditions).toEqual({ id: expect.any(String), connector: "and", conditions: [] });
+    expect(rule.actions).toEqual([
+      {
+        id: expect.any(String),
+        objective: "preselectAnswer",
+        target: "",
+        value: { type: "choices", choiceIds: [] },
+      },
+    ]);
+  });
+
   test("a Set value step always runs, and starts on Assign with an empty value (ENG-6935)", () => {
     const rule = createRule("setValue", { condition, variableId: ids.variables.score });
 
@@ -221,17 +235,19 @@ describe("the rules before the first question (ENG-6932)", () => {
     expect(setStartRules(surveyFlowFixture, []).startLogic).toBeNull();
   });
 
-  test("offer a jump, a calculation and Mark as low quality (ENG-6952); a block's rules also offer require answer", () => {
+  test("offer a jump, a calculation, Mark as low quality (ENG-6952) and Pre-select answer (ENG-7437); a block's rules also offer require answer", () => {
     expect(getAllowedActionObjectives(START_SCOPE_BLOCK_IDX)).toEqual([
       "calculate",
       "jumpToBlock",
       "markLowQuality",
+      "preselectAnswer",
     ]);
     expect(getAllowedActionObjectives(0)).toEqual([
       "calculate",
       "requireAnswer",
       "jumpToBlock",
       "markLowQuality",
+      "preselectAnswer",
     ]);
   });
 
@@ -242,17 +258,29 @@ describe("the rules before the first question (ENG-6932)", () => {
       { id: "c", objective: "requireAnswer" as const, target: "" },
     ];
 
-    expect(getObjectivesForAction(actions, 0, 2)).toEqual(["calculate", "requireAnswer", "jumpToBlock"]);
-    expect(getObjectivesForAction(actions, 1, 2)).toEqual(["calculate", "requireAnswer", "markLowQuality"]);
-    expect(getObjectivesForAction(actions, 2, 2)).toEqual(["calculate", "requireAnswer"]);
+    expect(getObjectivesForAction(actions, 0, 2)).toEqual([
+      "calculate",
+      "requireAnswer",
+      "jumpToBlock",
+      "preselectAnswer",
+    ]);
+    expect(getObjectivesForAction(actions, 1, 2)).toEqual([
+      "calculate",
+      "requireAnswer",
+      "markLowQuality",
+      "preselectAnswer",
+    ]);
+    expect(getObjectivesForAction(actions, 2, 2)).toEqual(["calculate", "requireAnswer", "preselectAnswer"]);
     expect(getObjectivesForAction(actions.slice(0, 1), 0, START_SCOPE_BLOCK_IDX)).toEqual([
       "calculate",
       "jumpToBlock",
       "markLowQuality",
+      "preselectAnswer",
     ]);
     expect(getObjectivesForAction(actions.slice(0, 2), 0, START_SCOPE_BLOCK_IDX)).toEqual([
       "calculate",
       "jumpToBlock",
+      "preselectAnswer",
     ]);
   });
 
@@ -264,16 +292,18 @@ describe("the rules before the first question (ENG-6932)", () => {
     expect(getNextActionObjective([], START_SCOPE_BLOCK_IDX)).toBe("jumpToBlock");
   });
 
-  test("a rule with no condition only sets values or marks Low quality, so it never gains a jump", () => {
+  test("a rule with no condition only sets values, marks Low quality or pre-selects answers, so it never gains a jump", () => {
     const setValue = [{ ...overallRules()[0].actions[0] }];
 
     expect(getObjectivesForAction(setValue, 0, 2, { alwaysRuns: true })).toEqual([
       "calculate",
       "markLowQuality",
+      "preselectAnswer",
     ]);
     expect(getObjectivesForAction(setValue, 0, START_SCOPE_BLOCK_IDX, { alwaysRuns: true })).toEqual([
       "calculate",
       "markLowQuality",
+      "preselectAnswer",
     ]);
     expect(getNextActionObjective(setValue, 2, { alwaysRuns: true })).toBe("calculate");
     expect(getNextActionObjective(setValue, START_SCOPE_BLOCK_IDX, { alwaysRuns: true })).toBe("calculate");

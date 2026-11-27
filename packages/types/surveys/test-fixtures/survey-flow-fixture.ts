@@ -75,6 +75,8 @@ export const SURVEY_FLOW_FIXTURE_IDS = {
   lowQuality: {
     rule: "flowrulelowquality000001",
     action: "flowactionlowquality0001",
+    /** ENG-7437: the same rule pre-selects "Netflix + Prime Video" in "bundle" (Overall block). */
+    preselectAction: "flowactionpreselect00001",
   },
 } as const;
 
@@ -421,7 +423,16 @@ const heavyUsersBlock: TSurveyBlock = {
           },
         ],
       },
-      actions: [{ id: ids.lowQuality.action, objective: "markLowQuality" }],
+      actions: [
+        { id: ids.lowQuality.action, objective: "markLowQuality" },
+        // ENG-7437: a heavy user is likely on a bundle; the respondent can change it.
+        {
+          id: ids.lowQuality.preselectAction,
+          objective: "preselectAnswer",
+          target: "bundle",
+          value: { type: "choices", choiceIds: ["netflix_prime"] },
+        },
+      ],
     },
   ],
 };

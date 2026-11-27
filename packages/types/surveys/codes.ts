@@ -228,7 +228,10 @@ const validateAnswerCodes = (element: TCodedElement): TCodeIssue[] => {
   return issues;
 };
 
-const OTHER_OPTION_ID = "other";
+/** The reserved "Other" option of a select: the respondent types its answer. */
+export const OTHER_OPTION_ID = "other";
+/** The reserved "None of these" option of a multi select: picked alone. */
+export const NONE_OPTION_ID = "none";
 
 const optionCodeOf = (option: unknown): string | undefined => {
   if (!isRecord(option)) return undefined;

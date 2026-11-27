@@ -4,14 +4,8 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { type TConditionGroup } from "@formbricks/types/surveys/logic";
-import {
-  type TAdvanceFromBlockInput,
-  type TStartSurveyInput,
-  advanceFromBlock,
-  enterBlock,
-  getPageVisibility,
-  startSurvey,
-} from "./block-flow";
+import { type TAdvanceFromBlockInput, advanceFromBlock, enterBlock, getPageVisibility } from "./block-flow";
+import { type TStartSurveyInput, startSurvey } from "./start-survey";
 
 vi.mock("@/lib/i18n", () => ({
   getLocalizedValue: vi.fn((value, language) =>
@@ -687,6 +681,7 @@ describe("startSurvey: rules before the first question (ENG-6932)", () => {
       endingId: undefined,
       variables: { score: 0 },
       markLowQuality: false,
+      preselections: {},
     });
   });
 

@@ -10123,16 +10123,83 @@ components:
           enum:
             - markLowQuality
       additionalProperties: false
+    SurveyPreselectAnswerAction:
+      type: object
+      description: 'Pre-selects an answer in a later question when the rule fires: the question''s page opens with it already given, and the respondent can change it. The response stores only what the page submits, so a question on a page the respondent never sees (jumped over, or not shown) stores nothing. A question that already has an answer (the respondent came back, or a URL prefill gave it) keeps it. `target` is a `multipleChoiceSingle`, `multipleChoiceMulti` or `openText` element in a later block (any block when used in `startLogic`). For a select question, `value` is `{ type: choices, choiceIds }`: option ids, never labels, so one action works in every survey language; exactly one for a single select, not the `other` option, and `none` only on its own. For a free text question, `value` is `{ type: static, value }`, a number written as text when the question takes a number. It never writes Embedded Data; use `calculate` for that. A value that does not fit the question is rejected with a 422 naming the action''s `value`.'
+      required:
+        - id
+        - objective
+        - target
+        - value
+      properties:
+        id:
+          type: string
+          format: cuid2
+        objective:
+          type: string
+          enum:
+            - preselectAnswer
+        target:
+          type: string
+          minLength: 1
+          description: Target element id.
+        value:
+          oneOf:
+            - type: object
+              description: Options of a single or multi select question, by id.
+              required:
+                - type
+                - choiceIds
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - choices
+                choiceIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 200
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 200
+              additionalProperties: false
+            - type: object
+              description: The answer of a free text question.
+              required:
+                - type
+                - value
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - static
+                value:
+                  type: string
+                  minLength: 1
+                  maxLength: 5000
+              additionalProperties: false
+      additionalProperties: false
+      example:
+        id: clact123456789012345678901
+        objective: preselectAnswer
+        target: inquiry_status
+        value:
+          type: choices
+          choiceIds:
+            - open_pending
     SurveyLogicAction:
       oneOf:
         - $ref: '#/components/schemas/SurveyCalculateAction'
         - $ref: '#/components/schemas/SurveyRequireAnswerAction'
         - $ref: '#/components/schemas/SurveyJumpToBlockAction'
         - $ref: '#/components/schemas/SurveyMarkLowQualityAction'
+        - $ref: '#/components/schemas/SurveyPreselectAnswerAction'
       description: |
         Logic action. Keep referenced ids stable: `calculate.variableId` points to a variable id,
         `requireAnswer.target` points to an element id, and `jumpToBlock.target` points to a block id
-        or ending id. `markLowQuality` takes no target: it marks the response Low quality when the rule fires.
+        or ending id. `markLowQuality` takes no target: it marks the response Low quality when the rule fires. `preselectAnswer.target` points to an element id, and its
+        `value.choiceIds` to that element's option ids.
     SurveyBlockLogic:
       type: object
       description: Conditional logic rule evaluated at block level.
@@ -10362,7 +10429,7 @@ components:
     SurveyStartLogic:
       type: array
       maxItems: 100
-      description: 'Rules before the first question. The survey runs them as soon as it loads, before the welcome card, and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`, `actions`), but only three actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is a screen-out: the respondent sees only that ending, and a finished response is stored that counts as Completed), `calculate`, to set a computed field, and `markLowQuality`, which marks the response Low quality with its first write (a screen-out''s finished response included). `requireAnswer` and any other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the action''s `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block (or the start-at target). `[]` means the survey has none.'
+      description: 'Rules before the first question. The survey runs them as soon as it loads, before the welcome card, and also when a start-at link skips ahead. Each rule has the block-rule shape (`id`, `conditions`, `actions`), but only four actions are allowed: `jumpToBlock`, to a block or to an ending (an ending is a screen-out: the respondent sees only that ending, and a finished response is stored that counts as Completed), `calculate`, to set a computed field, `markLowQuality`, which marks the response Low quality with its first write (a screen-out''s finished response included), and `preselectAnswer`, which opens any question with an answer already given. `requireAnswer` and any other action are rejected with a 422 naming `startLogic.<rule>.actions.<action>`. Nothing has been answered yet, so conditions and values may read `hiddenField` (URL parameters), `variable` and `reserved` operands only; an `element` operand is rejected with a 422 naming `startLogic.<rule>.conditions` (or the action''s `value`). A jump to a block or ending that does not exist is a `dangling_reference`. The first jump wins, every `calculate` runs, and with no jump the respondent continues to the first block (or the start-at target). `[]` means the survey has none.'
       items:
         $ref: '#/components/schemas/SurveyBlockLogic'
       example:

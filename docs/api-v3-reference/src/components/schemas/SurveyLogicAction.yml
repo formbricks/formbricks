@@ -3,6 +3,7 @@ oneOf:
   - $ref: ./SurveyRequireAnswerAction.yml
   - $ref: ./SurveyJumpToBlockAction.yml
   - $ref: ./SurveyMarkLowQualityAction.yml
+  - $ref: ./SurveyPreselectAnswerAction.yml
 description: >
   Logic action. Keep referenced ids stable: `calculate.variableId` points to a
   variable id,
@@ -11,4 +12,6 @@ description: >
   points to a block id
 
   or ending id. `markLowQuality` takes no target: it marks the response Low
-  quality when the rule fires.
+  quality when the rule fires. `preselectAnswer.target` points to an element id, and its
+
+  `value.choiceIds` to that element's option ids.

@@ -140,8 +140,8 @@ const QUESTION_TABLE_HEADER_CLASS =
   "border-b border-slate-200 pt-1 pb-1.5 text-[11px] font-semibold tracking-wide whitespace-nowrap text-slate-400 uppercase";
 
 /** What Add logic starts, in the rule types' order: before the first question, every type (ENG-6952). */
-const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
-const BLOCK_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "markLowQuality"];
+const START_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "preselectAnswer", "markLowQuality"];
+const BLOCK_RULE_KINDS: readonly TNewRuleKind[] = ["jump", "setValue", "preselectAnswer", "markLowQuality"];
 
 /** One icon for every ending, card or redirect, on its row and on a chip that jumps to it. */
 const EndingIcon = ({ className }: { readonly className?: string }) => (

@@ -13,6 +13,7 @@ import {
   findUnknownMatrixIds,
   getMatrixLookup,
 } from "@formbricks/types/surveys/matrix-conditions";
+import { getPreselectAnswerValueIssue } from "@formbricks/types/surveys/preselect-answer";
 import { type TOptionListKey, getOptionLists } from "@formbricks/types/surveys/show-if";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import { capInvalidParams } from "@/app/api/v3/lib/invalid-params";
@@ -327,6 +328,35 @@ function validateCalculateActionValue(
   if (booleanIssue && issues.length === before) issues.push(booleanIssue);
 }
 
+/**
+ * Pre-select answer (ENG-7437): its question must exist, and its answer fit it, with the same rule
+ * (`getPreselectAnswerValueIssue`) the editor and the survey refinement read. The order rule (a later
+ * block) is a precedence violation, reported below with Require answer's.
+ */
+function validatePreselectAnswerAction(
+  action: Extract<TSurveyBlockLogicAction, { objective: "preselectAnswer" }>,
+  actionPath: string,
+  input: TReferenceValidationInput,
+  issues: InvalidParam[]
+): void {
+  const element = input.blocks
+    .flatMap((block) => block.elements)
+    .find((candidate) => candidate.id === action.target);
+  if (!element) {
+    issues.push({
+      name: `${actionPath}.target`,
+      reason: `Element id '${action.target}' is not defined in blocks`,
+      code: "dangling_reference",
+      identifier: action.target,
+      referenceType: "element",
+      missingId: action.target,
+    });
+    return;
+  }
+  const valueIssue = getPreselectAnswerValueIssue(element, action.value);
+  if (valueIssue) issues.push({ name: `${actionPath}.value`, reason: valueIssue });
+}
+
 /** The typed fields of one source, by storage key; a `dataType` left out is the default `string`. */
 function getTypedFields(
   embeddedFields: NonNullable<TReferenceValidationInput["embeddedFields"]>,
@@ -610,6 +640,10 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
             referenceType: "element",
             missingId: action.target,
           });
+        }
+
+        if (action.objective === "preselectAnswer") {
+          validatePreselectAnswerAction(action, actionPath, input, issues);
         }
 
         if (action.objective === "jumpToBlock" && !navigationTargetIds.has(action.target)) {
@@ -973,17 +1007,19 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
       });
 
       logic.actions.forEach((action, actionIndex) => {
-        if (action.objective !== "requireAnswer") return;
+        // ENG-7437: a pre-selected answer, like a required one, is for a question still to come.
+        if (action.objective !== "requireAnswer" && action.objective !== "preselectAnswer") return;
+        const { objective } = action;
         const target = positions.get(action.target);
         if (!target || target.blockIndex > blockIndex) return;
 
         // eslint-disable-next-line sonarjs/no-nested-functions -- a thunk on purpose, so a repeated violation builds no issue (see addViolation)
-        addViolation(violations, `requireAnswer|${block.id}|${action.target}`, () =>
+        addViolation(violations, `${objective}|${block.id}|${action.target}`, () =>
           misorderedIssue(
             `${logicPath}.actions.${actionIndex}.target`,
             target.blockIndex === blockIndex
-              ? `requireAnswer target '${action.target}' is in the same block (blocks.${blockIndex}); requireAnswer must target an element in a later block`
-              : `requireAnswer target '${action.target}' is in an earlier block (blocks.${target.blockIndex}); requireAnswer must target an element in a later block`,
+              ? `${objective} target '${action.target}' is in the same block (blocks.${blockIndex}); ${objective} must target an element in a later block`
+              : `${objective} target '${action.target}' is in an earlier block (blocks.${target.blockIndex}); ${objective} must target an element in a later block`,
             action.target,
             "element"
           )

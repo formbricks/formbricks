@@ -17,6 +17,7 @@ import {
   getUpdatedActionBody,
 } from "@/lib/surveyLogic/utils";
 import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calculated-field-picker";
+import { PreselectAnswerFields } from "@/modules/survey/editor/components/preselect-answer-fields";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
 import { SetValueOneStepValue } from "@/modules/survey/editor/components/set-value-one-step-value";
 import { formulaToOneStep, oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
@@ -369,6 +370,17 @@ export function LogicEditorActions({
                     comboboxClasses="grow"
                   />
                 </div>
+              )}
+
+              {action.objective === "preselectAnswer" && (
+                <PreselectAnswerFields
+                  id={`action-${idx}-preselect`}
+                  key={`preselect-${action.id}`}
+                  action={action}
+                  localSurvey={localSurvey}
+                  scopeBlockIdx={scopeBlockIdx}
+                  onChange={(values) => handleValuesChange(idx, values)}
+                />
               )}
 
               {action.objective === "calculate" && (

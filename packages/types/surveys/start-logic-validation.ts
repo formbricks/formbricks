@@ -1,7 +1,12 @@
 import type { z } from "zod";
 import type { TEmbeddedDataType } from "../embedded-data";
 import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "../embedded-data-resolver";
-import type { TActionCalculate, TSurveyBlockLogic, TSurveyBlockLogicAction } from "./blocks";
+import type {
+  TActionCalculate,
+  TSurveyBlockLogic,
+  TSurveyBlockLogicAction,
+  TSurveyBlockLogicActionObjective,
+} from "./blocks";
 import {
   BOOLEAN_ASSIGN_MESSAGE,
   BOOLEAN_VALUE_TARGET_MESSAGE,
@@ -11,6 +16,7 @@ import {
 import { getSetValueExpressionIssues } from "./expression-types";
 import { type TExpression, isExpressionOverLimits } from "./expressions";
 import type { TConditionGroup, TSingleCondition } from "./logic";
+import { type TPreselectableElement, getPreselectAnswerValueIssue } from "./preselect-answer";
 
 /**
  * Validation of the rules before the first question, `survey.startLogic` (ENG-6932, ADR 0029).
@@ -19,9 +25,10 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
  * any answer exists:
  *
  * - **Actions** may only jump (to any block, or to an ending, which screens the respondent out), set a
- *   value (`calculate`) and mark the response Low quality (`markLowQuality`, ENG-6952: the survey
- *   sends the flag with the response's first write). Every other objective, `requireAnswer`
- *   included, is refused at its exact path.
+ *   value (`calculate`), mark the response Low quality (`markLowQuality`, ENG-6952: the survey
+ *   sends the flag with the response's first write) and pre-select an answer in any question
+ *   (`preselectAnswer`, ENG-7437). Every other objective, `requireAnswer` included, is refused at its
+ *   exact path.
  * - **Conditions and values** may read hidden fields (URL parameters), computed fields and reserved
  *   fields. An `element` operand is refused: there is no answer to read yet.
  *
@@ -32,7 +39,8 @@ import type { TConditionGroup, TSingleCondition } from "./logic";
 /** What this validator reads off the survey: the fields and destinations rules can name. */
 export interface TStartLogicSurvey {
   startLogic?: TSurveyBlockLogic[] | null;
-  blocks: readonly { id: string }[];
+  /** A pre-select answer action (ENG-7437) reads the questions it targets. */
+  blocks: readonly { id: string; elements?: readonly TPreselectableElement[] }[];
   endings: readonly { id: string }[];
   variables: readonly { id: string; type: "number" | "text" }[];
   hiddenFields: { fieldIds?: string[] };
@@ -47,8 +55,19 @@ export interface TStartLogicSurvey {
 
 type TIssue = z.core.$ZodIssue;
 
-// `markLowQuality` (ENG-6952) takes no target, so it has nothing to check.
-const ALLOWED_OBJECTIVES = new Set<string>(["jumpToBlock", "calculate", "markLowQuality"]);
+/**
+ * What a rule before the first question may do, in the order the editor lists them. The editor reads
+ * this list too (`getAllowedActionObjectives`, the Flow outline), so it offers exactly what saves.
+ * `markLowQuality` (ENG-6952) takes no target, so it has nothing to check.
+ */
+export const START_LOGIC_ACTION_OBJECTIVES = [
+  "calculate",
+  "jumpToBlock",
+  "markLowQuality",
+  "preselectAnswer",
+] as const satisfies readonly TSurveyBlockLogicActionObjective[];
+
+const ALLOWED_OBJECTIVES = new Set<string>(START_LOGIC_ACTION_OBJECTIVES);
 
 const ruleLabel = (ruleIdx: number) => `rule ${String(ruleIdx + 1)} before the first question`;
 
@@ -196,7 +215,7 @@ const validateAction = (
   if (!ALLOWED_OBJECTIVES.has(action.objective)) {
     return {
       code: "custom",
-      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can only jump to a block or an ending, set a value, or mark the response Low quality; "${action.objective}" is not allowed before the first question.`,
+      message: `Conditional Logic: ${ruleLabel(ruleIdx)} can only jump to a block or an ending, set a value, mark the response Low quality or pre-select an answer; "${action.objective}" is not allowed before the first question.`,
       path,
     };
   }
@@ -212,6 +231,24 @@ const validateAction = (
       path: [...path, "target"],
       params: { missingLogicDestination: "jump" },
     };
+  }
+
+  if (action.objective === "preselectAnswer") {
+    // Every question comes later than the rules before the first one, so any question may be targeted.
+    const element = survey.blocks
+      .flatMap((block) => block.elements ?? [])
+      .find((candidate) => candidate.id === action.target);
+    if (!element) {
+      return {
+        code: "custom",
+        message: `Conditional Logic: Element ID ${action.target} does not exist for the pre-select answer action in ${ruleLabel(ruleIdx)}`,
+        path: [...path, "target"],
+      };
+    }
+    const valueIssue = getPreselectAnswerValueIssue(element, action.value);
+    return valueIssue
+      ? { code: "custom", message: `Conditional Logic: ${valueIssue}`, path: [...path, "value"] }
+      : undefined;
   }
 
   if (action.objective === "calculate") {
