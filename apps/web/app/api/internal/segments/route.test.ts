@@ -150,6 +150,9 @@ const FILTERS = [
   },
 ];
 
+/** A filter change against the stored `FILTERS` (an edit that sends them back unchanged writes no filters). */
+const EDITED_FILTERS = [{ ...FILTERS[0], resource: { ...FILTERS[0].resource, value: "enterprise" } }];
+
 const storedSegment = (overrides: Record<string, unknown> = {}) => ({
   id: SEGMENT_ID,
   createdAt: DATE,
@@ -531,10 +534,10 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   });
 
   test("leaves isPrivate as stored when the body omits it, so saving a shared segment's filters keeps it shared", async () => {
-    await update({ filters: FILTERS });
+    await update({ filters: EDITED_FILTERS });
     expect(mocks.updateSegment).toHaveBeenCalledWith(
       SEGMENT_ID,
-      { filters: FILTERS },
+      { filters: EDITED_FILTERS },
       {
         connectedSurveyIds: [SURVEY_ID],
       }
@@ -619,6 +622,12 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect((await update(body)).status).toBe(200);
     expect(mocks.getSurveyIdsTargetedThroughNesting).not.toHaveBeenCalled();
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], visibleWhere);
+    // Unchanged filters are not written back, so a concurrent filter change isn't undone by a rename.
+    expect(mocks.updateSegment).toHaveBeenCalledWith(
+      SEGMENT_ID,
+      { title: "Renamed" },
+      { connectedSurveyIds: [SURVEY_ID] }
+    );
   });
 
   test("guards the write on the directly connected surveys only, not the nesting ones", async () => {
@@ -636,7 +645,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       new InvalidInputError("A segment filter can't use a survey's own targeting segment")
     );
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect(mocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
@@ -650,7 +659,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   test("checks the target surveys before validating the filters", async () => {
     mocks.getExistingWorkspaceSurveyIds.mockResolvedValueOnce(new Set());
 
-    expect((await update({ filters: FILTERS })).status).toBe(403);
+    expect((await update({ filters: EDITED_FILTERS })).status).toBe(403);
     expect(mocks.assertSurveyInteractionSurveyIds).not.toHaveBeenCalled();
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
@@ -658,9 +667,10 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
   test("scopes the connected-survey lookup to the workspace where the caller sees every survey", async () => {
     mocks.getUserVisibleSurveyWhere.mockResolvedValue({});
 
-    await update({ surveys: [SURVEY_ID], filters: FILTERS });
+    await update({ surveys: [SURVEY_ID], filters: EDITED_FILTERS });
 
     expect(mocks.getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(WORKSPACE_ID, [SURVEY_ID], {});
+    expect(mocks.assertSurveyInteractionSurveyIds).toHaveBeenCalled();
     expect(mocks.restoreHiddenSegmentSurveyIds).not.toHaveBeenCalled();
   });
 
@@ -727,7 +737,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       },
     ]);
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect(mocks.updateSegment).not.toHaveBeenCalled();
@@ -755,7 +765,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       new InvalidInputError("Recursive segment filter is not allowed")
     );
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe("Recursive segment filter is not allowed");
@@ -767,12 +777,12 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       new InvalidInputError(HIDDEN_FILTERS_MESSAGE)
     );
 
-    const response = await update({ filters: FILTERS });
+    const response = await update({ filters: EDITED_FILTERS });
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe(HIDDEN_FILTERS_MESSAGE);
     expect(mocks.assertAddedSegmentSurveyFiltersVisible).toHaveBeenCalledWith(
-      FILTERS,
+      EDITED_FILTERS,
       FILTERS,
       WORKSPACE_ID,
       memberActor,

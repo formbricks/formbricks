@@ -7,7 +7,10 @@ import { setV3SurveySegmentFilters } from "@/app/api/v3/surveys/targeting";
 import { assertV3OwnSegmentNotNestedElsewhere } from "@/app/api/v3/surveys/targeting";
 import { resetDb } from "@/integration/reset-db";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
-import { assertNoAddedPrivateSegmentReferences } from "@/modules/ee/contacts/segments/lib/helper";
+import {
+  assertNoAddedPrivateSegmentReferences,
+  collectNestedSegmentIds,
+} from "@/modules/ee/contacts/segments/lib/helper";
 import { SegmentSurveysChangedError } from "@/modules/ee/contacts/segments/lib/segment-errors";
 import {
   createSegment,
@@ -15,6 +18,7 @@ import {
   deleteSegment,
   getExistingWorkspaceSurveyIds,
   getSurveyIdsTargetedThroughNesting,
+  isNestedByAnotherSegment,
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
@@ -492,5 +496,27 @@ describe("deletePrivateSegmentIfUnused (ENG-7269)", () => {
     expect(await deletePrivateSegmentIfUnused(nestedFromElsewhere, workspaceId)).toBe(true);
     expect(await deletePrivateSegmentIfUnused(foreign.id, workspaceId)).toBe(false);
     expect(await prisma.segment.findUnique({ where: { id: foreign.id } })).not.toBeNull();
+  });
+});
+
+describe("what nests a segment: code and database agree (ENG-7269)", () => {
+  test.each([
+    ["a well-formed segment filter", (id: string) => nestedSegmentFilters(id), true],
+    ["a malformed node with a string id", (id: string) => [{ type: "segment", segmentId: id }], true],
+    ["an id wrapped in an array", (id: string) => [{ type: "segment", segmentId: [id] }], false],
+    ["a type wrapped in an array", (id: string) => [{ type: ["segment"], segmentId: id }], false],
+  ])("%s", async (_label, tree, nests) => {
+    const target = ids.referenced;
+    await prisma.segment.update({
+      where: { id: ids.control },
+      data: { filters: tree(target) as never, surveys: { connect: { id: ids.restricted } } },
+    });
+
+    expect(collectNestedSegmentIds(tree(target)).has(target)).toBe(nests);
+    expect(await isNestedByAnotherSegment(workspaceId, target)).toBe(nests);
+    // The nesting-survey lookup's own path agrees too.
+    expect(await getSurveyIdsTargetedThroughNesting(workspaceId, target)).toEqual(
+      nests ? [ids.restricted] : []
+    );
   });
 });

@@ -319,17 +319,21 @@ export async function updateSegmentOperation({
     if (refused) return refused;
 
     const actor = await resolveSurveyActorContext({ type: "user", id: userId }, organizationId);
-    const data: TSegmentUpdateInput = body.filters
-      ? {
-          ...body,
-          filters: await prepareEditedFilters(body.filters, oldObject, {
-            segmentId,
-            workspaceId,
-            actor,
-            visibleSurveyWhere,
-          }),
-        }
-      : body;
+    // Filters sent back unchanged are not written: a rename must not put back filters someone else changed
+    // since this request read them, without the nesting check a filter change gets.
+    const { filters: sentFilters, ...rest } = body;
+    const data: TSegmentUpdateInput =
+      changesFilters && sentFilters
+        ? {
+            ...rest,
+            filters: await prepareEditedFilters(sentFilters, oldObject, {
+              segmentId,
+              workspaceId,
+              actor,
+              visibleSurveyWhere,
+            }),
+          }
+        : rest;
 
     // ENG-6870: connecting a survey targets it with the whole stored tree, as attaching one does.
     const storedSurveyIds = new Set(oldObject.surveys);

@@ -510,8 +510,11 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
  * `segment` filter's `root` is such an object; matching malformed ones too (a draft save stores its tree
  * unchecked) fails closed, and the write paths refuse adding one that names a private segment.
  */
-const NESTS_SEGMENT_PATH = '$.** ? (@.type == "segment" && @.segmentId == $id)';
-const NESTED_SEGMENT_IDS_PATH = '$.** ? (@.type == "segment" && @.segmentId.type() == "string").segmentId';
+// `strict`: lax mode would unwrap arrays in the comparisons and count `segmentId: ["…"]` as nesting, which
+// the code's rule (and evaluation) does not.
+const NESTS_SEGMENT_PATH = 'strict $.** ? (@.type == "segment" && @.segmentId == $id)';
+const NESTED_SEGMENT_IDS_PATH =
+  'strict $.** ? (@.type == "segment" && @.segmentId.type() == "string").segmentId';
 
 /** Whether another segment of the workspace nests `segmentId`, as an SQL condition. */
 const nestedByAnotherSegmentSql = (workspaceId: string, segmentId: string): Prisma.Sql => Prisma.sql`
@@ -597,9 +600,9 @@ export const deletePrivateSegmentIfUnused = async (
  * ENG-7269: the surveys a segment targets through nesting. A `segment` filter is resolved when it is
  * evaluated, so a segment's filters are also part of the targeting of every survey on a segment that nests
  * it, directly or through other segments. The workspace's nesting edges are read once (one JSON-path pass
- * per segment), then walked with an equality join; `UNION` stops at a segment already reached, so a cycle
- * ends. Surveys are not scoped to the workspace here: a legacy link to another workspace stays in the set,
- * and the caller's workspace-scoped write check refuses it.
+ * per segment), then walked with an equality join (O(depth × edges)); `UNION` stops at a segment already
+ * reached, so a cycle ends. Surveys are not scoped to the workspace here: a legacy link to another
+ * workspace stays in the set, and the caller's workspace-scoped write check refuses it.
  */
 export const getSurveyIdsTargetedThroughNesting = async (
   workspaceId: string,
