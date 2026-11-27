@@ -1,6 +1,10 @@
 import { type TFunction } from "i18next";
 import { type TEmbeddedDataType } from "@formbricks/types/embedded-data";
-import { RESERVED_FIELD_CATALOG, type TReservedFieldPrivacy } from "@formbricks/types/embedded-data-resolver";
+import {
+  RESERVED_FIELD_CATALOG,
+  type TReservedFieldCapturedWhen,
+  type TReservedFieldPrivacy,
+} from "@formbricks/types/embedded-data-resolver";
 import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
 
 /**
@@ -16,7 +20,7 @@ import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display
  * When a field can be referenced in logic and recall, derived from the catalog's `availability`.
  *
  * `afterSubmit` is the honest reading of `server`: the value only exists once the request reaches
- * the API (a geo-IP country, a parsed user agent), so a running survey cannot recall it — but every
+ * the API (the resolved country, a parsed user agent), so a running survey cannot recall it — but every
  * server-side reader, from filters to exports, can.
  */
 export type TAutoCapturedAvailability = "always" | "afterSubmit";
@@ -30,6 +34,11 @@ export interface TAutoCapturedField {
    */
   label: string;
   dataType: TEmbeddedDataType;
+  /**
+   * What has to be true for a response to carry the field. "Auto-captured" means nobody declares
+   * it, not that every response fills it — so the table says which condition each one needs.
+   */
+  capturedWhen: TReservedFieldCapturedWhen;
   availability: TAutoCapturedAvailability;
   privacy: TReservedFieldPrivacy;
 }
@@ -46,6 +55,7 @@ export const getAutoCapturedFields = (t: TFunction): TAutoCapturedField[] =>
     name: entry.name,
     label: getReservedFieldLabel(entry.name, t),
     dataType: entry.dataType,
+    capturedWhen: entry.capturedWhen,
     availability: entry.availability === "server" ? "afterSubmit" : "always",
     privacy: entry.privacy,
   }));

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MAX_DASHBOARD_FILTERS } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import {
   MAX_DASHBOARD_WIDGETS,
   MAX_WIDGETS_PER_WRITE,
@@ -51,6 +52,36 @@ describe("ZV3DashboardReplaceBody", () => {
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_DASHBOARD_WIDGETS + 10))).success).toBe(true);
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_WIDGETS_PER_WRITE))).success).toBe(true);
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_WIDGETS_PER_WRITE + 1))).success).toBe(false);
+  });
+});
+
+describe("ZV3DashboardReplaceBody filters (ENG-7061)", () => {
+  const filter = (overrides: Record<string, unknown> = {}) => ({
+    id: "clfi000000000000000000001",
+    field: "FeedbackRecords.sourceName",
+    operator: "equals",
+    label: "Source",
+    values: ["Web"],
+    ...overrides,
+  });
+
+  test("leaves the catalog checks to the operation, so they answer 422 rather than 400", () => {
+    // An operator the field refuses, a field outside the catalog, a repeated id: each is well-shaped.
+    for (const filters of [
+      [filter({ operator: "gt" })],
+      [filter({ field: "FeedbackRecords.notAField" })],
+      [filter(), filter({ label: "Again" })],
+    ]) {
+      expect(ZV3DashboardReplaceBody.safeParse({ ...body([]), filters }).success).toBe(true);
+    }
+  });
+
+  test("still refuses a filters value that is not a list, or more than the cap, with 400", () => {
+    expect(ZV3DashboardReplaceBody.safeParse({ ...body([]), filters: "x" }).success).toBe(false);
+    const tooMany = Array.from({ length: MAX_DASHBOARD_FILTERS + 1 }, (_, index) =>
+      filter({ id: `clfi${String(index).padStart(21, "0")}` })
+    );
+    expect(ZV3DashboardReplaceBody.safeParse({ ...body([]), filters: tooMany }).success).toBe(false);
   });
 });
 

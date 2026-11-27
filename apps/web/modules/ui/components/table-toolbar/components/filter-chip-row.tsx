@@ -14,7 +14,7 @@ import {
   setDateQuickFilter,
   toggleQuickFilterValue,
 } from "../lib/filter-state";
-import { quickFilterAsRule, ruleAsQuickFilter } from "../lib/simple-rule";
+import { lockedFilterAsShown, quickFilterAsRule, ruleAsQuickFilter } from "../lib/simple-rule";
 import type { TFilterProperty, TLockedFilters, TTableFilter } from "../lib/types";
 import { DateFilterEditor } from "./date-filter-editor";
 import { FilterChip } from "./filter-chip";
@@ -211,7 +211,7 @@ export const FilterChipRow = ({
           return (
             <li key={`locked-${filter.property}-${filter.operator}-${index}`} className="max-w-full">
               <LockedChip
-                filter={filter}
+                filter={lockedFilterAsShown(property, filter, simpleRules)}
                 property={property}
                 hint={locked?.hint}
                 disabled={disabled}

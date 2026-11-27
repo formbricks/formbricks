@@ -5059,7 +5059,7 @@ paths:
               example:
                 title: Conflict
                 status: 409
-                detail: This chart is on 1 dashboard(s), so it was not deleted. Remove it from them first.
+                detail: This chart is on 1 dashboard, so it was not deleted. Remove it from that dashboard first.
                 code: chart_in_use
                 requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
                 details:
@@ -5461,7 +5461,11 @@ paths:
         Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
         is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
 
-        `filters`, when sent, replace the dashboard's filters. A filter on an embedded-data field
+        `filters`, when sent, replace the dashboard's filters. A filter that is well-formed but does not fit
+        the field catalog (a field outside it, an operator the field does not allow, an id used twice, or
+        values the field cannot take) answers 422 `unprocessable_content`, naming each one as
+        `filters.<index>.field`, `filters.<index>.operator`, `filters.<index>.id` or
+        `filters.<index>.values`; nothing is saved. A filter on an embedded-data field
         (`FeedbackRecords.ed_*`) must name a key that the Feedback Dataset of at least one widget the save
         keeps has; otherwise the save answers 422 naming `filters[<index>].field` with
         `invalid_reference`. A filter already saved on the dashboard is not asked again, so it keeps
@@ -5936,7 +5940,7 @@ paths:
                     requestId: req_01JB7X0000000000000000000
                     invalid_params:
                       - name: picks
-                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded.
                         code: limit_exceeded
         '429':
           $ref: '#/components/responses/V3ChartQueryTooManyRequests'
@@ -6055,7 +6059,7 @@ paths:
                     requestId: req_01JB7X0000000000000000000
                     invalid_params:
                       - name: picks
-                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded (MAX_DASHBOARD_FILTER_PICKS_CHARS).
+                        reason: Picks may take at most 4000 characters in all, each value counted percent-encoded.
                         code: limit_exceeded
                 tooManyQueries:
                   summary: The dashboard's charts need more than MAX_FILTER_VALUE_QUERIES queries for this list
@@ -6067,7 +6071,7 @@ paths:
                     requestId: req_01JB7X0000000000000000000
                     invalid_params:
                       - name: filterId
-                        reason: The dashboard's charts need more than 40 queries (MAX_FILTER_VALUE_QUERIES) to list this filter's values. Type a value instead, or split the dashboard.
+                        reason: The dashboard's charts need more than 40 queries to list this filter's values. Type a value instead, or split the dashboard.
                         code: limit_exceeded
                 typedFilter:
                   summary: The filter takes a typed value, not a pick from a list

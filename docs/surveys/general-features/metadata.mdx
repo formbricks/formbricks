@@ -19,7 +19,7 @@ icon: "user"
 
 ## Metadata Captured
 
-- **Source**: Where the respondent came from. A link survey opened with `?source=` records that value; without one it records the survey's type, `link` or `app`. See [Source Tracking](/surveys/link-surveys/source-tracking).
+- **Source**: Where the respondent came from, taken from the `?source=` parameter of the survey link (or, for an app survey, of the page it ran on). Without the parameter it stays empty. See [Source Tracking](/surveys/link-surveys/source-tracking).
 
 - **URL**: The URL of the page where the user filled the survey.
 
@@ -29,7 +29,7 @@ icon: "user"
 
 - **Device**: The device used by the user to fill the survey.
 
-- **Country**: The country of the user.
+- **Country**: The respondent's country as a two-letter code. Formbricks runs no GeoIP lookup: you can set it yourself with `?country=DE` on a link survey or `country` in `setEmbeddedData` for an app survey, and otherwise it comes from the `CF-IPCountry` (Cloudflare) or `CloudFront-Viewer-Country` (AWS CloudFront) request header. With neither, it stays empty. A survey with its own field or question named `country` [keeps the name](/surveys/embedded-data/reserved-fields#name-collisions), and the respondent's country then comes from the request header alone. A value you pass then follows that field's or question's own rules: it fills the field unless the field is [locked](/surveys/embedded-data/library#locked-fields), and on a link survey it prefills the question when it is a [valid answer](/surveys/link-surveys/data-prefilling#validation) for it. An app survey ignores a value passed for a question, with a console warning, because the answer is the respondent's. See [Reserved Fields](/surveys/embedded-data/reserved-fields).
 
 - **Action**: The action that triggered the survey. This is only available for App surveys.
 

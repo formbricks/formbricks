@@ -1,7 +1,6 @@
 "use client";
 
 import { TopicsSubtopicsContainer } from "../components/topics-subtopics-container";
-import { TopicsSubtopicsQueryClientProvider } from "../query-client-provider";
 
 interface TopicsSubtopicsPageProps {
   workspaceId: string;
@@ -9,12 +8,11 @@ interface TopicsSubtopicsPageProps {
   canWrite: boolean;
 }
 
+/** Reads through the workspace layout's `ApiQueryClientProvider`, so the house retry rule applies. */
 export const TopicsSubtopicsPage = ({
   workspaceId,
   directoryMap,
   canWrite,
 }: Readonly<TopicsSubtopicsPageProps>) => (
-  <TopicsSubtopicsQueryClientProvider>
-    <TopicsSubtopicsContainer workspaceId={workspaceId} directoryMap={directoryMap} canWrite={canWrite} />
-  </TopicsSubtopicsQueryClientProvider>
+  <TopicsSubtopicsContainer workspaceId={workspaceId} directoryMap={directoryMap} canWrite={canWrite} />
 );

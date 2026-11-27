@@ -9,6 +9,7 @@ interface EmbedSurveyPreviewEmailProps extends TEmailTemplateLegalProps {
   readonly html: string;
   readonly workspaceId: string;
   readonly logoUrl?: string;
+  readonly hideLogo?: boolean;
   readonly t?: TFunction;
 }
 
@@ -16,11 +17,12 @@ export function EmbedSurveyPreviewEmail({
   html,
   workspaceId,
   logoUrl,
+  hideLogo,
   t = mockT,
   ...legalProps
 }: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate forceLightMode logoUrl={logoUrl} t={t} {...legalProps}>
+    <EmailTemplate forceLightMode logoUrl={logoUrl} hideLogo={hideLogo} t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.embed_survey_preview_email_heading")}</Heading>
         <Text className="text-sm">{t("emails.embed_survey_preview_email_text")}</Text>

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZWorkflowStatus } from "../types/common";
-import { ZWorkflowDefinitionInput } from "../types/document";
+import { ZWorkflowDefinitionInput, ZWorkflowDefinitionInputStrict } from "../types/document";
 import { ZWorkflowRunStatus } from "../types/runs";
 import { ZWorkflowTriggerType } from "../types/triggers/enum";
 import { zPostgresText } from "./postgres-text";
@@ -11,32 +11,47 @@ import { zPostgresText } from "./postgres-text";
  * into these shapes; non-HTTP consumers can construct them directly.
  */
 
-export const ZCreateWorkflowInput = z
-  .strictObject({
-    workspaceId: z.cuid2(),
-    name: z.string().min(1).max(120),
-    description: z.string().max(500).nullable().optional(),
-    status: z
-      .literal("draft")
-      .optional()
-      .describe("Workflows are always created as drafts; only enable can make them live."),
-    definition: ZWorkflowDefinitionInput,
-  })
-  .describe("Creates a draft workflow.");
+// Create and patch are each built once and instantiated twice: with the lenient definition the v3
+// REST route parses, and with the strict one MCP tools parse (ENG-2437), so the two can't drift.
+const buildCreateWorkflowInput = (definition: typeof ZWorkflowDefinitionInput) =>
+  z
+    .strictObject({
+      workspaceId: z.cuid2(),
+      name: z.string().min(1).max(120),
+      description: z.string().max(500).nullable().optional(),
+      status: z
+        .literal("draft")
+        .optional()
+        .describe("Workflows are always created as drafts; only enable can make them live."),
+      definition,
+    })
+    .describe("Creates a draft workflow.");
+
+const buildPatchWorkflowInput = (definition: typeof ZWorkflowDefinitionInput) =>
+  z
+    .strictObject({
+      name: z.string().min(1).max(120).optional(),
+      description: z.string().max(500).nullable().optional(),
+      definition: definition
+        .optional()
+        .describe(
+          "Only accepted while the workflow is draft or disabled; the live version of an enabled workflow is immutable."
+        ),
+    })
+    .refine((input) => Object.keys(input).length > 0, {
+      message: "At least one field must be provided",
+    })
+    .describe("Partial workflow update. Status is never patchable; use the lifecycle operations.");
+
+export const ZCreateWorkflowInput = buildCreateWorkflowInput(ZWorkflowDefinitionInput);
 export type TCreateWorkflowInput = z.infer<typeof ZCreateWorkflowInput>;
 
-export const ZPatchWorkflowInput = z
-  .strictObject({
-    name: z.string().min(1).max(120).optional(),
-    description: z.string().max(500).nullable().optional(),
-    definition: ZWorkflowDefinitionInput.optional().describe(
-      "Only accepted while the workflow is draft or disabled; the live version of an enabled workflow is immutable."
-    ),
-  })
-  .refine((input) => Object.keys(input).length > 0, {
-    message: "At least one field must be provided",
-  })
-  .describe("Partial workflow update. Status is never patchable; use the lifecycle operations.");
+/** `ZCreateWorkflowInput` rejecting unknown keys inside `definition` too; for MCP writes. */
+export const ZCreateWorkflowInputStrict = buildCreateWorkflowInput(ZWorkflowDefinitionInputStrict);
+
+export const ZPatchWorkflowInput = buildPatchWorkflowInput(ZWorkflowDefinitionInput);
+/** `ZPatchWorkflowInput` rejecting unknown keys inside `definition` too; for MCP writes. */
+export const ZPatchWorkflowInputStrict = buildPatchWorkflowInput(ZWorkflowDefinitionInputStrict);
 export type TPatchWorkflowInput = z.infer<typeof ZPatchWorkflowInput>;
 
 export const ZDuplicateWorkflowInput = z

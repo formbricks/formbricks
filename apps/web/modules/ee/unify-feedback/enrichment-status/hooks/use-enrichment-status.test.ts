@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TEnrichmentStatusResponse } from "../lib/enrichment";
+import { ENRICHMENT_POLL_INTERVAL_MS, type TEnrichmentStatusResponse } from "../lib/enrichment";
 import { useEnrichmentStatus } from "./use-enrichment-status";
 
 function createWrapper(queryClient: QueryClient) {
@@ -131,6 +131,41 @@ describe("useEnrichmentStatus", () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // ENG-2254: the last good answer still says work is pending, so before, a 401 (session expired in a tab
+  // left open) or 403 (access revoked) kept the five-second interval going for as long as the tab lived.
+  test.each([401, 403])("stops polling on a %i under the page's retry: 1 client", async (status) => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          enrichments: [{ kind: "sentiment", eligible: 500, done: 100, failedTerminal: 0, pending: 400 }],
+          unavailable: false,
+        })
+      )
+      .mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ title: "Refused", status, detail: "refused" }), {
+            status,
+            headers: { "Content-Type": "application/problem+json" },
+          })
+      );
+
+    const { result } = renderHook(() => useEnrichmentStatus({ workspaceId: "w" }), {
+      // Mirrors `EnrichmentStatusQueryClientProvider`, the client this hook ships under: one retry, so the
+      // refusal is asked twice before the error lands and the interval is re-evaluated.
+      wrapper: createWrapper(new QueryClient({ defaultOptions: { queries: { retry: 1 } } })),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    await vi.advanceTimersByTimeAsync(ENRICHMENT_POLL_INTERVAL_MS + 2000);
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   test("stays idle (no fetch) when workspaceId is empty", () => {

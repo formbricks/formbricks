@@ -1,20 +1,11 @@
 import { expect } from "@playwright/test";
-import { logger } from "@formbricks/logger";
 import { test } from "../../lib/fixtures";
-import { loginAndGetApiKey } from "../../lib/utils";
+import { createUserWithApiKey } from "../../utils/api-key";
 import { RESPONSES_API_URL, SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests for Responses", () => {
-  test("Create, Retrieve, Update, and Delete Responses via API", async ({ page, users, request }) => {
-    let workspaceId: string;
-    let apiKey: string;
-
-    try {
-      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
-    } catch (error) {
-      logger.error(error, "Error during login and getting API key");
-      throw error;
-    }
+  test("Create, Retrieve, Update, and Delete Responses via API", async ({ users, request }) => {
+    const { workspaceId, apiKey } = await createUserWithApiKey(users);
 
     let createdResponseId1: string;
     let createdResponseId2: string;

@@ -29,7 +29,7 @@ docker run -d --name "$prefix-pg" --network "$prefix" --network-alias postgres \
   -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=formbricks \
   pgvector/pgvector@sha256:9ae02a756ba16a2d69dd78058e25915e36e189bb36ddf01ceae86390d7ed786a >/dev/null
 docker run -d --name "$prefix-redis" --network "$prefix" --network-alias redis \
-  valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd >/dev/null
+  valkey/valkey@sha256:169567d6288e5f08aa141847c0c3e0864a32e727682ca6f052a20567c7103ef8 >/dev/null
 for attempt in $(seq 1 60); do
   if docker exec "$prefix-pg" pg_isready -U test -d formbricks >/dev/null 2>&1; then break; fi
   if [ "$attempt" -eq 60 ]; then echo "Database did not start" >&2; exit 1; fi

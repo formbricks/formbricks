@@ -46,6 +46,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import { getEmailLogo } from "@/modules/ee/whitelabel/email-customization/lib/email-logo";
 import { toEmailDisplayText } from "@/modules/email/lib/email-display-text";
 import type { TEmailRateLimitContext } from "@/modules/email/lib/email-rate-limits";
 import { sendEmail } from "@/modules/email/lib/send-email";
@@ -610,6 +611,7 @@ export const sendResponseFinishedEmail = async (
     organization,
     elements: elementsWithResolvedUrls,
     logoUrl,
+    hideLogo: getEmailLogo(organization.whitelabel).hideLogo,
     t,
     ...legalProps,
   });
@@ -641,6 +643,7 @@ export const sendEmbedSurveyPreviewEmail = async ({
   locale,
   actorUserId,
   logoUrl,
+  hideLogo = false,
   surveyId,
   organizationId,
 }: Readonly<{
@@ -650,6 +653,8 @@ export const sendEmbedSurveyPreviewEmail = async ({
   locale: TUserLocale;
   actorUserId: string;
   logoUrl?: string;
+  /** The organization removed its logo: the email shows none. */
+  hideLogo?: boolean;
   surveyId?: string;
   organizationId?: string;
 }>): Promise<boolean> => {
@@ -660,6 +665,7 @@ export const sendEmbedSurveyPreviewEmail = async ({
     html: innerHtml,
     workspaceId,
     logoUrl: resolvedLogoUrl,
+    hideLogo,
     t,
     ...legalProps,
   });
@@ -679,7 +685,8 @@ export const sendEmailCustomizationPreviewEmail = async (
   locale: TUserLocale,
   actorUserId: string,
   logoUrl?: string,
-  organizationId?: string
+  organizationId?: string,
+  hideLogo = false
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
   // Resolve relative storage URLs to absolute URLs for email rendering
@@ -687,6 +694,7 @@ export const sendEmailCustomizationPreviewEmail = async (
   const emailHtmlBody = await renderEmailCustomizationPreviewEmail({
     userName,
     logoUrl: resolvedLogoUrl,
+    hideLogo,
     t,
     ...legalProps,
   });
@@ -706,6 +714,7 @@ export const sendEmailCustomizationPreviewEmail = async (
 export type TVerifiedLinkSurveyEmailData = TLinkSurveyEmailData & {
   surveyName: string;
   logoUrl?: string;
+  hideLogo?: boolean;
 };
 
 export const sendLinkSurveyToVerifiedEmail = async (
@@ -733,7 +742,14 @@ export const sendLinkSurveyToVerifiedEmail = async (
     surveyLanguageCode: data.surveyLanguageCode,
   });
 
-  const html = await renderLinkSurveyEmail({ surveyName, surveyLink, logoUrl, t, ...legalProps });
+  const html = await renderLinkSurveyEmail({
+    surveyName,
+    surveyLink,
+    logoUrl,
+    hideLogo: data.hideLogo === true,
+    t,
+    ...legalProps,
+  });
   return await sendEmail({
     emailType: "verified_survey_link",
     auditContext: { trigger: "system", surveyId, organizationId: rateLimit.organizationId },

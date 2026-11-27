@@ -20,6 +20,7 @@ import { requestEmailAuditErasureRequired } from "@/modules/email/lib/email-audi
 import { deleteWorkspaceFilesBestEffort } from "@/modules/storage/service";
 import {
   createOrganization,
+  createOrganizationIfNoneExists,
   deleteOrganization,
   getMonthlyOrganizationResponseCount,
   getMonthlyOrganizationWorkflowRunCount,
@@ -33,8 +34,10 @@ import {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
+    $executeRaw: vi.fn(),
     organization: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -211,6 +214,59 @@ describe("Organization Service", () => {
       vi.mocked(prisma.organization.findMany).mockRejectedValue(prismaError);
 
       await expect(getOrganizationsByUserId("user1")).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("createOrganizationIfNoneExists (ENG-7313)", () => {
+    const created = { id: "org1", name: "First", billing: {} } as never;
+
+    beforeEach(() => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
+      vi.mocked(prisma.organization.create).mockResolvedValue(created);
+    });
+
+    test("takes the instance-wide lock, then creates the organization when none exists", async () => {
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
+
+      await expect(createOrganizationIfNoneExists({ name: "First" })).resolves.toBeTruthy();
+      expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+      // One instance-wide key, so every claim waits on the same lock.
+      expect(vi.mocked(prisma.$executeRaw).mock.calls[0]).toContain("instance:first-organization");
+      expect(vi.mocked(prisma.$executeRaw).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(prisma.organization.findFirst).mock.invocationCallOrder[0]
+      );
+      expect(prisma.organization.create).toHaveBeenCalledTimes(1);
+      expect(logger.warn).toHaveBeenCalledWith(
+        { securityEvent: "organization.created", organizationId: "org1" },
+        "Organization created"
+      );
+    });
+
+    test("creates nothing, and logs nothing, when an organization already exists", async () => {
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: "existing" } as never);
+
+      await expect(createOrganizationIfNoneExists({ name: "Second" })).resolves.toBeNull();
+      expect(prisma.organization.create).not.toHaveBeenCalled();
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
+
+    test("logs nothing when the transaction does not commit", async () => {
+      vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+        await callback(prisma);
+        throw new Prisma.PrismaClientKnownRequestError("timeout", { code: "P2028", clientVersion: "test" });
+      });
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
+
+      await expect(createOrganizationIfNoneExists({ name: "First" })).rejects.toThrow(DatabaseError);
+      expect(logger.warn).not.toHaveBeenCalled();
+    });
+
+    test("surfaces a Prisma failure as a DatabaseError", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("boom", { code: "P2034", clientVersion: "test" })
+      );
+
+      await expect(createOrganizationIfNoneExists({ name: "First" })).rejects.toThrow(DatabaseError);
     });
   });
 

@@ -336,7 +336,8 @@ export function pivotMeasuresToCategories(
   data: TChartDataRow[],
   measureKeys: string[],
   formatLabel: (measureKey: string) => string,
-  /** Column to carry onto every pivoted row, so the tooltip can still print "n = …" for each bar. */
+  /** Column to carry onto every other measure's pivoted row, so the tooltip can still print "n = …"
+   * for each bar. */
   responseBaseKey?: string
 ): TChartDataRow[] {
   const row = data[0] ?? {};
@@ -357,7 +358,8 @@ export function pivotMeasuresToCategories(
       [PIVOTED_MEASURE_KEY]: key,
       tooltipLabel: formatLabel(key),
       fill,
-      ...(responseBaseKey ? { [responseBaseKey]: row[responseBaseKey] } : {}),
+      // The base measure's own row already plots the count; carrying it too prints it twice.
+      ...(responseBaseKey && key !== responseBaseKey ? { [responseBaseKey]: row[responseBaseKey] } : {}),
     };
   });
 }

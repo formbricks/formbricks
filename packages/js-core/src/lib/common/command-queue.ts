@@ -104,15 +104,11 @@ const executeQueueItem = async (item: InternalQueueItem): Promise<void> => {
     }
   }
 
-  const executeCommand = async (): Promise<Result<void, unknown>> => {
-    return (await item.command.apply(null, item.commandArgs)) as Result<void, unknown>;
-  };
-
-  const result = await wrapThrowsAsync(executeCommand)();
+  const result = await wrapThrowsAsync(async () => item.command.apply(null, item.commandArgs))();
 
   if (!result.ok) {
     console.error("🧱 Formbricks - Global error: ", result.error);
-  } else if (!result.data.ok) {
+  } else if (result.data && !result.data.ok) {
     console.error("🧱 Formbricks - Global error: ", result.data.error);
   }
 };

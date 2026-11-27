@@ -31,6 +31,7 @@ import {
   useSurveyStatusChangeWithCreatives,
 } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
+import { ArchiveSurveyRetentionWarning } from "@/modules/ee/data-retention/components/survey/archive-survey-retention-warning";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useExportSurvey } from "@/modules/survey/export/hooks/use-export-survey";
 import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
@@ -521,7 +522,8 @@ export const SurveyDropDownMenu = ({
           }
           body={
             <div className="space-y-3 whitespace-normal">
-              <p>{t("workspace.surveys.archive_survey_warning")}</p>
+              {/* Dialog content mounts only while open, so the retention request waits for the dialog. */}
+              <ArchiveSurveyRetentionWarning surveyId={survey.id} />
               {archiveLinkedCreatives.length > 0 && (
                 <Alert variant="warning" alertRole="status">
                   <AlertTitle>{t("workspace.creatives.survey_side.archive_note_title")}</AlertTitle>

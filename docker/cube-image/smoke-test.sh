@@ -18,7 +18,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 image="$1"
-hub_image_tag="${HUB_IMAGE_TAG:-0.8.5}"
+hub_image_tag="${HUB_IMAGE_TAG:-0.14.3}"
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 compose_file="$script_dir/../docker-compose.yml"
 helper="$script_dir/smoke-test.mjs"

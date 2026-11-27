@@ -20,6 +20,7 @@ import {
   setV3DashboardFilters,
   updateV3DashboardLayout,
 } from "./operations";
+import type { TV3DashboardReplaceBody } from "./schemas";
 import {
   type TDashboardListRow,
   type TDashboardResourceRow,
@@ -74,6 +75,15 @@ const contextOf = (authentication: never = session) => ({
   authentication,
   requestId: REQUEST_ID,
   instance: INSTANCE,
+});
+
+const filterOf = (overrides: Record<string, unknown> = {}) => ({
+  id: "clfi000000000000000000001",
+  field: "FeedbackRecords.sourceName",
+  operator: "equals",
+  label: "Source",
+  values: ["Web"],
+  ...overrides,
 });
 
 const granted = { workspaceId: WORKSPACE_ID, organizationId: ORGANIZATION_ID };
@@ -725,6 +735,63 @@ describe("replaceV3Dashboard (PUT)", () => {
     expect(body.invalid_params).toEqual([{ name: "widgets", reason }]);
   });
 
+  test.each([
+    {
+      case: "an operator the field refuses",
+      filters: [filterOf({ operator: "gt" })],
+      invalid: [{ name: "filters.0.operator", reason: "This field does not allow this operator." }],
+    },
+    {
+      case: "a field outside the catalog",
+      filters: [filterOf({ field: "FeedbackRecords.notAField" })],
+      invalid: [
+        {
+          name: "filters.0.field",
+          reason: "Must be a dimension from the field catalog or an embedded-data field.",
+        },
+      ],
+    },
+    {
+      case: "a repeated filter id",
+      filters: [filterOf(), filterOf({ label: "Again" })],
+      invalid: [{ name: "filters.1.id", reason: "Each filter id may appear once." }],
+    },
+    {
+      case: "values a number field cannot compare",
+      filters: [filterOf({ field: "FeedbackRecords.valueNumber", operator: "gt", values: ["many"] })],
+      invalid: [{ name: "filters.0.values", reason: expect.any(String) }],
+    },
+    {
+      case: "values past the picks budget",
+      filters: [filterOf({ operator: "equals", values: Array.from({ length: 5 }, () => "x".repeat(1000)) })],
+      invalid: [{ name: "filters", reason: expect.any(String), code: "limit_exceeded" }],
+    },
+  ])(
+    "answers 422 naming the filter for $case, before reading or writing anything (ENG-7061)",
+    async ({ filters, invalid }) => {
+      const response = await replaceV3Dashboard({
+        dashboardId: DASHBOARD_ID,
+        body: {
+          name: "Saved",
+          expectedUpdatedAt: EXPECTED_UPDATED_AT,
+          widgets,
+          filters: filters as TV3DashboardReplaceBody["filters"],
+        },
+        ...contextOf(),
+      });
+
+      expect(response.status).toBe(422);
+      const body = await response.json();
+      expect(body).toMatchObject({
+        code: "unprocessable_content",
+        detail: "The dashboard filters are not valid",
+      });
+      expect(body.invalid_params).toEqual(invalid);
+      expect(getDashboardWorkspaceRow).not.toHaveBeenCalled();
+      expect(replaceDashboardRow).not.toHaveBeenCalled();
+    }
+  );
+
   test("answers 409 for a name another dashboard has", async () => {
     vi.mocked(replaceDashboardRow).mockRejectedValue(uniqueViolation());
 
@@ -892,6 +959,16 @@ describe("setV3DashboardFilters (MCP set_dashboard_filters)", () => {
       REQUEST_ID,
       INSTANCE
     );
+  });
+
+  test("answers 422 naming the filter for a catalog problem, writing nothing (ENG-7061)", async () => {
+    const response = await setFilters(undefined, [{ ...filters[0], operator: "gt" as never }]);
+
+    expect(response.status).toBe(422);
+    expect((await response.json()).invalid_params).toEqual([
+      { name: "filters.0.operator", reason: "This field does not allow this operator." },
+    ]);
+    expect(replaceDashboardRow).not.toHaveBeenCalled();
   });
 
   test("returns the access refusal without writing, and maps an unexpected failure to 500", async () => {

@@ -2,6 +2,7 @@ import { APIError, getOAuthState } from "better-auth/api";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE, TooManyRequestsError } from "@formbricks/types/errors";
+import { markInstanceSetupCompleted } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { enforceCredentialSignupBackstop } from "@/modules/auth/lib/credential-signup-backstop";
@@ -60,6 +61,7 @@ vi.mock("@/modules/auth/lib/credential-signup-backstop", () => ({
 }));
 
 vi.mock("@/lib/constants", () => ({ WEBAPP_URL: "http://localhost:3000" }));
+vi.mock("@/lib/instance/service", () => ({ markInstanceSetupCompleted: vi.fn(async () => undefined) }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSsoEnabled: vi.fn(),
   getIsSamlSsoEnabled: vi.fn(),
@@ -92,6 +94,7 @@ beforeEach(() => {
     locale: "en-US",
   } as never);
   vi.mocked(startSsoRecovery).mockResolvedValue("/auth/verification-requested?x=1");
+  vi.mocked(markInstanceSetupCompleted).mockResolvedValue(undefined);
 });
 
 describe("getSsoProviderFromContext", () => {
@@ -343,6 +346,36 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       attributionProperties: {},
     });
     expect(identifyPostHogPerson).toHaveBeenCalledWith("u1", { email: "a@b.com", name: undefined });
+  });
+
+  test("records the instance as set up when it creates the first SSO user of a fresh instance (ENG-7313)", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({ ...provisionDecision, wasFreshInstance: true });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(markInstanceSetupCompleted).toHaveBeenCalledTimes(1);
+    expect(provisionSsoUserMemberships).toHaveBeenCalled();
+  });
+
+  test("does not touch the setup marker for any other SSO sign-up", async () => {
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision(provisionDecision);
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
+  });
+
+  test("still provisions when recording the setup marker fails", async () => {
+    vi.mocked(markInstanceSetupCompleted).mockRejectedValue(new Error("db down"));
+    await runWithSsoRequestContext(async () => {
+      setSsoProvisioningDecision({ ...provisionDecision, wasFreshInstance: true });
+      await after({ id: "u1", email: "a@b.com" } as never, callbackCtx as never);
+    });
+    expect(loggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "u1" }),
+      "Failed to record that the instance is set up"
+    );
+    expect(provisionSsoUserMemberships).toHaveBeenCalled();
   });
 
   test("forwards useDefaultOrganization so the write phase find-or-creates the org (ENG-2089)", async () => {

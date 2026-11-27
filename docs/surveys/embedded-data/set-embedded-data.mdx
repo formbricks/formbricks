@@ -24,6 +24,11 @@ The bag reaches a response only through the survey's **declared ingested fields*
 
 That means the workflow is always: declare the field on the survey first, then push a value under the same name.
 
+One reserved field is the exception: **`country`**. Pass a two-letter ISO code, such as
+`formbricks.setEmbeddedData({ country: "DE" })`, and it becomes the response's `country`, ahead of anything your
+CDN reports. Formbricks has no GeoIP lookup, so this is how a site that knows the visitor's country, or a
+self-hosted instance with no CDN in front, records one. See [Reserved Fields](/surveys/embedded-data/reserved-fields).
+
 Values are scoped to the response. They are **never** written to the contact record, so this is not a back door into contact attributes.
 
 ## Merge Semantics

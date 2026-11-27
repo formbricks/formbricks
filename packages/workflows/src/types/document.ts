@@ -20,6 +20,7 @@ import { WORKFLOW_LIMITS } from "./limits";
 import { MAX_WORKFLOW_NODE_ID_LENGTH } from "./node-ids";
 import { validateWorkflowDefinitionSaveRules } from "./save-rules";
 import { getWorkflowStepType } from "./steps";
+import { toStrictSchema } from "./strict";
 import { ZWorkflowTriggerNode } from "./triggers";
 
 export const WORKFLOW_SCHEMA_VERSION = 1;
@@ -298,6 +299,14 @@ export const ZWorkflowDefinitionInput = ZWorkflowDefinition.superRefine((definit
 }).describe(
   `Workflow definition with graph references validated. Node ids use letters, digits, _ and - (at most ${MAX_WORKFLOW_NODE_ID_LENGTH} characters), and a step id can't be trigger or start with trigger_. At most ${WORKFLOW_LIMITS.maxSteps} steps, ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else or filter and ${WORKFLOW_LIMITS.minSwitchCases} to ${WORKFLOW_LIMITS.maxSwitchCases} cases per switch; branches never join; Variable paths start with payload., steps. or response.`
 );
+
+/**
+ * `ZWorkflowDefinitionInput` with every structured object rejecting unknown keys, for MCP writes
+ * (ENG-2437): a misspelled key inside a step's config fails, naming the key, instead of being dropped
+ * while the call reports success. Builder `ui` metadata stays open. The v3 REST route and the builder
+ * keep the lenient schema until the next major.
+ */
+export const ZWorkflowDefinitionInputStrict = toStrictSchema(ZWorkflowDefinitionInput);
 
 // Executable workflows are the enable-time subset: the trigger (and with it the entry point)
 // must exist, so the base's draft-only nullability is tightened back to required here.

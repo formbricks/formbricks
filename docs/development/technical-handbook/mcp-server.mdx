@@ -142,11 +142,10 @@ a scope family, and the gate maps it to that family's scope at the declared leve
 needs `surveys:read`, Charts at `write` needs `dashboards:write` — so the table above still says which
 scope opens each tool. A tool cannot be registered without a permission: the type refuses an empty list,
 and a list that is empty or names a permission or level the registry does not offer throws at
-registration. A new tool inherits enforcement by construction — the gate refuses a token whose scopes
-don't reach a declared permission before the handler touches a v3 operation, with a 403 that names the
-permission, the missing scope and that the client must reconnect. That 403 is in the JSON-RPC tool result,
-which is what a client reads; the HTTP `insufficient_scope` challenge comes only from the transport-level
-refusal in `modules/mcp/auth.ts`, for a token without any MCP scope. The same gate then holds an OAuth
+registration. The gate refuses a missing scope before the handler runs. The JSON-RPC tool result carries
+a 403 with the permission and scope. It asks OAuth callers to reconnect and API-key callers to use a key
+with that access. The HTTP `insufficient_scope` challenge comes from the transport-level refusal in
+`modules/mcp/auth.ts` for a token without any MCP scope. The same gate then holds an OAuth
 call to the MCP client's **grant** (ADR-0041): each declared permission must be at least the declared
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
@@ -776,11 +775,11 @@ Two kinds of exception:
 - **Free-form by design.** `blocks`, `metadata`, `welcomeCard` and friends on `create_survey`, and the
   `data` payload on `patch_survey` / `validate_survey`, accept any nested shape. They are validated by the
   v3 survey document contract once the call reaches the operation.
-- **The workflow `definition`.** Everything below `definition` on `create_workflow` and `patch_workflow`
-  is still open, so a misspelled key inside a trigger, node, edge or node `config` is dropped rather than
-  rejected. That schema is shared with the v3 Workflows REST API and the workflow builder, so tightening it
-  is a v3 API change rather than an MCP one; it is tracked as ENG-2437. Treat a `create_workflow` result as
-  confirming only what it echoes back.
+- **Workflow `ui` metadata.** The `definition` on `create_workflow` and `patch_workflow` is strict at
+  every level, so a misspelled key inside a trigger, step, edge or step `config` is rejected and named.
+  Only the builder's `ui` objects (on the definition, the trigger and each step) keep any key, so a
+  definition read back from `get_workflow` can be sent again. The v3 Workflows REST API still drops
+  unknown keys inside `definition` until the next major.
 
 <Note>
   A client that adds its own keys to a tool call's `arguments` will be rejected. Nothing in the MCP spec

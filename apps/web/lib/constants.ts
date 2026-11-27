@@ -42,6 +42,9 @@ export const WEBHOOK_DELIVERY_TIMEOUT_MS = env.WEBHOOK_DELIVERY_TIMEOUT_MS ?? 5_
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const PASSWORD_RESET_TOKEN_LIFETIME_MINUTES = env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES;
+
+// Optional secret the first administrator must present on a fresh instance (ENG-7313). Unset by default.
+export const SETUP_TOKEN = env.SETUP_TOKEN;
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
 export const GOOGLE_OAUTH_ENABLED = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
@@ -141,8 +144,9 @@ export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
  * Resolve here, never at the call site. The secret signs Better Auth's session cookies (auth.ts), the
  * forward-auth proxy's verification of them (session-cookie.ts), and every app JWT — invites, email
  * verification, email change, survey PIN tokens, gateway service tokens (lib/jwt.ts). A divergence
- * between any two of those is an outage, and it surfaces only as an opaque `state_security_mismatch`
- * (better-auth-observability.ts).
+ * between any two of those is an outage. On an SSO callback it surfaces as a `state_security_mismatch`
+ * whose Sentry capture is tagged `auth.state_cookie: signature_invalid` (oauth-state-cookie-diagnosis.ts,
+ * ENG-6692); elsewhere it is no more specific than a failed verification.
  *
  * `firstConfigured` treats a blank value as unset, which `??` does not: `"" ?? env.NEXTAUTH_SECRET` is
  * `""`, which is falsy and would fail every guard below while shadowing a perfectly good legacy secret.
