@@ -211,7 +211,7 @@ const getExistingFields = async (key: TIntegrationAirtableCredential, baseId: st
 /**
  * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
  * space, in the same order as `elements`; `matchLabelsToColumns` says how a table created before the fix
- * keeps filling its fields. Only a label matching no field gets a new field.
+ * keeps filling its fields, and which new fields to create.
  */
 export const writeData = async (
   key: TIntegrationAirtableCredential,
@@ -226,14 +226,13 @@ export const writeData = async (
     );
   }
 
-  // 1) Pick each answer's field: its own label, else a legacy one, else a new field with its label
+  // 1) Pick each answer's field: an existing one, or a new one to create
   const existingFields = await getExistingFields(key, configData.baseId, configData.tableId);
   const existingFieldNames = [...existingFields];
-  const matchedFields = matchLabelsToColumns(existingFieldNames, elements, legacyElements);
-  const fieldNames = elements.map((label, i) => {
-    const field = matchedFields[i];
-    return field === undefined ? label : existingFieldNames[field];
-  });
+  const choices = matchLabelsToColumns(existingFieldNames, elements, legacyElements);
+  const fieldNames = choices.map((choice) =>
+    "existing" in choice ? existingFieldNames[choice.existing] : choice.create
+  );
 
   // 2) Build the record payload, and figure out which fields need creating
   const data: Record<string, string> = {};
@@ -243,7 +242,9 @@ export const writeData = async (
         ? truncateText(responses[i], AIRTABLE_MESSAGE_LIMIT)
         : responses[i];
   }
-  const fieldsToCreate = fieldNames.filter((name) => !existingFields.has(name));
+  const fieldsToCreate = [
+    ...new Set(choices.flatMap((choice) => ("create" in choice ? [choice.create] : []))),
+  ].filter((name) => !existingFields.has(name));
 
   // 3) Create any missing fields with throttling to respect Airtable's 5 req/sec per base limit
   if (fieldsToCreate.length > 0) {

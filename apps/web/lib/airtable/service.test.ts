@@ -121,6 +121,16 @@ describe("writeData", () => {
     expect(airtable.records).toEqual([{ [label]: "a", [legacyLabel]: "b" }]);
   });
 
+  test("keeps both answers when a changed label now equals another question's label", async () => {
+    // A two-paragraph headline (now "First line Second line") next to a plain one with that text.
+    airtable.fieldNames = [];
+
+    await writeData(key, configData, ["a", "b"], [label, label], [legacyLabel, label]);
+
+    expect(airtable.createdFields).toEqual([legacyLabel, label]);
+    expect(airtable.records).toEqual([{ [legacyLabel]: "a", [label]: "b" }]);
+  });
+
   test("uses the labels as they are when no legacy labels are passed", async () => {
     airtable.fieldNames = ["Metadata"];
 

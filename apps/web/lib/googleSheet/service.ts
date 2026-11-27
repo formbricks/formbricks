@@ -80,7 +80,7 @@ const readHeaderRow = (
  *
  * ENG-3682: `legacyElements` holds each label as it read before block elements were separated by a
  * space, in the same order as `elements`; `matchLabelsToColumns` says how a sheet written before the fix
- * keeps filling its columns. Only a label matching no column is appended as a new header.
+ * keeps filling its columns. A label matching no column is appended as a new header.
  */
 export const alignRowToHeaders = (
   existingHeaders: string[],
@@ -89,16 +89,17 @@ export const alignRowToHeaders = (
   legacyElements: string[] = elements
 ): { headers: string[]; row: string[]; headersChanged: boolean } => {
   const headers = [...existingHeaders];
-  const matchedColumns = matchLabelsToColumns(existingHeaders, elements, legacyElements);
+  const choices = matchLabelsToColumns(existingHeaders, elements, legacyElements);
 
-  const placements: { column: number; value: string }[] = [];
-  elements.forEach((label, index) => {
-    let column = matchedColumns[index];
-    if (column === undefined) {
+  const placements: { column: number; value: string }[] = choices.map((choice, index) => {
+    let column: number;
+    if ("existing" in choice) {
+      column = choice.existing;
+    } else {
       column = headers.length;
-      headers.push(label);
+      headers.push(choice.create);
     }
-    placements.push({ column, value: responses[index] ?? "" });
+    return { column, value: responses[index] ?? "" };
   });
 
   const row: string[] = new Array(headers.length).fill("");
