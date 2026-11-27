@@ -4628,6 +4628,7 @@
         "issue_offline": "Parece que está offline. Verifique a sua ligação à Internet e tente novamente.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Escolhe para onde esta regra salta",
+        "issue_save_blocked_tooltip": "Resolve todos os erros para guardar o inquérito",
         "issue_show_if": "Mostrar se: {message}",
         "issue_show_if_question": "Escolhe uma pergunta para esta condição",
         "issue_show_if_value": "Escolhe um valor para esta condição",

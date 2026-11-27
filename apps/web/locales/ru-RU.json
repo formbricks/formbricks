@@ -4628,6 +4628,7 @@
         "issue_offline": "Похоже, вы не в сети. Проверьте подключение к интернету и попробуйте снова.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Выбери, куда переходит это правило",
+        "issue_save_blocked_tooltip": "Исправьте все ошибки, чтобы сохранить опрос",
         "issue_show_if": "Условие показа: {message}",
         "issue_show_if_question": "Выбери вопрос для этого условия",
         "issue_show_if_value": "Выбери значение для этого условия",

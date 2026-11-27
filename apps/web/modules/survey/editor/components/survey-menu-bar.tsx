@@ -142,6 +142,29 @@ interface SurveyMenuBarProps {
 const isAnsweredRefusal = (error: unknown): error is V3ApiError =>
   error instanceof V3ApiError && error.status !== 0;
 
+/**
+ * Wraps a button that errors have switched off: the tooltip says why, and only shows while blocked. The button
+ * itself uses aria-disabled, not disabled, because a disabled button takes no hover or click, and both are needed.
+ */
+const ErrorBlockedTooltip = ({
+  blocked,
+  message,
+  children,
+}: {
+  readonly blocked: boolean;
+  readonly message: string;
+  readonly children: ReactNode;
+}) => (
+  <TooltipProvider delayDuration={0}>
+    <Tooltip open={blocked ? undefined : false}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <InfoTooltipContent side="bottom" align="end">
+        {message}
+      </InfoTooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
+
 export const SurveyMenuBar = ({
   localSurvey,
   survey,
@@ -748,6 +771,12 @@ export const SurveyMenuBar = ({
 
   // After a refused publish the button says why it is off, and a click on it opens the list of errors.
   const isActivateBlocked = errorCount > 0;
+  // Save and Save & Close on a live survey are refused by the same errors; a draft's save is not.
+  const isSaveBlocked = isActivateBlocked && localSurvey.status !== "draft";
+  const blockedButtonProps = (blocked: boolean) => ({
+    "aria-disabled": blocked || undefined,
+    className: cn(blocked && "cursor-not-allowed opacity-50"),
+  });
 
   const handleActivateClick = () => {
     if (isActivateBlocked) {
@@ -876,26 +905,39 @@ export const SurveyMenuBar = ({
           </div>
         )}
         {!isCxMode && (
-          <Button
-            data-save-button
-            disabled={isSurveySaving}
-            variant="secondary"
-            size="sm"
-            loading={isSurveySaving}
-            onClick={() => (localSurvey.status === "draft" ? handleSurveySaveDraft() : handleSurveySave())}
-            type="submit">
-            {localSurvey.status === "draft" ? draftSaveLabel : t("common.save")}
-          </Button>
+          <ErrorBlockedTooltip
+            blocked={isSaveBlocked}
+            message={t("workspace.surveys.edit.issue_save_blocked_tooltip")}>
+            <Button
+              data-save-button
+              disabled={isSurveySaving}
+              variant="secondary"
+              size="sm"
+              loading={isSurveySaving}
+              {...blockedButtonProps(isSaveBlocked)}
+              onClick={() => {
+                if (isSaveBlocked) return onBlockedActivateClick();
+                return localSurvey.status === "draft" ? handleSurveySaveDraft() : handleSurveySave();
+              }}
+              type="submit">
+              {localSurvey.status === "draft" ? draftSaveLabel : t("common.save")}
+            </Button>
+          </ErrorBlockedTooltip>
         )}
         {localSurvey.status !== "draft" && (
-          <Button
-            disabled={isSurveySaving}
-            className="mr-3"
-            size="sm"
-            loading={isSurveySaving}
-            onClick={() => handleSaveAndGoBack()}>
-            {t("workspace.surveys.edit.save_and_close")}
-          </Button>
+          <ErrorBlockedTooltip
+            blocked={isSaveBlocked}
+            message={t("workspace.surveys.edit.issue_save_blocked_tooltip")}>
+            <Button
+              disabled={isSurveySaving}
+              size="sm"
+              loading={isSurveySaving}
+              {...blockedButtonProps(isSaveBlocked)}
+              className={cn("mr-3", blockedButtonProps(isSaveBlocked).className)}
+              onClick={() => (isSaveBlocked ? onBlockedActivateClick() : handleSaveAndGoBack())}>
+              {t("workspace.surveys.edit.save_and_close")}
+            </Button>
+          </ErrorBlockedTooltip>
         )}
         {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
           <Button
@@ -910,25 +952,18 @@ export const SurveyMenuBar = ({
         )}
         {/* Always display Publish button for link surveys for better CR */}
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip open={isActivateBlocked ? undefined : false}>
-              <TooltipTrigger asChild>
-                {/* aria-disabled, not disabled: a disabled button takes no hover or click, and both are needed. */}
-                <Button
-                  size="sm"
-                  disabled={isSurveySaving || isVisibilityRefreshing}
-                  loading={isSurveyPublishing}
-                  aria-disabled={isActivateBlocked || undefined}
-                  className={cn(isActivateBlocked && "cursor-not-allowed opacity-50")}
-                  onClick={handleActivateClick}>
-                  {draftPrimaryLabel}
-                </Button>
-              </TooltipTrigger>
-              <InfoTooltipContent side="bottom" align="end">
-                {t("workspace.surveys.edit.issue_activate_blocked_tooltip")}
-              </InfoTooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <ErrorBlockedTooltip
+            blocked={isActivateBlocked}
+            message={t("workspace.surveys.edit.issue_activate_blocked_tooltip")}>
+            <Button
+              size="sm"
+              disabled={isSurveySaving || isVisibilityRefreshing}
+              loading={isSurveyPublishing}
+              {...blockedButtonProps(isActivateBlocked)}
+              onClick={handleActivateClick}>
+              {draftPrimaryLabel}
+            </Button>
+          </ErrorBlockedTooltip>
         )}
       </div>
       <AlertDialog

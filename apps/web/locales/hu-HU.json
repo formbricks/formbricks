@@ -4628,6 +4628,7 @@
         "issue_offline": "Úgy tűnik, Ön jelenleg nincs kapcsolatban az internettel. Kérjük, ellenőrizze internetkapcsolatát, majd próbálja meg újra.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Kérjük, válassza ki, hová ugorjon ez a szabály",
+        "issue_save_blocked_tooltip": "A kérdőív mentéséhez kérjük, szíveskedjék kijavítani valamennyi hibát.",
         "issue_show_if": "Megjelenítés, ha: {message}",
         "issue_show_if_question": "Kérjük, válasszon kérdést ehhez a feltételhez",
         "issue_show_if_value": "Kérjük, válasszon értéket ehhez a feltételhez",

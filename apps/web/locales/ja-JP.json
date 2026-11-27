@@ -4628,6 +4628,7 @@
         "issue_offline": "オフラインのようです。インターネット接続を確認して、もう一度お試しください。",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "このルールのジャンプ先を選択してください",
+        "issue_save_blocked_tooltip": "アンケートを保存するには、すべてのエラーを解決してください",
         "issue_show_if": "表示条件: {message}",
         "issue_show_if_question": "この条件に使う質問を選んでください",
         "issue_show_if_value": "この条件に使う値を選んでください",

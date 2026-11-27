@@ -4628,6 +4628,7 @@
         "issue_offline": "Du scheinst offline zu sein. Überprüfe deine Internetverbindung und versuche es erneut.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Wähle aus, wohin diese Regel springt",
+        "issue_save_blocked_tooltip": "Bitte behebe alle Fehler, um die Umfrage zu speichern",
         "issue_show_if": "Anzeigen, wenn: {message}",
         "issue_show_if_question": "Wähle eine Frage für diese Bedingung aus",
         "issue_show_if_value": "Wähle einen Wert für diese Bedingung aus",

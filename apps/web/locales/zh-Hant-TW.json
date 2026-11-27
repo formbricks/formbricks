@@ -4628,6 +4628,7 @@
         "issue_offline": "你似乎已離線。請檢查網際網路連線後再試一次。",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "請選擇此規則要跳轉到哪裡",
+        "issue_save_blocked_tooltip": "請先解決所有錯誤，才能儲存問卷",
         "issue_show_if": "顯示條件：{message}",
         "issue_show_if_question": "請為此條件選擇一個問題",
         "issue_show_if_value": "請為此條件選擇一個值",

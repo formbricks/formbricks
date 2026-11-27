@@ -4628,6 +4628,7 @@
         "issue_offline": "Çevrimdışı görünüyorsun. İnternet bağlantını kontrol edip tekrar dene.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Bu kuralın nereye atlayacağını seç",
+        "issue_save_blocked_tooltip": "Anketi kaydetmek için lütfen tüm hataları çöz",
         "issue_show_if": "Şu durumda göster: {message}",
         "issue_show_if_question": "Bu koşul için bir soru seç",
         "issue_show_if_value": "Bu koşul için bir değer seç",

@@ -4628,6 +4628,7 @@
         "issue_offline": "你似乎已离线。请检查网络连接后重试。",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "选择此规则要跳转到的位置",
+        "issue_save_blocked_tooltip": "请先解决所有错误，再保存问卷",
         "issue_show_if": "显示条件:{message}",
         "issue_show_if_question": "为此条件选择一个问题",
         "issue_show_if_value": "为此条件选择一个值",

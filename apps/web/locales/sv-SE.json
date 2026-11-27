@@ -4628,6 +4628,7 @@
         "issue_offline": "Du verkar vara offline. Kontrollera din internetanslutning och försök igen.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Välj vart den här regeln ska hoppa",
+        "issue_save_blocked_tooltip": "Åtgärda alla fel för att kunna spara enkäten",
         "issue_show_if": "Visa om: {message}",
         "issue_show_if_question": "Välj en fråga för det här villkoret",
         "issue_show_if_value": "Välj ett värde för det här villkoret",

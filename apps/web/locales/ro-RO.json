@@ -4628,6 +4628,7 @@
         "issue_offline": "Se pare că ești offline. Verifică conexiunea la internet și încearcă din nou.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Alege unde trimite această regulă",
+        "issue_save_blocked_tooltip": "Rezolvă toate erorile pentru a salva sondajul",
         "issue_show_if": "Afișează dacă: {message}",
         "issue_show_if_question": "Alege o întrebare pentru această condiție",
         "issue_show_if_value": "Alege o valoare pentru această condiție",

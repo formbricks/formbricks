@@ -4628,6 +4628,7 @@
         "issue_offline": "Je lijkt offline te zijn. Controleer je internetverbinding en probeer het opnieuw.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Kies waar deze regel naartoe springt",
+        "issue_save_blocked_tooltip": "Los alle fouten op om de enquête op te slaan",
         "issue_show_if": "Toon-als: {message}",
         "issue_show_if_question": "Kies een vraag voor deze voorwaarde",
         "issue_show_if_value": "Kies een waarde voor deze voorwaarde",

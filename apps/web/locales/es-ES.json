@@ -4628,6 +4628,7 @@
         "issue_offline": "Parece que no tienes conexión. Comprueba tu conexión a internet e inténtalo de nuevo.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Elige a dónde salta esta regla",
+        "issue_save_blocked_tooltip": "Soluciona todos los errores para guardar la encuesta",
         "issue_show_if": "Mostrar si: {message}",
         "issue_show_if_question": "Elige una pregunta para esta condición",
         "issue_show_if_value": "Elige un valor para esta condición",

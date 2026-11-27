@@ -4628,6 +4628,7 @@
         "issue_offline": "Tu sembles être hors ligne. Vérifie ta connexion Internet et réessaie.",
         "issue_repeat_count": "{message} ×{count}",
         "issue_rule_choose_destination": "Choisis où cette règle redirige",
+        "issue_save_blocked_tooltip": "Corrige toutes les erreurs pour enregistrer le sondage",
         "issue_show_if": "Afficher si : {message}",
         "issue_show_if_question": "Choisis une question pour cette condition",
         "issue_show_if_value": "Choisis une valeur pour cette condition",
