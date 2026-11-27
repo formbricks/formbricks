@@ -2354,6 +2354,13 @@ describe("Mark as low quality on the v3 survey document (ENG-6933)", () => {
     expect(rule.id).toBe(SURVEY_FLOW_FIXTURE_IDS.lowQuality.rule);
     expect(rule.actions).toEqual([
       { id: SURVEY_FLOW_FIXTURE_IDS.lowQuality.action, objective: "markLowQuality" },
+      // ENG-7437: the fixture's rule also pre-selects a bundle, which round-trips the same way.
+      {
+        id: SURVEY_FLOW_FIXTURE_IDS.lowQuality.preselectAction,
+        objective: "preselectAnswer",
+        target: "bundle",
+        value: { type: "choices", choiceIds: ["netflix_prime"] },
+      },
     ]);
 
     const preparation = prepareV3SurveyPatchInput(surveyFlowFixture, resource);

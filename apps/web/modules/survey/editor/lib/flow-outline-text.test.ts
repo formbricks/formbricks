@@ -370,7 +370,10 @@ describe("describeRuleSummary: the whole sentence, for the tooltip and the row's
     const lowQuality = surveyFlowFixture.blocks
       .flatMap((block) => block.logic ?? [])
       .find((item) => item.id === ids.lowQuality.rule);
-    expect(describeRuleSummary(lowQuality!, surveyFlowFixture, t)).toMatch(/→ mark_as_low_quality$/);
+    // ENG-7437: its Pre-select answer step follows, naming the option by its label.
+    expect(describeRuleSummary(lowQuality!, surveyFlowFixture, t)).toMatch(
+      /→ mark_as_low_quality · Pre-select “Netflix \+ Prime Video” in “.+”$/
+    );
   });
 
   test("a rule without conditions always runs", () => {

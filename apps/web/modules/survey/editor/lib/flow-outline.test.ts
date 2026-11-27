@@ -90,7 +90,16 @@ describe("buildFlowOutline: every construct in the fixture survey", () => {
       type: "markLowQuality",
       editable: true,
     });
-    expect(row?.rule.actions).toEqual([{ id: ids.lowQuality.action, objective: "markLowQuality" }]);
+    expect(row?.rule.actions).toEqual([
+      { id: ids.lowQuality.action, objective: "markLowQuality" },
+      // ENG-7437: the same rule pre-selects a bundle; the row still reads as its first action.
+      {
+        id: ids.lowQuality.preselectAction,
+        objective: "preselectAnswer",
+        target: "bundle",
+        value: { type: "choices", choiceIds: ["netflix_prime"] },
+      },
+    ]);
   });
 
   test("everything the survey holds is editable, and nothing is read-only", () => {
