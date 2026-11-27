@@ -110,6 +110,22 @@ describe("matchLabelsToColumns", () => {
     });
   });
 
+  test("gives three headlines whose names chain into each other their own legacy fields", () => {
+    // `<p>AB</p><p>C</p>` ("AB C", was "ABC"), `<p>A</p><p>B C</p>` ("A B C", was "AB C"), plain "A B C".
+    const labels = ["AB C", "A B C", "A B C"];
+    const legacyLabels = ["ABC", "AB C", "A B C"];
+    expect(matchLabelsToColumns([], labels, legacyLabels)).toEqual([
+      create("ABC"),
+      create("AB C"),
+      create("A B C"),
+    ]);
+    expect(matchLabelsToColumns(["ABC", "AB C", "A BC"], labels, ["ABC", "AB C", "A BC"])).toEqual([
+      existing(0),
+      existing(1),
+      existing(2),
+    ]);
+  });
+
   test("keeps the pre-fix order when two headlines read alike before the fix", () => {
     // q1 is `<p>A</p><p>B</p>` (legacy "AB"); q2 is a plain "AB" headline. Both wrote to "AB" columns
     // before the fix, the first occurrence to the first column.
