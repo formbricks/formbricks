@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  MAX_UTM_VALUE_LENGTH,
   VISIT_STORAGE_KEY,
   getVisitSnapshot,
   recordCampaign,
@@ -262,6 +263,15 @@ describe("visit store — the campaign the visit arrived with (ENG-7430)", () =>
     recordCampaign("?utm_campaign=winter");
 
     expect(getVisitSnapshot(T0 + SECOND)?.utm).toEqual({ utmCampaign: "winter" });
+  });
+
+  test("caps each stored value, so a crafted link cannot bloat the visit", () => {
+    land("/", `?utm_campaign=${"x".repeat(5000)}&utm_source=newsletter`, T0);
+
+    expect(getVisitSnapshot(T0)?.utm).toEqual({
+      utmSource: "newsletter",
+      utmCampaign: "x".repeat(MAX_UTM_VALUE_LENGTH),
+    });
   });
 
   test("a new tab starts without another visit's campaign", () => {

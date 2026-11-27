@@ -30,6 +30,11 @@ import { type TVisitUtm, readUtmParams } from "@formbricks/types/visit";
  */
 
 export const VISIT_STORAGE_KEY = "formbricks-visit";
+/**
+ * The longest UTM value the visit keeps. The entry is rewritten on every page, so a crafted link with
+ * a huge `utm_campaign` would otherwise be carried and re-serialised for the rest of the visit.
+ */
+export const MAX_UTM_VALUE_LENGTH = 500;
 const MAX_PATH_ENTRIES = 50;
 
 interface TVisitState {
@@ -189,7 +194,9 @@ export const recordCampaign = (search: string): void => {
   const state = loadState();
   if (!state) return;
 
-  state.utm = utm;
+  state.utm = Object.fromEntries(
+    Object.entries(utm).map(([key, value]) => [key, value.slice(0, MAX_UTM_VALUE_LENGTH)])
+  );
   saveState(state);
 };
 
