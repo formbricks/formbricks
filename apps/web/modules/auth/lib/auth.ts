@@ -213,9 +213,9 @@ export const auth = betterAuth({
   //  - `/link-social` and `/unlink-account` fight `accountLinking.enabled: false` and the verify-before-
   //    link recovery flow.
   //  - `/oauth2/create-client`, `/update-client`, `/delete-client`, `/client/rotate-secret` (ENG-3253) and
-  //    `/client/rotate-keys` (added in 1.7.10, opt-in upstream through `allowClientKeyRotation`, which we
-  //    leave off, so it answers 403 either way) are the session-authenticated client CRUD. No screen calls them, and they skip the redirect
-  //    allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
+  //    `/client/rotate-keys` (added in 1.7.10; upstream refuses it unless `allowClientKeyRotation` is set,
+  //    which we leave off, and it answers 404 here regardless) are the session-authenticated client CRUD.
+  //    No screen calls them, and they skip the redirect allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
   //    for its own `https` redirect URI, or repoint one with `update-client`, then phish a consent.
   //    Closed by path rather than with `clientPrivileges`, because the plugin also asserts that hook
   //    on `/oauth2/register` whenever a session cookie rides along, which would break MCP

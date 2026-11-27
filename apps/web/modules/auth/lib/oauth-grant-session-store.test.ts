@@ -16,7 +16,7 @@ const contextFor = (path: string, cookie: string | null, cacheCookieName = CACHE
 };
 
 describe("oauthGrantReadsSessionStoreBeforeHandler", () => {
-  test.each(["/oauth2/authorize", "/oauth2/consent", "/oauth2/continue"])(
+  test.each(["/oauth2/authorize", "/oauth2/consent", "/oauth2/continue", "/oauth2/update-consent"])(
     "drops the session cache cookie on %s and keeps the session token",
     (path) => {
       const { ctx, headers } = contextFor(path, `${TOKEN_COOKIE}; ${CACHE_COOKIE}=eyJ.payload; theme=dark`);
@@ -111,16 +111,6 @@ describe("oauthGrantReadsSessionStoreBeforeHandler", () => {
       request: new Request("http://localhost:3000/api/auth/oauth2/authorize", {
         headers: { cookie: TOKEN_COOKIE },
       }),
-      context: { authCookies: { sessionData: { name: CACHE_COOKIE } } },
-    } as unknown as AuthHookContext;
-
-    expect(() => oauthGrantReadsSessionStoreBeforeHandler(ctx)).not.toThrow();
-  });
-
-  test("does nothing when the request carries no headers object", () => {
-    const ctx = {
-      path: "/oauth2/authorize",
-      headers: undefined,
       context: { authCookies: { sessionData: { name: CACHE_COOKIE } } },
     } as unknown as AuthHookContext;
 

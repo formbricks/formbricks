@@ -86,15 +86,15 @@ const hasDecodableProtectedHeader = (token: string): boolean => {
 };
 
 /**
- * Loads the key set before `verifyBearerToken` does, because that call hides every way the load fails:
- * an endpoint answering non-2xx becomes a bare `Error("Jwks failed: …")`, and an unreachable one (DNS,
- * refused connection, no hairpin to the public origin) has its `TypeError` swallowed into the same
- * `no token payload` 401 as a garbage token. `getJwks` is the library's own loader and URL-keyed cache,
- * so it surfaces an error we can classify as `jwks_fetch` (from Better Auth 1.7.16 an unreachable
- * endpoint arrives as a bare `Error("JWKS fetch failed")`: the library logs the `TypeError` itself and
- * drops it, so its code is not in our log context), and on success `verifyBearerToken` reads the set cached here instead
- * of fetching again. `createLocalJWKSet` rejects a 200 that is not a key set (a proxy's login page),
- * which the library would otherwise cache and trip over later as another swallowed `TypeError`.
+ * Loads the key set before `verifyBearerToken` does, because that call hides how the load failed: an
+ * endpoint answering non-2xx becomes a bare `Error("Jwks failed: …")`, and an unreachable one (DNS,
+ * refused connection, no hairpin to the public origin) lost its cause. Before Better Auth 1.7.16 its
+ * `TypeError` was swallowed into the same `no token payload` 401 as a garbage token; since then it is a
+ * bare `Error("JWKS fetch failed")` with no `cause` (the library logs the `TypeError` itself), so its
+ * code is not in our log context. `getJwks` is the library's own loader and URL-keyed cache, so it
+ * surfaces an error we can classify as `jwks_fetch`, and on success `verifyBearerToken` reads the set
+ * cached here instead of fetching again. `createLocalJWKSet` rejects a 200 that is not a key set (a
+ * proxy's login page), which the library would otherwise cache and trip over later.
  *
  * Skipped for a token whose header does not decode: `getJwks` would refuse it before fetching, and
  * `verifyBearerToken` rejects it anyway.

@@ -1,12 +1,15 @@
+import { createHash, randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
   BASE_URL,
+  ORIGIN,
   REDIRECT_URI,
   authorize,
   consent,
   createUser,
   grant,
+  handle,
   registerClient,
   signIn,
 } from "@/integration/oauth-flow";
@@ -46,6 +49,35 @@ const signedInConsentedUser = async () => {
   await grant(cookie, clientId, SCOPE);
   return { cookie, userId, clientId };
 };
+
+/**
+ * A pending authorization the way the login page holds it: `/oauth2/authorize` while signed out answers with
+ * a redirect to sign in, carrying the signed query that `/oauth2/continue` later resumes.
+ */
+const pendingAuthorization = async (clientId: string): Promise<string> => {
+  const verifier = randomBytes(32).toString("base64url");
+  const query = new URLSearchParams({
+    response_type: "code",
+    client_id: clientId,
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPE,
+    code_challenge: createHash("sha256").update(verifier).digest("base64url"),
+    code_challenge_method: "S256",
+    resource: getMcpResourceUrl(),
+    state: "state",
+  });
+  const response = await handle(`/oauth2/authorize?${query}`, { headers: { accept: "text/html" } });
+  const login = new URL(response.headers.get("location") ?? "", BASE_URL);
+  expect(login.pathname).toBe("/auth/login");
+  return login.search.slice(1);
+};
+
+const continueAuthorization = (cookie: string, signedQuery: string) =>
+  handle("/oauth2/continue", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
+    body: JSON.stringify({ selected: true, oauth_query: signedQuery }),
+  });
 
 beforeEach(async () => {
   await resetDb();
@@ -87,6 +119,34 @@ describe("OAuth authorization with a revoked session (real Postgres and Valkey)"
 
     expect(target.searchParams.get("code")).toBeNull();
     expect(target.pathname).toBe("/auth/login");
+  });
+
+  test("/oauth2/continue resumes a pending authorization for a live session, and not for a revoked one", async () => {
+    const { cookie, userId, clientId } = await signedInConsentedUser();
+    const signedQuery = await pendingAuthorization(clientId);
+
+    expect(await codeIn(await continueAuthorization(cookie, signedQuery))).toBeTruthy();
+
+    await revokeUserSessionsExcept({ userId });
+
+    expect(await codeIn(await continueAuthorization(cookie, signedQuery))).toBeNull();
+  });
+
+  test("/oauth2/update-consent does not widen a stored consent for a revoked session", async () => {
+    const { cookie, userId } = await signedInConsentedUser();
+    const stored = await prisma.oauthConsent.findFirstOrThrow({ where: { userId } });
+    await revokeUserSessionsExcept({ userId });
+
+    const response = await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id: stored.id, update: { scopes: ["surveys:read", "surveys:write"] } }),
+    });
+
+    expect(response.status).toBe(401);
+    expect((await prisma.oauthConsent.findUniqueOrThrow({ where: { id: stored.id } })).scopes).toEqual(
+      stored.scopes
+    );
   });
 
   test("/oauth2/consent does not turn a revoked session's approval into a code", async () => {

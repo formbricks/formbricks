@@ -2,16 +2,22 @@ import { APIError } from "better-auth/api";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 
 /**
- * The routes that turn a session into a credential that outlives it: `authorize` mints an authorization
- * code when a consent already covers the request, `consent` records the approval and mints one, and
- * `continue` resumes a pending authorization after sign-in or organization selection. A code exchanges
- * for tokens that survive every revocation of the session.
+ * The routes that turn a session into a credential or grant that outlives it: `authorize` mints an
+ * authorization code when a consent already covers the request, `consent` records the approval and mints
+ * one, `continue` resumes a pending authorization after sign-in or organization selection, and
+ * `update-consent` widens the scopes a stored consent covers, so the next `authorize` skips the consent
+ * screen. A code exchanges for tokens that survive every revocation of the session. `delete-consent` only
+ * removes a grant and the `get-consent*` routes only read, so they stay on the cache.
  */
 const OAUTH_GRANT_PATHS: ReadonlySet<string> = new Set([
   "/oauth2/authorize",
   "/oauth2/consent",
   "/oauth2/continue",
+  "/oauth2/update-consent",
 ]);
+
+// The matcher below must read a cookie name the way Better Auth's parsers do. `better-auth-trust-device-gate.ts`
+// carries an older copy that does not (ENG-7559); fix both together when that ticket is picked up.
 
 /** `<name>` and its chunks `<name>.0`, `<name>.1`, …: Better Auth splits a large cookie cache value. */
 const isCookieNamedOrChunkOf = (cookieName: string, name: string): boolean =>
