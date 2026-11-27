@@ -96,6 +96,7 @@ Current workloads on the shared `background-jobs` queue include:
 | Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window.                             |
 | Deletion cleanup  | `deletion-cleanup.drain`                         | Removes the Hub records and stored files of deleted surveys and responses, retrying until done. |
 | Creative counts   | `creative-stats.flush`                           | Copies creative Impressions and Clicks from Redis to the database every minute.            |
+| OAuth clients     | `oauth-client.cleanup`                           | Deletes anonymous MCP client registrations older than 7 days that were never consented to and hold no live token, once a day. |
 | Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                                                   |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
 | Attachment exports | `attachment-export.reconcile`                   | Re-dispatches lost exports, fails stuck ones and deletes export ZIPs after 3 months ([versioned buckets](/self-hosting/configuration/file-uploads) need a lifecycle rule). |

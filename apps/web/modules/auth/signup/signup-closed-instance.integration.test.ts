@@ -7,7 +7,7 @@ import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-conte
 
 /**
  * ENG-2293 at the FRAMEWORK boundary: Better Auth's native `/sign-up/email` against a real Postgres, with
- * no `createUserAction` in the way.
+ * no sign-up route (`POST /api/internal/signups`) in the way.
  *
  * ENG-2293 was reported against the raw HTTP route, where the closed-instance policy existed only in the
  * server action. Since ENG-3988 that route is closed outright (`disabledPaths`), so a raw POST now gets a
@@ -55,7 +55,7 @@ const rawSignUp = (email: string): Promise<Response> =>
   );
 
 /**
- * An in-process sign-up that did NOT come through `createUserAction`, so the policy gate decides it.
+ * An in-process sign-up that did NOT come through the sign-up route (`POST /api/internal/signups`), so the policy gate decides it.
  *
  * A `hooks.before` rejection reaches an `auth.api` caller as a thrown `APIError`, even with
  * `asResponse` (only the HTTP handler turns it into a response), so both outcomes are normalised to
@@ -83,7 +83,7 @@ beforeEach(async () => {
 
 describe("native Better Auth sign-up on a closed instance (real Postgres)", () => {
   // Even on a fresh instance, which the gate would admit: the route is gone, not gated. The first
-  // administrator signs up through the /setup form, which goes through createUserAction.
+  // administrator signs up through the /setup form, which goes through the sign-up route.
   test("the raw HTTP route is closed, even while the instance is fresh", async () => {
     expect(await prisma.user.count()).toBe(0);
 

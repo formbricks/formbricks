@@ -55,10 +55,13 @@ describe("getContactAttributeKeys", () => {
     ];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(mockAttributeKeys);
 
-    const result = await getContactAttributeKeys(mockWorkspaceIds);
+    const result = await getContactAttributeKeys(mockWorkspaceIds, 25, 50);
 
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: mockWorkspaceIds } },
+      orderBy: { id: "asc" },
+      take: 25,
+      skip: 50,
     });
     expect(result).toEqual(mockAttributeKeys);
   });
@@ -70,7 +73,7 @@ describe("getContactAttributeKeys", () => {
       new Prisma.PrismaClientKnownRequestError(errorMessage, { code: "P1000", clientVersion: "test" })
     );
 
-    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
+    await expect(getContactAttributeKeys(mockWorkspaceIds, 25, 50)).rejects.toThrow(DatabaseError);
   });
 
   test("should throw generic error if non-Prisma error occurs", async () => {
@@ -82,14 +85,14 @@ describe("getContactAttributeKeys", () => {
       code: PrismaErrorType.UniqueConstraintViolation,
     });
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(errToThrow);
-    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(errorMessage);
+    await expect(getContactAttributeKeys(mockWorkspaceIds, 25, 50)).rejects.toThrow(errorMessage);
   });
 
   test("should re-throw non-Prisma errors", async () => {
     const mockWorkspaceIds = ["ws1"];
     const errorMessage = "boom";
     vi.mocked(prisma.contactAttributeKey.findMany).mockRejectedValue(new Error(errorMessage));
-    await expect(getContactAttributeKeys(mockWorkspaceIds)).rejects.toThrow(errorMessage);
+    await expect(getContactAttributeKeys(mockWorkspaceIds, 25, 50)).rejects.toThrow(errorMessage);
   });
 });
 

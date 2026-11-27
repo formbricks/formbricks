@@ -2,14 +2,14 @@
 
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { timeSince } from "@/lib/time";
+import type { TWebhookListItem } from "@/modules/integrations/webhooks/types/webhooks";
 import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
 import { hasRestrictedAttachedSurvey } from "@/modules/survey/visibility/lib/outbound";
 import { Badge } from "@/modules/ui/components/badge";
 
-const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
+const renderSelectedSurveysText = (webhook: TWebhookListItem, allSurveys: TSurvey[]) => {
   let surveyNames: string[];
 
   if (webhook.surveyIds.length === 0) {
@@ -34,7 +34,7 @@ const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
   );
 };
 
-const renderSelectedTriggersText = (webhook: Webhook, t: TFunction) => {
+const renderSelectedTriggersText = (webhook: TWebhookListItem, t: TFunction) => {
   if (webhook.triggers.length === 0) {
     return <p className="text-slate-400">{t("workspace.integrations.webhooks.no_triggers")}</p>;
   } else {
@@ -72,7 +72,7 @@ export const WebhookRowData = ({
   webhook,
   surveys,
   surveyVisibilityEnabled,
-}: Readonly<{ webhook: Webhook; surveys: TSurvey[]; surveyVisibilityEnabled: boolean }>) => {
+}: Readonly<{ webhook: TWebhookListItem; surveys: TSurvey[]; surveyVisibilityEnabled: boolean }>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 

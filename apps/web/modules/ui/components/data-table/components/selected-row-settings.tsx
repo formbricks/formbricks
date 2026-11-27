@@ -6,9 +6,11 @@ import { type ReactNode, useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { deleteInChunks } from "../lib/delete-in-chunks";
 
 const Separator = () => <div>|</div>;
 
@@ -23,6 +25,9 @@ interface SelectedRowSettingsProps<T> {
   /** Extra actions for the bar, given the table so they can read the selection when clicked. */
   readonly renderExtraActions?: (table: Table<T>) => ReactNode;
 }
+
+/** Deletions in flight at once: enough to be quick, few enough to stay inside the write budget. */
+const DELETE_CHUNK_SIZE = 5;
 
 export const SelectedRowSettings = <T,>({
   table,
@@ -63,33 +68,25 @@ export const SelectedRowSettings = <T,>({
 
   // Handle deletion
   const handleDelete = async () => {
+    const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+    const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
     try {
       setIsDeleting(true);
-      const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
-
-      const CHUNK_SIZE = 5;
-      for (let i = 0; i < rowsToBeDeleted.length; i += CHUNK_SIZE) {
-        const chunk = rowsToBeDeleted.slice(i, i + CHUNK_SIZE);
-        if (type === "response") {
-          await Promise.all(chunk.map((rowId) => deleteAction(rowId, { decrementQuotas })));
-        } else {
-          await Promise.all(chunk.map((rowId) => deleteAction(rowId)));
-        }
-      }
-
-      // Update the row list UI
-      updateRowList(rowsToBeDeleted);
-      const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
-      toast.success(t("common.table_items_deleted_successfully", { type: capitalizedType }));
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
+      const { deleted, error } = await deleteInChunks(
+        rowsToBeDeleted,
+        (rowId) => (type === "response" ? deleteAction(rowId, { decrementQuotas }) : deleteAction(rowId)),
+        DELETE_CHUNK_SIZE
+      );
+      // The rows already gone leave the table even when a later one failed.
+      if (deleted.length > 0) updateRowList(deleted);
+      if (error === undefined) {
+        toast.success(t("common.table_items_deleted_successfully", { type: capitalizedType }));
       } else {
-        const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
         toast.error(
-          t("common.an_unknown_error_occurred_while_deleting_table_items", {
-            type: capitalizedType,
-          })
+          getV3ApiErrorMessage(
+            error,
+            t("common.an_unknown_error_occurred_while_deleting_table_items", { type: capitalizedType })
+          )
         );
       }
     } finally {

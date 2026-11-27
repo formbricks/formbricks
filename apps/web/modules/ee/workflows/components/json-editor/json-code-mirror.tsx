@@ -25,6 +25,7 @@ import {
 } from "@codemirror/view";
 import { tags } from "@lezer/highlight";
 import { useEffect, useRef } from "react";
+import { useCspNonce } from "@/lib/csp/nonce";
 import type { TJsonEditorVariableRequest } from "@/modules/ee/workflows/components/json-editor/json-editor";
 import { findJsonVariableTokens, insertJsonVariableToken } from "@/modules/ee/workflows/lib/json-editor";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
@@ -195,6 +196,8 @@ export const JsonCodeMirror = ({
 }: Readonly<JsonCodeMirrorProps>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
+  // The document's nonce never changes, so the editor created once below can read it.
+  const nonce = useCspNonce();
   // The latest props, read by the long-lived editor's listeners.
   const onChangeRef = useRef(onChange);
   const onRequestVariableRef = useRef(onRequestVariable);
@@ -221,6 +224,9 @@ export const JsonCodeMirror = ({
       state: EditorState.create({
         doc: lastValueRef.current,
         extensions: [
+          // CodeMirror mounts its styles as a <style> element, which the page's CSP applies only with
+          // its nonce.
+          EditorView.cspNonce.of(nonce ?? ""),
           lineNumbers(),
           history(),
           // No indentWithTab: Tab keeps moving focus out of the field, as in every other input.

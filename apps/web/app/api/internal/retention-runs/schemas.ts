@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  MAX_CURSOR_LENGTH,
   type TKeysetCursor,
   computeFilterFingerprint,
   decodeKeysetCursor,
@@ -36,7 +37,7 @@ export const ZRetentionRunsListQuery = z
   .object({
     organizationId: z.cuid2(),
     limit: z.coerce.number().int().min(1).max(RETENTION_RUNS_MAX_LIMIT).default(RETENTION_RUNS_DEFAULT_LIMIT),
-    cursor: z.string().trim().min(1).optional(),
+    cursor: z.string().max(MAX_CURSOR_LENGTH).trim().min(1).optional(),
     includeEmpty: ZBooleanQueryParam,
   })
   .strict()

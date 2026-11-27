@@ -16,7 +16,10 @@ readonly ZED_IMAGE="${ZED_IMAGE_REF:-authzed/zed:v1.1.1}"
 if command -v zed >/dev/null 2>&1; then
   zed validate "${SCRIPT_DIR}/${VALIDATION_FILE}"
 elif command -v docker >/dev/null 2>&1; then
+  source "${SCRIPT_DIR}/../scripts/ci-network.sh"
+  ci_pull_image "${ZED_IMAGE}"
   docker run --rm \
+    --pull never \
     --volume "${SCRIPT_DIR}:/authzed:ro" \
     "${ZED_IMAGE}" \
     validate "/authzed/${VALIDATION_FILE}"

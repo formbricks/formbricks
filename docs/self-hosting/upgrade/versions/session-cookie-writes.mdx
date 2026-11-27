@@ -1,0 +1,26 @@
+---
+title: "Unreleased: Session-cookie writes need the Formbricks app"
+description: "Writes that authenticate with the Formbricks session cookie are accepted only from the Formbricks app."
+icon: "shield-check"
+---
+
+**Applies to:** the release that moves the dashboard onto the internal API (planned for 7.0). This change is on
+`main` once that work merges, and not in any 6.x patch.
+**Upgrade impact: Action required only for scripts that send a browser's session cookie.**
+
+## What changes
+
+A `POST`, `PUT`, `PATCH` or `DELETE` that authenticates with the Formbricks **session cookie** is accepted only
+when the Formbricks app sent it: the browser's `Sec-Fetch-Site: same-origin`, or an `Origin` matching the host
+the request was sent to (the first `X-Forwarded-Host`, else `Host`). Anything else gets `403`. Requests with an
+API key (`x-api-key` or `Authorization: Bearer`) are not affected.
+
+## What to do
+
+- **Browsers need nothing.** The host rule is the one your dashboard's server actions already had to pass.
+- **Scripts that send a browser's session cookie** to write through `/api/v3` now get `403`. The v3 reference
+  listed the cookie as an auth method until this release; create an API key and send that instead.
+- A client that sends no `Sec-Fetch-Site` header (an older browser, a proxy that strips it) is checked by its
+  `Origin` instead: it must match the host the request was sent to, `WEBAPP_URL`, `BETTER_AUTH_URL` /
+  `NEXTAUTH_URL`, or an origin listed in
+  [`BETTER_AUTH_TRUSTED_ORIGINS`](/self-hosting/configuration/environment-variables) (comma-separated).

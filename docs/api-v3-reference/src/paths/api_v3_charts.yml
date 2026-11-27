@@ -3,7 +3,7 @@ get:
   summary: List charts
   description: |
     Lists a workspace's charts, newest first, page by page. Each chart embeds the dashboards that
-    hold it. Needs read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+    hold it. Needs read access to the workspace. `x-api-key` or a Bearer token.
   tags:
     - V3 Charts
   parameters:

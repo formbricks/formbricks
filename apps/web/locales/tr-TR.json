@@ -43,6 +43,9 @@
       "reset_password_description": "Şifrenizi sıfırlamak için oturumunuz kapatılacak."
     },
     "invite": {
+      "accept_invitation": "Daveti kabul et",
+      "already_a_member": "Zaten üyesin",
+      "already_a_member_description": "Zaten bu kuruluşun bir parçasısın, bu yüzden davet herhangi bir şeyi değiştirmedi.",
       "create_account": "Hesap oluştur",
       "email_does_not_match": "Hay aksi! Yanlış email 🤦",
       "email_does_not_match_description": "Davetteki email adresinizle eşleşmiyor.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Davet kodu bulunamadı veya zaten kullanılmış.",
       "login": "Giriş yap",
       "welcome_to_organization": "İçeridesiniz 🎉",
-      "welcome_to_organization_description": "Organizasyona hoş geldiniz."
+      "welcome_to_organization_description": "Organizasyona hoş geldiniz.",
+      "you_are_invited": "Davetlisin 💌",
+      "you_are_invited_description": "Kuruluşa katılmak için daveti kabul et."
     },
     "last_used": "Son Kullanılan",
     "login": {
@@ -82,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "İki aşamalı giriş burada tamamlanamıyor",
       "oauth_signup_not_allowed_description": "Kimlik sağlayıcın seni oturum açtırdı, ancak bu Formbricks örneği bu şekilde yeni hesap oluşturacak şekilde ayarlanmamış. Bir yöneticiden seni davet etmesini iste, ardından tekrar dene.",
       "oauth_signup_not_allowed_title": "Hesabını oluşturamadık",
-      "please_verify_your_email_to_continue": "Lütfen e-posta adresinizi doğrulayın. Size bir doğrulama bağlantısı gönderdik.",
       "use_a_backup_code": "Yedek kod kullan"
     },
     "oauth": {
@@ -209,7 +213,7 @@
       "log_in": "Giriş yap",
       "password_requirements": "Şifre gereksinimleri",
       "password_validation_contain_at_least_1_number": "En az 1 rakam içermeli",
-      "password_validation_minimum_8_and_maximum_128_characters": "En az 8, en fazla 128 karakter",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "En az 8 karakter ve en fazla 72 bayt",
       "password_validation_uppercase_and_lowercase": "Büyük ve küçük harf karışımı",
       "please_verify_captcha": "Lütfen reCAPTCHA doğrulamasını yapın",
       "privacy_policy": "Gizlilik Politikası",
@@ -437,6 +441,7 @@
     "hidden": "Gizli",
     "hidden_field": "Gizli alan",
     "hidden_fields": "Gizli alanlar",
+    "hide": "Gizle",
     "hide_password": "Şifreyi gizle",
     "html": "HTML",
     "id": "ID",
@@ -1003,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Yönetici Oluştur",
+      "setup_token": "Kurulum belirteci",
+      "setup_token_invalid": "Kurulum belirteci hatalı.",
+      "setup_token_needs_email_sign_up": "Bu örnek bir kurulum jetonu gerektiriyor, bunu yalnızca e-posta ile kayıt taşıyabiliyor ve e-posta ile kayıt kapalı. Yönetici hesabı oluşturulana kadar EMAIL_AUTH_DISABLED ayarını kaldır, ardından e-posta ile kaydı yeniden kapatmak için bu ayarı tekrar tanımla.",
       "this_user_has_all_the_power": "Bu kullanıcı tüm yetkilere sahiptir."
     }
   },
@@ -3372,6 +3380,9 @@
         "billing_currency_conflict": "Bu plan değişikliği, hesabındaki farklı para birimiyle yapılan faturalandırmayla çakışıyor. Plan değiştirmek için lütfen destek ekibiyle iletişime geç.",
         "billing_interval_toggle": "Fatura dönemi",
         "cancel_at_period_end": "Dönem sonunda iptal et",
+        "card_declined": "Kartın reddedildi. Lütfen farklı bir kart kullan veya bankanla iletişime geç.",
+        "card_expired": "Kartının süresi dolmuş. Lütfen “Kart bilgilerini ve faturaları yönet” bölümünden kartını güncelle ve tekrar dene.",
+        "card_insufficient_funds": "Kartında yeterli bakiye yok. Lütfen farklı bir kart kullan veya daha sonra tekrar dene.",
         "card_payment_method_required": "Mevcut planından geçiş yapmak için ödeme yöntemi olarak bir kart gerekiyor. Lütfen bir kart ekle ve tekrar dene.",
         "comparison_addon": "Eklenti",
         "comparison_best_for": "En uygun",
@@ -3887,7 +3898,6 @@
         "only_org_owner_can_perform_action": "Bu ayara yalnızca organizasyon sahipleri erişebilir.",
         "organization_created_successfully": "Organizasyon başarıyla oluşturuldu",
         "organization_deleted_successfully": "Organizasyon başarıyla silindi",
-        "organization_deletion_disabled": "Organizasyon silme işlemi devre dışı.",
         "organization_invite_link_ready": "Organizasyon davet bağlantınız hazır!",
         "organization_name": "Organizasyon Adı",
         "organization_name_description": "Organizasyonunuza açıklayıcı bir ad verin.",
@@ -4066,6 +4076,7 @@
         "prompt_helper_pmf": "Ürün-pazar uyumunu ölçün ve kullanıcıların en çok neleri özleyeceğini öğrenin",
         "prompt_helper_pmf_label": "Ürün-pazar uyumu",
         "prompt_label": "İhtiyacın olan anketi açıkla",
+        "prompt_needs_more_detail": "Yapay zekâ işe yarar bir taslak oluşturabilsin diye anketin amacını, hedef kitlesini veya konusunu bir cümleyle anlat.",
         "prompt_placeholder": "İhtiyacın olan anketi tanımla, örneğin: Yeni kullanıcıların neden onboarding sırasında durduğunu ve kurulumu tamamlamalarına neyin yardımcı olacağını anla",
         "provider_auth_failed": "Yapay zeka sağlayıcısı bu örneğin kimlik bilgilerini reddetti. Yöneticinizden yapay zeka yapılandırmasını kontrol etmesini isteyin.",
         "regenerate": "Yeniden oluştur",
@@ -4162,9 +4173,9 @@
         "app_survey_description": "Yanıt toplamak için web uygulamana veya web sitene bir anket göm.",
         "assign": "Ata",
         "audience": "Hedef Kitle",
+        "auto_advance_after_one_answer": "Tek yanıttan sonra otomatik ilerle",
+        "auto_advance_after_one_answer_description": "Yalnızca tek soru içeren kartlarda, biri bir derecelendirme, NPS, CSAT, CES, tek seçimli veya tek seçimli görsel sorusunu yanıtlar yanıtlamaz sonraki soruya geçer. Zorunlu sorularda \"Diğer\" seçili olmadığı sürece İleri düğmesi gizlenir.",
         "auto_close_on_inactivity": "Hareketsizlikte otomatik kapat",
-        "auto_progress_rating_and_nps": "Derecelendirme ve NPS sorularını otomatik ilerlet",
-        "auto_progress_rating_and_nps_description": "Tek soruluk bloklarda otomatik ilerle. Zorunlu sorular İleri düğmesini gizler, \"Diğer\" seçildiğinde hariç.",
         "auto_save_disabled": "Otomatik kaydetme devre dışı",
         "auto_save_disabled_tooltip": "Anketin yalnızca taslak halindeyken otomatik kaydedilir. Bu, artık taslak olmayan anketlerin yanlışlıkla değiştirilmemesini sağlar.",
         "auto_save_failed": "Değişiklikler kaydedilmedi",
@@ -4633,6 +4644,17 @@
         "max_file_size_limit_is_mb": "Maksimum dosya boyutu sınırı {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "Maksimum dosya boyutu sınırı {maxSize} MB. Daha fazlasına ihtiyacın varsa, lütfen <upgradeLink>planını yükselt</upgradeLink>.",
         "missing_first": "İlk eksik",
+        "missing_label": {
+          "choice_image_alt_text": "{n}. seçeneğin görsel alt metni",
+          "in_question": "{blockNumber}. bloktaki {questionNumber}. soruda {field} eksik",
+          "in_question_for_languages": "{blockNumber}. bloktaki {questionNumber}. soruda {field} şu diller için eksik: {languages}",
+          "on_ending_card": "{endingNumber}. Bitiş kartında {field} eksik",
+          "on_ending_card_for_languages": "{endingNumber}. Bitiş kartında {field} şu diller için eksik: {languages}",
+          "on_welcome_card": "Karşılama kartında {field} eksik",
+          "on_welcome_card_for_languages": "Karşılama kartında {field} şu diller için eksik: {languages}",
+          "question_text": "Soru metni",
+          "subfield_label": "{field} alanının etiketi"
+        },
         "mobile_preview": "Mobil önizleme",
         "move_question_to_block": "Soruyu bloğa taşı",
         "multiply": "Çarp",

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { redactIntegrationCredentials, withStoredIntegrationKey } from "./redact-credentials";
+import { redactIntegrationCredentials } from "./redact-credentials";
 
 describe("redactIntegrationCredentials", () => {
   // Regression: these objects are passed to "use client" wrappers, so anything left in them ends up in
@@ -102,43 +102,5 @@ describe("redactIntegrationCredentials", () => {
     ["no key", { config: { data: [] } }],
   ])("passes through %s unchanged", (_label, input) => {
     expect(redactIntegrationCredentials(input as never)).toEqual(input);
-  });
-});
-
-describe("withStoredIntegrationKey", () => {
-  const stored = {
-    config: { key: { access_token: "real-access", refresh_token: "real-refresh" }, data: [] },
-  };
-
-  // Regression for the round-trip that redaction created: the settings pages blank config.key on the
-  // way out, and the mapping UI echoes the whole integration back on add / edit / delete. Honouring the
-  // echoed key wrote empty strings over the stored tokens and disconnected the integration, while the
-  // UI still showed it connected because the wrappers only test config.key for presence.
-  test("keeps the stored credentials when the client echoes blanked ones", () => {
-    const incoming = {
-      type: "notion",
-      config: { key: { access_token: "", refresh_token: "" }, data: [{ surveyId: "s1" }] },
-    };
-
-    const result = withStoredIntegrationKey(incoming, stored);
-
-    expect(result.config.key).toEqual(stored.config.key);
-    // the non-secret payload the client legitimately owns still wins
-    expect(result.config.data).toEqual([{ surveyId: "s1" }]);
-  });
-
-  test("keeps the stored credentials even when the client sends a different key", () => {
-    const incoming = { type: "notion", config: { key: { access_token: "attacker" }, data: [] } };
-
-    expect(withStoredIntegrationKey(incoming, stored).config.key).toEqual(stored.config.key);
-  });
-
-  test.each<[string, { config: { key?: Record<string, unknown>; data: never[] } } | null]>([
-    ["no stored integration", null],
-    ["stored integration without a key", { config: { data: [] } }],
-  ])("passes the input through when there is %s", (_label, storedValue) => {
-    const incoming = { type: "notion", config: { key: { access_token: "fresh" }, data: [] } };
-
-    expect(withStoredIntegrationKey(incoming, storedValue)).toEqual(incoming);
   });
 });

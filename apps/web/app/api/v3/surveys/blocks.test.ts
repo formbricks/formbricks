@@ -538,3 +538,70 @@ describe("remapBlockInvalidParamPath rewrites paths quoted inside the reason", (
     ).toBe("Block 'b1' does not exist");
   });
 });
+
+/**
+ * ENG-7013: a loop is reported as `name: blocks.<i>.logic` plus "Cyclic logic detected in block <n> (…)",
+ * both numbered against the post-op array. The path was remapped to the stored position and the
+ * sentence was not, so one param named two different blocks.
+ */
+describe("remapBlockInvalidParamPath numbers a block named in the reason like its path", () => {
+  // Reorder [C, A, B] of stored A, B, C: post-op index 0 is stored block 2, 1 is 0, 2 is 1.
+  const reordered = new Map([
+    [0, "blocks.2"],
+    [1, "blocks.0"],
+    [2, "blocks.1"],
+  ]);
+
+  test("moves the block number to the stored position, the way the path moves", () => {
+    const remapped = remapBlockInvalidParamPath(
+      {
+        name: "blocks.0.logic",
+        reason: "Conditional Logic: Cyclic logic detected in block 1 (C).",
+      },
+      reordered
+    );
+
+    expect(remapped).toEqual({
+      name: "blocks.2.logic",
+      reason: "Conditional Logic: Cyclic logic detected in block 3 (C).",
+    });
+  });
+
+  test("names a block the request inserted by its ops path, which has no stored number", () => {
+    const remapped = remapBlockInvalidParamPath(
+      {
+        name: "blocks.1.logic",
+        reason: "Conditional Logic: Cyclic logic detected in block 2 (New).",
+      },
+      new Map([[1, "ops.0.block"]])
+    );
+
+    expect(remapped).toEqual({
+      name: "ops.0.block.logic",
+      reason: "Conditional Logic: Cyclic logic detected in the block at ops.0.block (New).",
+    });
+  });
+
+  test("leaves a block name that quotes the message alone", () => {
+    const remapped = remapBlockInvalidParamPath(
+      {
+        name: "blocks.0.logic",
+        reason: "Conditional Logic: Cyclic logic detected in block 1 (Cyclic logic detected in block 2 (x)).",
+      },
+      reordered
+    );
+
+    expect(remapped.reason).toBe(
+      "Conditional Logic: Cyclic logic detected in block 3 (Cyclic logic detected in block 2 (x))."
+    );
+  });
+
+  test("leaves the number alone when the block has no remapped position", () => {
+    const param = {
+      name: "blocks.9.logic",
+      reason: "Conditional Logic: Cyclic logic detected in block 10 (Z).",
+    };
+
+    expect(remapBlockInvalidParamPath(param, reordered)).toEqual(param);
+  });
+});

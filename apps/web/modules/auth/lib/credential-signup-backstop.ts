@@ -1,7 +1,12 @@
 import "server-only";
 import { BootstrapAdminMarker } from "@formbricks/database/prisma";
 import { isSignupEmailDomainBlocked } from "@/modules/auth/lib/signup-email-domain";
-import { resolveUninvitedSignupAdmission, signupDisabledError } from "@/modules/auth/lib/signup-policy";
+import {
+  isAdmitted,
+  logClosedSignupRejection,
+  resolveUninvitedSignupAdmission,
+  signupDisabledError,
+} from "@/modules/auth/lib/signup-policy";
 import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 
 /**
@@ -20,7 +25,7 @@ import { isBootstrapAdminSignup, isSignupDomainAllowed } from "@/modules/auth/li
 export const enforceCredentialSignupBackstop = async (
   email: string
 ): Promise<false | { data: { isBootstrapAdmin: BootstrapAdminMarker } } | undefined> => {
-  // createUserAction runs the full personal-email policy (Cloud gate + invite exemption) and marks the
+  // the sign-up route runs the full personal-email policy (Cloud gate + invite exemption) and marks the
   // request scope before calling signUpEmail. If that mark is absent, the sign-up did not come through
   // the action, so both re-checks below re-enforce what the action would have applied (no invite is
   // carried on that path). The raw HTTP route is closed since ENG-3988, so this covers in-process callers
@@ -36,7 +41,8 @@ export const enforceCredentialSignupBackstop = async (
   if (await isSignupEmailDomainBlocked(email, async () => false)) {
     return false;
   }
-  // ENG-2293 BACKSTOP: closed-instance policy (SIGNUP_ENABLED / multi-org / fresh-instance).
+  // ENG-2293 BACKSTOP: closed-instance policy (SIGNUP_ENABLED / multi-org / fresh-instance), including
+  // the optional setup token (ENG-7313): a caller that cannot present one is not admitted.
   // The primary gate is `signupPolicyBeforeHandler` in auth.ts's `hooks.before`, which rejects
   // `POST /sign-up/email` before Better Auth looks the address up — deliberately NOT here,
   // because this hook only ever runs for an address that does not yet exist (the duplicate
@@ -47,7 +53,8 @@ export const enforceCredentialSignupBackstop = async (
   // route the before-hook names: any future Better Auth plugin that creates a user (magic link,
   // email OTP, admin create) lands here, and on a closed instance it should not.
   const admission = await resolveUninvitedSignupAdmission();
-  if (admission === "denied") {
+  if (!isAdmitted(admission)) {
+    logClosedSignupRejection("better-auth-user-create-backstop");
     throw signupDisabledError();
   }
 

@@ -31,6 +31,7 @@ import {
   getSegment,
   getSegments,
   getSegmentsByAttributeKey,
+  getSegmentsByIds,
   getSurveyWorkspaceIdMap,
   resetSegmentInSurvey,
   selectSegment,
@@ -193,6 +194,36 @@ describe("Segment Service Tests", () => {
     test("should throw DatabaseError on Prisma error", async () => {
       vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("DB error"));
       await expect(getSegments("workspace-id-mock", ALL_SEGMENT_SURVEY_REFS)).rejects.toThrow(Error);
+    });
+  });
+
+  describe("getSegmentsByIds", () => {
+    const workspaceId = "workspace-1";
+
+    test("reads only the filters of the given ids in the workspace, in one query", async () => {
+      const filters = [{ id: "filter-1" }] as unknown as TBaseFilters;
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        { id: "segment-1", filters: [] },
+        { id: "segment-2", filters },
+      ] as unknown as Awaited<ReturnType<typeof prisma.segment.findMany>>);
+
+      await expect(getSegmentsByIds(["segment-1", "segment-2"], workspaceId)).resolves.toEqual([
+        { id: "segment-1", filters: [] },
+        { id: "segment-2", filters },
+      ]);
+      expect(prisma.segment.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.segment.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["segment-1", "segment-2"] }, workspaceId },
+        select: { id: true, filters: true },
+      });
+    });
+
+    test("maps a Prisma failure to DatabaseError", async () => {
+      vi.mocked(prisma.segment.findMany).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("boom", { code: "P1", clientVersion: "5" })
+      );
+
+      await expect(getSegmentsByIds(["segment-1"], workspaceId)).rejects.toThrow(DatabaseError);
     });
   });
 

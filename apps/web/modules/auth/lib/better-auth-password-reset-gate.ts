@@ -4,7 +4,7 @@ import { APIError } from "better-auth/api";
  * Before-hook gate that rejects password-reset requests when the operator has disabled password resets
  * via PASSWORD_RESET_DISABLED=1. This closes the bypass where the native Better Auth HTTP endpoints
  * (/api/auth/request-password-reset and /api/auth/reset-password) were reachable even though the
- * wrapper server actions (forgotPasswordAction, resetPasswordAction) correctly blocked.
+ * app's own entry points (`POST /api/internal/password-reset-requests`, `POST /api/internal/password-resets`) correctly blocked.
  *
  * ENG-2105.
  */

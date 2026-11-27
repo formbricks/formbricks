@@ -98,7 +98,7 @@ export const updateUserLastLoginAt = async (email: string) => {
  * The address is canonicalized before the query rather than at each call site. Postgres compares
  * `text` case-sensitively, so a raw `findFirst` on `email` disagrees with Better Auth, which stores
  * and looks up `email.toLowerCase()` — and Better Auth is who we hand the result to. That
- * disagreement is the whole defect: `forgotPasswordAction` passed the form input through unchanged,
+ * disagreement is the whole defect: `POST /api/internal/password-reset-requests` passed the form input through unchanged,
  * so `Alice@example.com` matched no row, the action took its enumeration-safe silent-skip branch, and
  * the user was told to check an inbox nothing had been sent to (ENG-3257).
  *

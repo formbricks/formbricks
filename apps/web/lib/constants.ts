@@ -42,6 +42,9 @@ export const WEBHOOK_DELIVERY_TIMEOUT_MS = env.WEBHOOK_DELIVERY_TIMEOUT_MS ?? 5_
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const PASSWORD_RESET_TOKEN_LIFETIME_MINUTES = env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES;
+
+// Optional secret the first administrator must present on a fresh instance (ENG-7313). Unset by default.
+export const SETUP_TOKEN = env.SETUP_TOKEN;
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
 export const GOOGLE_OAUTH_ENABLED = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
@@ -141,8 +144,9 @@ export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
  * Resolve here, never at the call site. The secret signs Better Auth's session cookies (auth.ts), the
  * forward-auth proxy's verification of them (session-cookie.ts), and every app JWT — invites, email
  * verification, email change, survey PIN tokens, gateway service tokens (lib/jwt.ts). A divergence
- * between any two of those is an outage, and it surfaces only as an opaque `state_security_mismatch`
- * (better-auth-observability.ts).
+ * between any two of those is an outage. On an SSO callback it surfaces as a `state_security_mismatch`
+ * whose Sentry capture is tagged `auth.state_cookie: signature_invalid` (oauth-state-cookie-diagnosis.ts,
+ * ENG-6692); elsewhere it is no more specific than a failed verification.
  *
  * `firstConfigured` treats a blank value as unset, which `??` does not: `"" ?? env.NEXTAUTH_SECRET` is
  * `""`, which is falsy and would fail every guard below while shadowing a perfectly good legacy secret.
@@ -169,12 +173,27 @@ export const AUTH_URL = firstConfigured(env.BETTER_AUTH_URL, env.NEXTAUTH_URL);
  * from one `$webappUrl`, and the one-click installer seds both to the same domain — so the common case is
  * one origin listed twice.
  *
+ * `WEBAPP_URL` is trusted too: it is the instance's own public origin, and on an instance that sets only
+ * it, Better Auth would otherwise add the request's Host to the allow-list itself (ENG-7369).
+ *
  * The explicit type predicate is load-bearing — `.filter(Boolean)` does not narrow
  * `(string | undefined)[]` to the `string[]` that `trustedOrigins` requires.
  */
 export const AUTH_TRUSTED_ORIGINS = [
-  ...new Set([env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url?.trim()))),
+  ...new Set(
+    [env.BETTER_AUTH_URL, env.NEXTAUTH_URL, env.WEBAPP_URL]
+      .filter((url): url is string => Boolean(url?.trim()))
+      // Better Auth compares an http(s) entry with the request's bare origin, so a subpath or trailing
+      // slash would never match. Reduce to the origin, then de-duplicate.
+      .map((url) => new URL(url).origin)
+  ),
 ];
+
+/** `BETTER_AUTH_TRUSTED_ORIGINS`, which Better Auth adds to the origins it trusts for sign-in. */
+export const BETTER_AUTH_ENV_TRUSTED_ORIGINS = (env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
@@ -266,6 +285,8 @@ export { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/modules/ee/license-check/
 
 export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+/** True only when an Envoy gateway in front of the app enforces the covered API rate limits. */
+export const ENVOY_RATE_LIMITING_ENABLED = env.ENVOY_RATE_LIMITING_ENABLED === "1";
 /**
  * Number of reverse proxies in front of the app whose `X-Forwarded-For` entries may be believed.
  *
@@ -370,6 +391,3 @@ export const USER_MANAGEMENT_MINIMUM_ROLE = env.USER_MANAGEMENT_MINIMUM_ROLE ?? 
 export const AUDIT_LOG_ENABLED = env.AUDIT_LOG_ENABLED === "1";
 export const AUDIT_LOG_GET_USER_IP = env.AUDIT_LOG_GET_USER_IP === "1";
 export const SESSION_MAX_AGE = Number(env.SESSION_MAX_AGE) || 86400;
-
-// Control hash for constant-time password verification to prevent timing attacks. Used when user doesn't exist to maintain consistent verification timing
-export const CONTROL_HASH = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q"; //NOSONAR not a real password hash, used only for timing-safe comparison

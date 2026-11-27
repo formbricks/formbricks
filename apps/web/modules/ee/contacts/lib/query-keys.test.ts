@@ -9,6 +9,8 @@ describe("contactQueryKeys", () => {
       contactQueryKeys.contactList("ws_1", params),
       contactQueryKeys.attributeKeyList("ws_1", params),
       contactQueryKeys.segmentList("ws_1", null),
+      contactQueryKeys.attributeKeyValues("key_1"),
+      contactQueryKeys.segmentFilterSurveys("ws_1"),
     ]) {
       expect(key.slice(0, contactQueryKeys.all.length)).toEqual(contactQueryKeys.all);
     }
@@ -21,6 +23,8 @@ describe("contactQueryKeys", () => {
       contactQueryKeys.contactList("ws_1", null),
       contactQueryKeys.attributeKeyList("ws_1", params),
       contactQueryKeys.segmentList("ws_1", params),
+      contactQueryKeys.attributeKeyValues("ws_1"),
+      contactQueryKeys.segmentFilterSurveys("ws_1"),
     ].map((key) => JSON.stringify(key));
     expect(new Set(keys).size).toBe(keys.length);
   });

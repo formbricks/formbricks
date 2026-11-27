@@ -61,7 +61,7 @@ describe("handleClientResponseCreateError vs real Prisma 7 + adapter-pg (ENG-217
 
     expect(error?.code).toBe("P2002");
 
-    expect(() => handleClientResponseCreateError(error, display.id)).toThrow(InvalidInputError);
-    expect(() => handleClientResponseCreateError(error, display.id)).not.toThrow(DatabaseError);
+    expect(() => handleClientResponseCreateError(error)).toThrow(InvalidInputError);
+    expect(() => handleClientResponseCreateError(error)).not.toThrow(DatabaseError);
   });
 });

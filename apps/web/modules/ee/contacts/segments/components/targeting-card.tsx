@@ -18,14 +18,14 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
-  cloneSegmentAction,
-  createSegmentAction,
-  loadNewSegmentAction,
-  resetSegmentFiltersAction,
-  updateSegmentAction,
-} from "@/modules/ee/contacts/segments/actions";
+  attachSurveySegment,
+  copySegment,
+  createSegment,
+  resetSurveySegment,
+  updateSegment,
+} from "@/modules/ee/contacts/segments/lib/api-client";
 import {
   type TSharedSegmentEdit,
   keepSharedSegmentEditFor,
@@ -125,15 +125,10 @@ export function TargetingCard({
     if (!segment) return;
 
     try {
-      const clonedSegmentResponse = await cloneSegmentAction({
-        segmentId: segment.id,
-        surveyId: localSurvey.id,
-      });
-      if (clonedSegmentResponse?.data) {
-        setSegment(clonedSegmentResponse.data);
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      setSegment(await copySegment(segment.id, localSurvey.id));
+      router.refresh();
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -153,43 +148,51 @@ export function TargetingCard({
     setSegment(updatedSegment);
   };
 
-  const handleLoadNewSegment = async (surveyId: string, segmentId: string) => {
-    const updatedSurvey = await loadNewSegmentAction({ surveyId: surveyId, segmentId });
-    return updatedSurvey?.data as TSurvey;
+  /**
+   * The dialogs below toast the message of what they catch, so a failure carries a readable one. A success
+   * refreshes the route: `segments` (and so the editor's Cancel target) comes from the server render.
+   */
+  const withReadableMessage = async <T,>(request: () => Promise<T>): Promise<T> => {
+    try {
+      const result = await request();
+      router.refresh();
+      return result;
+    } catch (error) {
+      throw new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+    }
   };
 
-  const handleSaveAsNewSegmentUpdate = async (segmentId: string, data: TSegmentUpdateInput) => {
-    const updatedSegment = await updateSegmentAction({ segmentId, data });
-    return updatedSegment?.data as TSegment;
-  };
+  const handleLoadNewSegment = (surveyId: string, segmentId: string): Promise<TSurvey> =>
+    withReadableMessage(async () => ({
+      ...localSurvey,
+      segment: await attachSurveySegment(surveyId, segmentId),
+    }));
 
-  const handleSaveAsNewSegmentCreate = async (data: TSegmentCreateInput) => {
-    const createdSegment = await createSegmentAction(data);
-    return createdSegment?.data as TSegment;
-  };
+  const handleSaveAsNewSegmentUpdate = (segmentId: string, data: TSegmentUpdateInput) =>
+    withReadableMessage(() => updateSegment(segmentId, data));
+
+  const handleSaveAsNewSegmentCreate = (data: TSegmentCreateInput) =>
+    withReadableMessage(() => createSegment(data));
 
   const handleSaveSegment = async (data: TSegmentUpdateInput) => {
     try {
       if (!segment) throw new Error(t("workspace.segments.invalid_segment"));
-      const result = await updateSegmentAction({ segmentId: segment.id, data });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await updateSegment(segment.id, data);
       toast.success(t("workspace.segments.segment_saved_successfully"));
+      // Cancel restores the segment from `segments`, which the server render owns: refresh it.
+      router.refresh();
 
       setSharedSegmentEdit(null);
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("workspace.segments.error_saving_segment"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.segments.error_saving_segment")));
     }
   };
 
   const handleResetAllFilters = async () => {
     try {
-      const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
-      return segmentResponse?.data;
+      return await resetSurveySegment(localSurvey.id);
     } catch {
       toast.error(t("workspace.segments.error_resetting_filters"));
     }

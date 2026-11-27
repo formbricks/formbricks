@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
-import { getLatestStableFbReleaseAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
+import { getLatestRelease } from "@/modules/workspaces/settings/(setup)/app-connection/lib/api-client";
 import packageJson from "../../../../../package.json";
 
 /**
@@ -25,18 +25,19 @@ export const useLatestStableRelease = (isOwnerOrManager: boolean): string => {
       return;
     }
 
-    // Guard against a response landing after the role changed and this effect was torn down: the
-    // in-flight request cannot be aborted, so drop its result instead of writing it to state.
-    let cancelled = false;
+    // Abort the request when the role changes or the component unmounts, and drop whatever it still
+    // answers: a stale result must not overwrite a newer one.
+    const controller = new AbortController();
 
     const loadLatestRelease = async () => {
-      const res = await getLatestStableFbReleaseAction();
-      if (cancelled) {
+      let latestVersionTag: string | null;
+      try {
+        latestVersionTag = await getLatestRelease({ signal: controller.signal });
+      } catch {
+        // Nothing to advertise when the check fails; the prompt is a convenience.
         return;
       }
-
-      const latestVersionTag = res?.data;
-      if (!latestVersionTag) {
+      if (controller.signal.aborted || !latestVersionTag) {
         return;
       }
 
@@ -50,7 +51,7 @@ export const useLatestStableRelease = (isOwnerOrManager: boolean): string => {
     void loadLatestRelease();
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [isOwnerOrManager]);
 

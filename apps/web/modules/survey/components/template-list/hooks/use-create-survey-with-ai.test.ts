@@ -107,6 +107,29 @@ describe("useCreateSurveyWithAI", () => {
     expect(streamSurveyGeneration).not.toHaveBeenCalled();
   });
 
+  test("does not submit a prompt the server would reject as too thin, and says what to add (ENG-2187)", async () => {
+    // 14 characters, 2 words: past the old 4-character gate, short of the server's 24 characters
+    // and 4 words, so Create used to stay enabled for a request that always fails.
+    const { result } = renderAiHook();
+
+    await submitWithPrompt(result, "superhuman PMF");
+
+    expect(result.current.canCreate).toBe(false);
+    expect(result.current.promptNeedsMoreDetail).toBe(true);
+    expect(streamSurveyGeneration).not.toHaveBeenCalled();
+  });
+
+  test("shows no detail hint for an empty prompt or one detailed enough", () => {
+    const { result } = renderAiHook();
+
+    expect(result.current.promptNeedsMoreDetail).toBe(false);
+
+    act(() => result.current.setPrompt("  create an onboarding survey  "));
+
+    expect(result.current.promptNeedsMoreDetail).toBe(false);
+    expect(result.current.canCreate).toBe(true);
+  });
+
   test("sends the trimmed prompt to the stream", async () => {
     const { result } = renderAiHook();
 

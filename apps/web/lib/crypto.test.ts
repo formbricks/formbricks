@@ -9,6 +9,7 @@ import {
   getWebhookSecretBytes,
   hashSecret,
   hashSha256,
+  isApiKeyLookupHashMatch,
   parseApiKeyV2,
   symmetricDecrypt,
   symmetricEncrypt,
@@ -117,6 +118,22 @@ describe("Crypto Utils", () => {
       const expectedHash = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
 
       expect(hashSha256(input)).toBe(expectedHash);
+    });
+  });
+
+  describe("isApiKeyLookupHashMatch", () => {
+    const hash = hashSha256("some-secret");
+
+    test("matches the same hex digest", () => {
+      expect(isApiKeyLookupHashMatch(hash, hashSha256("some-secret"))).toBe(true);
+    });
+
+    test("rejects a different digest, a malformed one, and a missing stored hash", () => {
+      expect(isApiKeyLookupHashMatch(hash, hashSha256("other-secret"))).toBe(false);
+      expect(isApiKeyLookupHashMatch(hash, "abcd")).toBe(false);
+      expect(isApiKeyLookupHashMatch(null, hash)).toBe(false);
+      expect(isApiKeyLookupHashMatch(undefined, hash)).toBe(false);
+      expect(isApiKeyLookupHashMatch("", "")).toBe(false);
     });
   });
 
@@ -291,19 +308,24 @@ describe("Crypto Utils", () => {
       });
     });
 
-    test("should decrypt legacy V1 format (with only one colon)", () => {
-      // Simulate a V1 encrypted value (only has one colon: iv:ciphertext)
-      // This test verifies backward compatibility
+    test("decrypts a real legacy AES-256-CBC payload and warns once that it is still in use", async () => {
       const plaintext = "legacy data";
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv("aes256", Buffer.from(testKey, "hex"), iv);
+      const legacy = `${iv.toString("hex")}:${cipher.update(plaintext, "utf8", "hex") + cipher.final("hex")}`;
+      expect(legacy.split(":")).toHaveLength(2);
 
-      // Since we can't easily create a V1 format without the old code,
-      // we'll just verify that a payload with 2 parts triggers the V1 path
-      // For a real test, you'd need a known V1 encrypted value
+      // Fresh module so the once-per-process warning flag starts unset.
+      vi.resetModules();
+      const fresh = await import("./crypto");
+      vi.mocked(logger.warn).mockClear();
+      expect(fresh.symmetricDecrypt(legacy, testKey)).toBe(plaintext);
+      expect(fresh.symmetricDecrypt(legacy, testKey)).toBe(plaintext);
 
-      // Skip this test or use a known V1 encrypted string if available
-      // For now, we'll test that the logic correctly identifies the format
-      const v2Encrypted = symmetricEncrypt(plaintext, testKey);
-      expect(v2Encrypted.split(":")).toHaveLength(3); // V2 has 3 parts
+      const cbcWarnings = vi
+        .mocked(logger.warn)
+        .mock.calls.filter(([message]) => String(message).includes("legacy unauthenticated AES-256-CBC"));
+      expect(cbcWarnings).toHaveLength(1);
     });
 
     test("should throw error for invalid encrypted data", () => {

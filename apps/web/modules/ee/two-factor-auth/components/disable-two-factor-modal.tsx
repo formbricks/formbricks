@@ -7,7 +7,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { ZUserPassword } from "@formbricks/types/user";
+import { ZUserCurrentPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { disableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -27,7 +27,7 @@ import { PasswordInput } from "@/modules/ui/components/password-input";
 
 const ZDisableTwoFactorFormState = z
   .object({
-    password: ZUserPassword,
+    password: ZUserCurrentPassword,
     code: z.string().optional(),
     backupCode: z.string().optional(),
   })

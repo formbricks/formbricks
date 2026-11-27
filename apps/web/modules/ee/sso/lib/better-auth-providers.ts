@@ -23,7 +23,7 @@ import {
   SAML_TENANT,
   WEBAPP_URL,
 } from "@/lib/constants";
-import { getAuthIssuerUrl } from "@/modules/auth/lib/oauth-urls";
+import { getSsoCallbackUrl } from "@/modules/auth/lib/oauth-urls";
 import { resolveEmailVerifiedFromRawClaim } from "./email-verification-policy";
 import { captureSsoIdentity } from "./sso-request-context";
 
@@ -146,8 +146,7 @@ const toAccountSubject = (subject: string | number | null | undefined): string |
  * sign-in fails closed with a state mismatch. `appendPath` also handles the documented subpath shape where
  * the configured auth URL already ends in `/api/auth` (see ENG-606).
  */
-const ssoLegacyRedirectUri = (providerId: string): string =>
-  `${getAuthIssuerUrl()}/oauth2/callback/${providerId}`;
+const ssoLegacyRedirectUri = (providerId: string): string => getSsoCallbackUrl(providerId);
 
 /** OIDC display name: `name`, else given+family, else `preferred_username`. */
 const toDisplayName = (profile: GenericOAuthUserInfo): string | undefined => {

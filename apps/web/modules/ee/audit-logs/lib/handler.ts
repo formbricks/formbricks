@@ -4,6 +4,7 @@ import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
+import { sanitizeAuditApiUrl } from "@/modules/ee/audit-logs/lib/api-url";
 import {
   UNKNOWN_AUDIT_REQUEST_METADATA,
   getAuditRequestMetadata,
@@ -44,7 +45,8 @@ type TBuildAuditEventInput = TAuditEventInput & {
 
 /**
  * Builds an audit event and logs it.
- * Redacts sensitive data from the old and new objects before logging.
+ * Redacts sensitive data from the old and new objects, and reduces `apiUrl` to its route and allowlisted
+ * query parameters, before logging. Every entry point goes through here, so callers pass the raw URL.
  * Every exported entry point checks `getIsAuditLogsEnabled` before building or writing an event.
  */
 const buildAndLogAuditEvent = async ({
@@ -83,7 +85,7 @@ const buildAndLogAuditEvent = async ({
       status,
       ipAddress: AUDIT_LOG_GET_USER_IP ? requestMetadata.ipAddress : UNKNOWN_DATA,
       userAgent: requestMetadata.userAgent,
-      apiUrl,
+      apiUrl: sanitizeAuditApiUrl(apiUrl),
       ...(changes ? { changes } : {}),
       ...(status === "failure" && eventId ? { eventId } : {}),
     };

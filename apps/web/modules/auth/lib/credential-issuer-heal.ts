@@ -27,7 +27,7 @@ const HEALED_PATHS = new Set(["/sign-in/email", "/request-password-reset"]);
  * older NULL rows so a rollback to 1.7.0 still finds them. Delete both once that rollback is off the table.
  *
  * The reset is healed at the request, not at `/reset-password`, because the request carries the email.
- * On 1.7.0 a link issued before the heal fails, cleanly, in `resetPasswordAction`; on 1.7.7 it resets.
+ * On 1.7.0 a link issued before the heal fails, cleanly, in `completePasswordResetOperation`; on 1.7.7 it resets.
  *
  * The user is matched the way Better Auth matches them (lowercased, then exact). Only `issuer` changes
  * and its value follows from `provider`, so no row can move between users. Best effort: a failure is

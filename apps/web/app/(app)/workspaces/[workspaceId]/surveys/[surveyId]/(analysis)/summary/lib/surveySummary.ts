@@ -15,7 +15,12 @@ import {
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { type TResponseNotShown, getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
+import {
+  type TNotShownRecordKey,
+  type TResponseNotShown,
+  getNotShownElementIds,
+  getNotShownIds,
+} from "@formbricks/types/surveys/not-shown";
 import {
   TSurvey,
   TSurveyElementSummaryAddress,
@@ -81,12 +86,12 @@ const createNotShownLookup = (survey: TSurvey) => {
  */
 const countOptionsNotShown = (
   answered: readonly TSurveySummaryResponse[],
-  recordKey: "options" | "rows" | "columns",
+  recordKey: TNotShownRecordKey,
   elementId: string
 ): Record<string, number> => {
   const counts: Record<string, number> = {};
   for (const response of answered) {
-    for (const optionId of new Set(response.notShown?.[recordKey]?.[elementId] ?? [])) {
+    for (const optionId of new Set(getNotShownIds(response.notShown, recordKey, elementId))) {
       counts[optionId] = (counts[optionId] ?? 0) + 1;
     }
   }
@@ -101,11 +106,11 @@ const countOptionsNotShown = (
  */
 const wasOptionNotShown = (
   response: TSurveySummaryResponse,
-  recordKey: "options" | "rows" | "columns",
+  recordKey: TNotShownRecordKey,
   elementId: string,
   optionId: string | undefined
 ): boolean =>
-  optionId !== undefined && (response.notShown?.[recordKey]?.[elementId] ?? []).includes(optionId);
+  optionId !== undefined && getNotShownIds(response.notShown, recordKey, elementId).includes(optionId);
 
 /**
  * An option's share over the respondents shown it: `base` (who answered the element) less those not

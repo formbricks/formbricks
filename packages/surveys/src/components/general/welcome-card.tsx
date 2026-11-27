@@ -175,6 +175,7 @@ export function WelcomeCard({
             responseData,
             variablesData,
             languageCode,
+            "rich",
             dayFirstLocale
           )}
         />
@@ -184,6 +185,7 @@ export function WelcomeCard({
             responseData,
             variablesData,
             languageCode,
+            "rich",
             dayFirstLocale
           )}
         />

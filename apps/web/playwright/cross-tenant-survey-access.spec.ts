@@ -7,8 +7,8 @@ import { test } from "./lib/fixtures";
 // survey by surveyId alone, so pairing your own workspace with someone else's survey id read their
 // survey definition, response counts and response content. Survey ids are public (/s/<surveyId>),
 // so this needed nothing but a free account. Every survey-scoped page now goes through
-// getSurveyAuth, which ties the two together and fails closed with a 404. The second test guards
-// against a fix that over-blocks and takes the owner's own surveys down with it.
+// getSurveyAuth, which ties the two together and fails closed with a 404. That owners still open
+// their own surveys is proven by every survey spec.
 
 // Name of the survey seeded into every workspace by the users fixture.
 const SEED_SURVEY_NAME = "E2E Seed Survey";
@@ -34,7 +34,6 @@ const setupTwoTenants = async (users: UsersFixture) => {
   return {
     attacker,
     attackerWorkspaceId: attacker.workspaceId,
-    attackerSurveyId: await getSeededSurveyId(attacker.workspaceId),
     victimSurveyId: await getSeededSurveyId(victim.workspaceId),
   };
 };
@@ -60,24 +59,5 @@ test.describe("Cross-tenant survey access (ENG-2101)", () => {
         new RegExp(SEED_SURVEY_NAME)
       );
     }
-  });
-
-  test("keeps access to the workspace's own surveys", async ({ page, users }) => {
-    const { attacker, attackerWorkspaceId, attackerSurveyId } = await setupTwoTenants(users);
-
-    await attacker.login();
-
-    const base = `/workspaces/${attackerWorkspaceId}/surveys/${attackerSurveyId}`;
-
-    // The bare survey route redirects to the summary.
-    await page.goto(base, { waitUntil: "domcontentloaded" });
-    await page.waitForURL(`**${base}/summary`);
-    await expect(page.getByRole("heading", { name: SEED_SURVEY_NAME })).toBeVisible();
-
-    await page.goto(`${base}/responses`, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("heading", { name: SEED_SURVEY_NAME })).toBeVisible();
-
-    await page.goto(`${base}/edit`, { waitUntil: "domcontentloaded" });
-    await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
   });
 });

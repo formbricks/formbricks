@@ -43,6 +43,9 @@
       "reset_password_description": "Du wirst abgemeldet, um dein Passwort zurückzusetzen."
     },
     "invite": {
+      "accept_invitation": "Einladung annehmen",
+      "already_a_member": "Du bist bereits Mitglied",
+      "already_a_member_description": "Du gehörst bereits zu dieser Organisation, daher hat die Einladung nichts geändert.",
       "create_account": "Konto erstellen",
       "email_does_not_match": "Hoppla! Falsche E-Mail 🤦",
       "email_does_not_match_description": "Die E-Mail-Adresse in der Einladung stimmt nicht mit deiner überein.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Der Einladungscode kann nicht gefunden werden oder wurde bereits verwendet.",
       "login": "Anmelden",
       "welcome_to_organization": "Du bist drin 🎉",
-      "welcome_to_organization_description": "Willkommen in der Organisation."
+      "welcome_to_organization_description": "Willkommen in der Organisation.",
+      "you_are_invited": "Du bist eingeladen 💌",
+      "you_are_invited_description": "Nimm die Einladung an, um der Organisation beizutreten."
     },
     "last_used": "Zuletzt verwendet",
     "login": {
@@ -82,7 +87,6 @@
       "oauth_second_factor_unavailable_title": "Die Zwei-Faktor-Anmeldung kann hier nicht abgeschlossen werden",
       "oauth_signup_not_allowed_description": "Dein Identity Provider hat dich angemeldet, aber diese Formbricks-Instanz ist nicht so eingerichtet, dass neue Konten auf diesem Weg erstellt werden können. Bitte einen Administrator, dich einzuladen, und versuche es dann erneut.",
       "oauth_signup_not_allowed_title": "Wir konnten dein Konto nicht erstellen",
-      "please_verify_your_email_to_continue": "Bitte bestätige deine E-Mail-Adresse. Wir haben dir einen Bestätigungslink gesendet.",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
     "oauth": {
@@ -209,7 +213,7 @@
       "log_in": "Anmelden",
       "password_requirements": "Passwortanforderungen",
       "password_validation_contain_at_least_1_number": "Mindestens 1 Zahl enthalten",
-      "password_validation_minimum_8_and_maximum_128_characters": "Mindestens 8 & maximal 128 Zeichen",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "Mindestens 8 Zeichen und maximal 72 Bytes",
       "password_validation_uppercase_and_lowercase": "Mischung aus Groß- und Kleinbuchstaben",
       "please_verify_captcha": "Bitte verifiziere das reCAPTCHA",
       "privacy_policy": "Datenschutzerklärung",
@@ -437,6 +441,7 @@
     "hidden": "Versteckt",
     "hidden_field": "Verstecktes Feld",
     "hidden_fields": "Versteckte Felder",
+    "hide": "Ausblenden",
     "hide_password": "Passwort verbergen",
     "html": "HTML",
     "id": "ID",
@@ -1003,6 +1008,9 @@
     },
     "signup": {
       "create_administrator": "Administrator erstellen",
+      "setup_token": "Einrichtungs-Token",
+      "setup_token_invalid": "Das Einrichtungs-Token ist nicht korrekt.",
+      "setup_token_needs_email_sign_up": "Diese Instanz benötigt ein Setup-Token, das nur bei der Registrierung per E-Mail übermittelt werden kann – und die Registrierung per E-Mail ist deaktiviert. Entferne EMAIL_AUTH_DISABLED, bis das Administratorkonto existiert, und setze die Variable danach erneut, um die Registrierung per E-Mail wieder zu deaktivieren.",
       "this_user_has_all_the_power": "Dieser Nutzer hat alle Rechte."
     }
   },
@@ -3372,6 +3380,9 @@
         "billing_currency_conflict": "Diese Tarifänderung steht im Konflikt mit einer Abrechnung in einer anderen Währung auf deinem Konto. Bitte kontaktiere den Support, um den Tarif zu wechseln.",
         "billing_interval_toggle": "Abrechnungsintervall",
         "cancel_at_period_end": "Am Ende des Zeitraums kündigen",
+        "card_declined": "Deine Karte wurde abgelehnt. Bitte verwende eine andere Karte oder wende dich an deine Bank.",
+        "card_expired": "Deine Karte ist abgelaufen. Bitte aktualisiere sie unter „Kartendaten & Rechnungen verwalten“ und versuche es erneut.",
+        "card_insufficient_funds": "Deine Karte ist nicht ausreichend gedeckt. Bitte verwende eine andere Karte oder versuche es später erneut.",
         "card_payment_method_required": "Um von deinem aktuellen Tarif zu wechseln, brauchst du eine Karte als Zahlungsmethode. Bitte füge eine Karte hinzu und versuche es erneut.",
         "comparison_addon": "Add-on",
         "comparison_best_for": "Am besten für",
@@ -3887,7 +3898,6 @@
         "only_org_owner_can_perform_action": "Nur Organisationsinhaber können auf diese Einstellung zugreifen.",
         "organization_created_successfully": "Organisation erfolgreich erstellt",
         "organization_deleted_successfully": "Organisation erfolgreich gelöscht",
-        "organization_deletion_disabled": "Das Löschen von Organisationen ist deaktiviert.",
         "organization_invite_link_ready": "Dein Einladungslink für die Organisation ist fertig!",
         "organization_name": "Organisationsname",
         "organization_name_description": "Gib deiner Organisation einen aussagekräftigen Namen.",
@@ -4066,6 +4076,7 @@
         "prompt_helper_pmf": "Miss die Product-Market-Fit und erfahre, was Nutzer am meisten vermissen würden",
         "prompt_helper_pmf_label": "Product-Market-Fit",
         "prompt_label": "Beschreibe die Umfrage, die du brauchst",
+        "prompt_needs_more_detail": "Beschreibe in einem Satz das Ziel, die Zielgruppe oder das Thema der Umfrage, damit die KI einen brauchbaren Entwurf erstellen kann.",
         "prompt_placeholder": "Beschreibe die Umfrage, die du benötigst, z. B. Verstehen, warum neue Nutzer während des Onboardings abbrechen und was ihnen helfen würde, die Einrichtung abzuschließen",
         "provider_auth_failed": "Der KI-Anbieter hat die Zugangsdaten dieser Instanz abgelehnt. Bitte deinen Administrator, die KI-Konfiguration zu überprüfen.",
         "regenerate": "Neu generieren",
@@ -4162,9 +4173,9 @@
         "app_survey_description": "Binde eine Umfrage in deine Web-App oder Website ein, um Antworten zu sammeln.",
         "assign": "Zuweisen",
         "audience": "Publikum",
+        "auto_advance_after_one_answer": "Automatisch weiter nach einer Antwort",
+        "auto_advance_after_one_answer_description": "Springt zur nächsten Frage, sobald jemand eine Bewertungs-, NPS-, CSAT-, CES-, Einfachauswahl- oder Einzelauswahl-Bildfrage beantwortet – auf Karten, die nur diese eine Frage enthalten. Bei Pflichtfragen wird „Weiter“ ausgeblendet, außer wenn „Andere“ ausgewählt ist.",
         "auto_close_on_inactivity": "Automatisches Schließen bei Inaktivität",
-        "auto_progress_rating_and_nps": "Bewertungs- und NPS-Fragen automatisch fortsetzen",
-        "auto_progress_rating_and_nps_description": "Automatisches Fortschreiten bei Ein-Fragen-Blöcken. Pflichtfragen blenden „Weiter“ aus, außer wenn „Sonstiges“ ausgewählt ist.",
         "auto_save_disabled": "Automatisches Speichern deaktiviert",
         "auto_save_disabled_tooltip": "Deine Umfrage wird nur im Entwurfsmodus automatisch gespeichert. So wird sichergestellt, dass aktive Umfragen nicht versehentlich geändert werden.",
         "auto_save_failed": "Änderungen nicht gespeichert",
@@ -4633,6 +4644,17 @@
         "max_file_size_limit_is_mb": "Die maximale Dateigröße beträgt {maxSize} MB.",
         "max_file_size_limit_is_mb_upgrade": "Die maximale Dateigröße beträgt {maxSize} MB. Wenn du mehr benötigst, <upgradeLink>upgrade deinen Tarif</upgradeLink>.",
         "missing_first": "Fehlende zuerst",
+        "missing_label": {
+          "choice_image_alt_text": "Bild-Alternativtext von Auswahlmöglichkeit {n}",
+          "in_question": "{field} in Frage {questionNumber} von Block {blockNumber} fehlt",
+          "in_question_for_languages": "{field} in Frage {questionNumber} von Block {blockNumber} fehlt für die folgenden Sprachen: {languages}",
+          "on_ending_card": "{field} auf Abschlusskarte {endingNumber} fehlt",
+          "on_ending_card_for_languages": "{field} auf Abschlusskarte {endingNumber} fehlt für die folgenden Sprachen: {languages}",
+          "on_welcome_card": "{field} auf der Willkommenskarte fehlt",
+          "on_welcome_card_for_languages": "{field} auf der Willkommenskarte fehlt für die folgenden Sprachen: {languages}",
+          "question_text": "Fragetext",
+          "subfield_label": "Bezeichnung für Feld {field}"
+        },
         "mobile_preview": "Mobile Vorschau",
         "move_question_to_block": "Frage in Block verschieben",
         "multiply": "Multiplizieren",

@@ -28,8 +28,11 @@ import { prisma } from "@formbricks/database";
  *
  * `DeletionCleanup` is the third, for the same reason as the outbox: it names deleted rows by value, so
  * it has no foreign keys (ENG-3612).
+ *
+ * `InstanceSetup` (ENG-7313) is instance-level and has no foreign keys, so it must be listed too: a leaked
+ * marker would make every later test see an already-set-up instance.
  */
 export const resetDb = (): Promise<unknown> =>
   prisma.$executeRawUnsafe(
-    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "AuthzedProjectionScopeState", "oauthResource", "DeletionCleanup" RESTART IDENTITY CASCADE;'
+    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "AuthzedProjectionScopeState", "oauthResource", "DeletionCleanup", "InstanceSetup" RESTART IDENTITY CASCADE;'
   );

@@ -4,7 +4,6 @@ import { LockIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
 import { startSsoSignIn } from "@/modules/ee/sso/lib/start-sso-sign-in";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -13,20 +12,25 @@ interface SamlButtonProps {
   returnToUrl?: string;
   lastUsed?: boolean;
   source: "signin" | "signup";
+  /** Whether the instance's one SAML connection exists, looked up where the page rendered. */
+  connectionExists: boolean;
 }
 
-export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButtonProps>) => {
+export const SamlButton = ({
+  returnToUrl,
+  lastUsed,
+  source,
+  connectionExists,
+}: Readonly<SamlButtonProps>) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    setIsLoading(true);
-    const doesSamlConnectionExist = await doesSamlConnectionExistAction();
-    if (!doesSamlConnectionExist?.data) {
+    if (!connectionExists) {
       toast.error(t("auth.saml_connection_error"));
-      setIsLoading(false);
       return;
     }
+    setIsLoading(true);
 
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 

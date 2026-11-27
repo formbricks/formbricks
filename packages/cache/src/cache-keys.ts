@@ -86,6 +86,14 @@ export const createCacheKey = {
       makeCacheKey("custom-css", scope, `v${String(processorVersion)}`, sourceHash),
   },
 
+  // Integration-related keys
+  integration: {
+    // ENG-3907: serializes the header read, header write and row append on one Google spreadsheet across
+    // workers and replicas, so two responses cannot both extend the header from the same stale read.
+    googleSheetWriteLock: (spreadsheetId: string): CacheKey =>
+      makeCacheKey("integration", "google-sheets", spreadsheetId, "write-lock"),
+  },
+
   // Response-related keys
   response: {
     countBySurveyId: (surveyId: string): CacheKey => makeCacheKey("response", surveyId, "count"),

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 /**
@@ -298,7 +299,7 @@ const post = (body: unknown = {}) =>
     new NextRequest(`http://localhost/api/v3/workflows/${WORKFLOW_ID}/test-runs`, {
       method: "POST",
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
     }),
     { params: Promise.resolve({ workflowId: WORKFLOW_ID }) }
   );

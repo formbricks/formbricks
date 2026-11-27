@@ -18,7 +18,7 @@ import {
   sendSignedWebhookRequest,
 } from "@/modules/integrations/webhooks/lib/send-signed-webhook";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
-import { TWebhookInput } from "../types/webhooks";
+import { TWebhookInput, TWebhookListItem } from "../types/webhooks";
 
 const getWebhookTestErrorMessage = async (statusCode: number): Promise<string | null> => {
   switch (statusCode) {
@@ -143,7 +143,9 @@ export const createWebhook = async (
   }
 };
 
-export const getWebhooks = async (workspaceId: string): Promise<Webhook[]> => {
+// The signing secret is read here only to derive `hasSecret`; it is dropped before the rows leave this
+// function, because the result is serialised to the browser for every member, read-only ones included.
+export const getWebhooks = async (workspaceId: string): Promise<TWebhookListItem[]> => {
   validateInputs([workspaceId, ZId]);
 
   try {
@@ -155,7 +157,7 @@ export const getWebhooks = async (workspaceId: string): Promise<Webhook[]> => {
         createdAt: "desc",
       },
     });
-    return webhooks;
+    return webhooks.map(({ secret, ...webhook }) => ({ ...webhook, hasSecret: secret !== null }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

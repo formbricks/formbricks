@@ -205,6 +205,79 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  // ENG-7037: the editor stores an untranslated text as "" and refuses to publish it; so does this. A
+  // draft may hold it (the editor autosaves drafts leniently), so it is refused from the publish on.
+  describe.each([
+    ["an empty string", ""],
+    ["whitespace only", "  \n\t "],
+    ["empty rich text", "<p></p>"],
+  ])("a configured language whose text is %s", (_label, blank) => {
+    const body = (
+      overrides: { status?: string; languages?: { code: string; enabled: boolean }[] },
+      texts: { headline: Record<string, string>; subheader?: Record<string, string> }
+    ) => ({
+      ...rawCreateBody,
+      ...overrides,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              headline: texts.headline,
+              ...(texts.subheader ? { subheader: texts.subheader } : {}),
+            },
+          ],
+        },
+      ],
+    });
+    const translated = { "en-US": "What should we improve?", "de-DE": blank };
+    const missingTranslations = (raw: ReturnType<typeof body>) => {
+      const preparation = prepareV3SurveyCreateInput(raw);
+      return preparation.ok
+        ? undefined
+        : preparation.validation.invalidParams.filter((param) => param.code === "missing_translation");
+    };
+
+    test("is reported as a missing translation once the survey is not a draft", () => {
+      expect(missingTranslations(body({ status: "inProgress" }, { headline: translated }))).toEqual([
+        expect.objectContaining({
+          name: "blocks.0.elements.0.headline",
+          code: "missing_translation",
+          identifier: "de-DE",
+          referenceType: "language",
+        }),
+      ]);
+    });
+
+    test("is accepted in a draft, which the editor saves before it is translated", () => {
+      expect(prepareV3SurveyCreateInput(body({ status: "draft" }, { headline: translated })).ok).toBe(true);
+    });
+
+    test("is accepted when the language is disabled", () => {
+      // An import turns a language off for the texts its source lacked, and leaves them blank.
+      const raw = body(
+        { status: "inProgress", languages: [{ code: "de-DE", enabled: false }] },
+        { headline: translated }
+      );
+
+      expect(prepareV3SurveyCreateInput(raw).ok).toBe(true);
+    });
+
+    test("is accepted when the default language is blank as well", () => {
+      // An optional text left empty everywhere is the editor's own shape for "no text", not a gap.
+      const raw = body(
+        { status: "inProgress" },
+        {
+          headline: { "en-US": "What should we improve?", "de-DE": "Was sollen wir verbessern?" },
+          subheader: { "en-US": "", "de-DE": blank },
+        }
+      );
+
+      expect(prepareV3SurveyCreateInput(raw).ok).toBe(true);
+    });
+  });
+
   test("rejects partial derived translations before internal survey validation", () => {
     const preparation = prepareV3SurveyCreateInput({
       ...rawCreateBody,
@@ -965,6 +1038,39 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
       expect.arrayContaining([
         expect.objectContaining({ name: "blocks.0.elements.0.headline" }),
         expect.objectContaining({ name: "endings.0.headline" }),
+      ])
+    );
+  });
+
+  test("refuses to publish a draft whose enabled language has blank text (ENG-7037)", () => {
+    const blankGerman = {
+      ...storedInvalidSurvey,
+      blocks: [
+        {
+          ...(storedInvalidSurvey.blocks[0] as object),
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { "en-US": "What should we improve?", "de-DE": "" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const result = prepareV3SurveyPatchInput(blankGerman, { status: "inProgress" });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.validation.invalidParams).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "blocks.0.elements.0.headline",
+          code: "missing_translation",
+          identifier: "de-DE",
+        }),
       ])
     );
   });

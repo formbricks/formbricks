@@ -45,6 +45,7 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
 import { combineFilterResults, evaluateSurveyInteractionFilterInMemory } from "./filter/survey-interaction";
+import { SEGMENT_TITLE_TAKEN_ERROR_MESSAGE } from "./segment-errors";
 
 export type PrismaSegment = Prisma.SegmentGetPayload<{
   include: {
@@ -116,6 +117,32 @@ export const getSegment = reactCache(async (segmentId: string): Promise<TSegment
     throw error;
   }
 });
+
+/**
+ * The filters of several segments in one read, for the recursion check: a level of references costs one
+ * query instead of one per segment. Scoped to the workspace, like every other nested-segment read, so a
+ * tree naming another workspace's segment is refused rather than followed. Only ids that exist come back;
+ * the caller reports a missing one, so it names the id its walk met.
+ */
+export const getSegmentsByIds = async (
+  segmentIds: string[],
+  workspaceId: string
+): Promise<{ id: string; filters: TBaseFilters }[]> => {
+  validateInputs([segmentIds, z.array(ZId)], [workspaceId, ZId]);
+  try {
+    const segments = await prisma.segment.findMany({
+      where: { id: { in: segmentIds }, workspaceId },
+      select: { id: true, filters: true },
+    });
+    return segments.map((segment) => ({ id: segment.id, filters: segment.filters as TBaseFilters }));
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 /**
  * `getSegments`' survey-reference scope for the server-side callers that need every survey a segment is
@@ -290,7 +317,7 @@ const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): 
  */
 const throwSegmentTitleTaken = (error: unknown): void => {
   if (isUniqueConstraintError(error)) {
-    throw new InvalidInputError("A segment with this title already exists");
+    throw new InvalidInputError(SEGMENT_TITLE_TAKEN_ERROR_MESSAGE);
   }
 };
 

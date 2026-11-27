@@ -12,8 +12,14 @@ vi.mock("@/lib/env", () => ({ env: { WEBAPP_URL: "http://localhost:3000" } }));
 // chain is irrelevant to that call and pulls in server env, so stub it.
 vi.mock("@/modules/gateway-auth/lib/service", () => ({ getGatewayAuthServiceTokenPurpose: vi.fn() }));
 
-const { createSignupIntentToken, readSignupIntent, classifySignupIntent, SIGNUP_INTENT_COOKIE_NAME } =
-  await import("./signup-intent");
+const {
+  createDecoySignupIntentToken,
+  createSignupIntentToken,
+  readSignupIntent,
+  classifySignupIntent,
+  SIGNUP_INTENT_COOKIE_NAME,
+} = await import("./signup-intent");
+const { createId } = await import("@paralleldrive/cuid2");
 const { symmetricEncrypt } = await import("@/lib/crypto");
 
 describe("signup intent token", () => {
@@ -147,5 +153,40 @@ describe("classifySignupIntent", () => {
 
   test("reports invalid for a cookie that does not verify", () => {
     expect(classifySignupIntent("not-a-jwt", "user_1")).toBe("invalid");
+  });
+
+  // ENG-7094: a decoy comes from a sign-up with an already-registered address. That proves nothing, the
+  // same as no sign-up, and must not read as `other_user`, which is logged and audited as a possible
+  // pre-hijack.
+  test("reports absent for a decoy, whichever account is being verified", () => {
+    const decoy = createDecoySignupIntentToken();
+    expect(readSignupIntent(decoy)).toEqual({ userId: null, reason: "absent" });
+    expect(classifySignupIntent(decoy, "user_1")).toBe("absent");
+  });
+});
+
+// ENG-7094: the decoy is what an already-registered address gets from sign-up, so the caller must not be
+// able to tell it from the cookie a new account gets.
+describe("createDecoySignupIntentToken", () => {
+  const claimsOf = (token: string) => jwt.decode(token) as Record<string, unknown>;
+
+  test("has the same claims and length as a cookie for a real Better Auth user id", () => {
+    const real = createSignupIntentToken(createId());
+    const decoy = createDecoySignupIntentToken();
+
+    expect(decoy).toHaveLength(real.length);
+    expect(Object.keys(claimsOf(decoy)).sort()).toEqual(Object.keys(claimsOf(real)).sort());
+    expect(claimsOf(decoy).uid as string).toHaveLength((claimsOf(real).uid as string).length);
+  });
+
+  test("is fresh on every call", () => {
+    expect(createDecoySignupIntentToken()).not.toBe(createDecoySignupIntentToken());
+  });
+
+  // The decoy marker relies on this: a real id never starts with a digit.
+  test("real cuid2 ids never take the decoy form", () => {
+    for (let i = 0; i < 1000; i++) {
+      expect(readSignupIntent(createSignupIntentToken(createId())).reason).toBe("valid");
+    }
   });
 });

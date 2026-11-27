@@ -5,6 +5,7 @@ import {
   IS_FORMBRICKS_CLOUD,
   IS_FORMBRICKS_SURVEYS_CONFIGURED,
 } from "@/lib/constants";
+import { ApiQueryClientProvider } from "@/modules/api/components/api-query-client-provider";
 import { getPendingDowngradeSchedule } from "@/modules/ee/license-check/lib/license";
 import { SettingsNavigation } from "@/modules/settings/components/settings-navigation";
 import type { TSettingsLayoutData } from "@/modules/settings/lib/navigation-data";
@@ -40,40 +41,43 @@ export const SettingsShell = ({ data, children }: Readonly<SettingsShellProps>) 
         status={status}
       />
 
-      <div className="flex h-full">
-        <SettingsNavigation
-          user={data.user}
-          workspaceId={data.currentWorkspace?.id ?? ""}
-          workspaceName={data.currentWorkspace?.name ?? ""}
-          organizationId={data.organization.id}
-          organizationName={data.organization.name}
-          membershipRole={data.membershipRole}
-          isFormbricksCloud={data.isFormbricksCloud}
-          isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
-          backUrl={data.backUrl}
-        />
-        <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
-          {/* TopControlBar reads the workspace context (and would throw without it), so it only renders
+      {/* The sidebar and the breadcrumbs read the switcher lists through the dashboard API, sharing one cache. */}
+      <ApiQueryClientProvider>
+        <div className="flex h-full">
+          <SettingsNavigation
+            user={data.user}
+            workspaceId={data.currentWorkspace?.id ?? ""}
+            workspaceName={data.currentWorkspace?.name ?? ""}
+            organizationId={data.organization.id}
+            organizationName={data.organization.name}
+            membershipRole={data.membershipRole}
+            isFormbricksCloud={data.isFormbricksCloud}
+            isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
+            backUrl={data.backUrl}
+          />
+          <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
+            {/* TopControlBar reads the workspace context (and would throw without it), so it only renders
               when there is a current workspace — a user with no workspace still gets the org settings. */}
-          {data.currentWorkspace && (
-            <TopControlBar
-              currentOrganizationId={data.organization.id}
-              isMultiOrgEnabled={data.isMultiOrgEnabled}
-              organizationWorkspacesLimit={data.organizationWorkspacesLimit}
-              isFormbricksCloud={data.isFormbricksCloud}
-              isLicenseActive={active}
-              isNoLicense={status === "no-license"}
-              isOwnerOrManager={data.isOwnerOrManager}
-              isAccessControlAllowed={data.isAccessControlAllowed}
-              membershipRole={data.membershipRole}
-              // These routes carry no workspaceId, so the top bar must not claim a current
-              // workspace. The sidebar's Workspace section stays as the way to reach one.
-              showWorkspaceBreadcrumb={false}
-            />
-          )}
-          <div className="flex-1 overflow-y-auto">{children}</div>
+            {data.currentWorkspace && (
+              <TopControlBar
+                currentOrganizationId={data.organization.id}
+                isMultiOrgEnabled={data.isMultiOrgEnabled}
+                organizationWorkspacesLimit={data.organizationWorkspacesLimit}
+                isFormbricksCloud={data.isFormbricksCloud}
+                isLicenseActive={active}
+                isNoLicense={status === "no-license"}
+                isOwnerOrManager={data.isOwnerOrManager}
+                isAccessControlAllowed={data.isAccessControlAllowed}
+                membershipRole={data.membershipRole}
+                // These routes carry no workspaceId, so the top bar must not claim a current
+                // workspace. The sidebar's Workspace section stays as the way to reach one.
+                showWorkspaceBreadcrumb={false}
+              />
+            )}
+            <div className="flex-1 overflow-y-auto">{children}</div>
+          </div>
         </div>
-      </div>
+      </ApiQueryClientProvider>
     </div>
   );
 

@@ -8,6 +8,7 @@ import { type TSurveyEnding } from "@formbricks/types/surveys/types";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { readZip } from "@/lib/analysis-export/__fixtures__/read-zip";
 import { test } from "./lib/fixtures";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 /**
  * **Response export, end to end (ENG-1847, ENG-6794).**
@@ -308,7 +309,7 @@ test.describe("Response export @slow", () => {
       if (!choices) throw new Error("The seeded survey lost its choices");
       choices[0].code = "9";
 
-      const refused = await page.request.patch(url, { data: { blocks } });
+      const refused = await page.request.patch(url, { data: { blocks }, headers: SAME_ORIGIN_HEADERS });
       expect(refused.status()).toBe(422);
       const problem = (await refused.json()) as { invalid_params?: { code?: string }[] };
       expect(problem.invalid_params?.map((param) => param.code)).toContain("immutable_answer_code");

@@ -366,7 +366,7 @@ const I18N_STRING_FIELDS = new Set([
 ]);
 
 // Collections inside an element whose entries are numbered in the editor UI.
-const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
+export const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
   rows: "common.row_n",
   columns: "common.column_n",
   choices: "common.choice_n",
@@ -374,7 +374,7 @@ const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
 
 // Element fields whose schema name is not what the author sees in the editor. A function with literal
 // t() calls rather than a key table, because the translation scanner only sees literal keys.
-const getElementFieldLabel = (field: string, t: TFunction): string | undefined => {
+export const getElementFieldLabel = (field: string, t: TFunction): string | undefined => {
   if (field === "shuffleOption") return t("workspace.surveys.edit.field_label_shuffle_option");
   if (field === "imageAltText") return t("workspace.surveys.edit.image_alt_text");
   return undefined;

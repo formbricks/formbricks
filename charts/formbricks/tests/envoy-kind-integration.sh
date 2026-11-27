@@ -3,6 +3,7 @@
 set -euo pipefail
 
 readonly CHART_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${CHART_DIR}/../../scripts/ci-network.sh"
 readonly KIND_VERSION=v0.33.0
 readonly NODE_IMAGE='kindest/node:v1.34.11@sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d'
 readonly CLUSTER_NAME="formbricks-envoy-$$-${RANDOM}"
@@ -16,6 +17,12 @@ context="kind-${CLUSTER_NAME}"
 kubectl_test() { kubectl --context "$context" "$@"; }
 
 diagnostics() {
+  # Download/build failures occur before a cluster exists. Do not misreport those as a
+  # disappeared kind context or accidentally query the operator's default cluster.
+  if [[ ! -s "$KUBECONFIG" ]]; then
+    printf '\nNo isolated kind kubeconfig is available; skipping Kubernetes diagnostics.\n' >&2
+    return
+  fi
   printf '\nHelm releases:\n' >&2
   helm list -A >&2 || true
   printf '\nPod state:\n' >&2
@@ -35,8 +42,22 @@ diagnostics() {
     kubectl_test -n "$NAMESPACE" logs "job/$job" --all-containers --tail=100 >&2 || true
   done
 }
+# The port-forward of the running check_envoy, stopped on exit so a failed check cannot leave it behind.
+port_forward_pid=""
+# Each check_envoy forwards from its own local port, so a forward that outlived its check is never reused.
+envoy_checks=0
+
+stop_port_forward() {
+  if [[ -n "$port_forward_pid" ]]; then
+    kill "$port_forward_pid" >/dev/null 2>&1 || true
+    wait "$port_forward_pid" 2>/dev/null || true
+    port_forward_pid=""
+  fi
+}
+
 cleanup() {
   local code=$?
+  stop_port_forward
   if (( code != 0 )); then diagnostics; fi
   if [[ -x "$kind_bin" ]]; then
     "$kind_bin" delete cluster --name "$CLUSTER_NAME" >/dev/null 2>&1 || true
@@ -57,7 +78,7 @@ case "$(uname -s)-$(uname -m)" in
     ;;
   *) printf 'Unsupported kind test platform: %s-%s\n' "$(uname -s)" "$(uname -m)" >&2; exit 1 ;;
 esac
-curl --fail --silent --show-error --location --retry 3 \
+ci_download \
   "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-${platform}" \
   --output "$kind_bin"
 printf '%s  %s\n' "$checksum" "$kind_bin" | shasum -a 256 --check
@@ -68,11 +89,12 @@ chmod 700 "$kind_bin"
 # forbid registry fallback and ensure the deployed image is this candidate.
 echo 'Building the Cube candidate for the kind lifecycle test'
 docker build --tag formbricks-cube:envoy-kind "${CHART_DIR}/../../docker/cube-image"
+ci_pull_image "$NODE_IMAGE"
 "$kind_bin" create cluster --name "$CLUSTER_NAME" --image "$NODE_IMAGE" --wait 120s
 "$kind_bin" load docker-image formbricks-cube:envoy-kind --name "$CLUSTER_NAME"
 
 # The platform installs Gateway API Standard and the matching Envoy CRDs as separate ownership units.
-curl --fail --silent --show-error --location --retry 3 \
+ci_download \
   https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml \
   --output "${temp_dir}/gateway-standard.yaml"
 kubectl_test apply --server-side --field-manager=platform-gateway-api -f "${temp_dir}/gateway-standard.yaml"
@@ -228,20 +250,23 @@ check_envoy() {
       "$gateway_address" "$proxy_namespace" "$proxy_address" >&2
     return 1
   fi
-  kubectl_test -n "$proxy_namespace" port-forward "svc/$proxy_service" 18080:80 \
+  envoy_checks=$((envoy_checks + 1))
+  local local_port=$((18080 + envoy_checks))
+  # kubectl itself, not the kubectl_test function: a backgrounded function runs in a subshell, so $! would
+  # be the subshell and killing it would leave kubectl holding the port, still forwarding to the old proxy.
+  kubectl --context "$context" -n "$proxy_namespace" port-forward "svc/$proxy_service" "${local_port}:80" \
     >"${temp_dir}/port-forward.log" 2>&1 &
-  local forward_pid=$!
+  port_forward_pid=$!
   local success=false
   for attempt in {1..60}; do
-    if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:18080/health \
+    if curl --fail --silent --show-error --max-time 3 "http://127.0.0.1:${local_port}/health" \
       >"${temp_dir}/gateway-health.log" 2>/dev/null; then
       success=true
       break
     fi
     sleep 2
   done
-  kill "$forward_pid" >/dev/null 2>&1 || true
-  wait "$forward_pid" 2>/dev/null || true
+  stop_port_forward
   if [[ "$success" != true ]]; then
     cat "${temp_dir}/port-forward.log" >&2
     echo 'No successful /health response through the Envoy proxy' >&2

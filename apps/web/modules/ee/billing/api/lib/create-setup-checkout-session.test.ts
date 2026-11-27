@@ -108,6 +108,27 @@ describe("createSetupCheckoutSession", () => {
     expect(mocks.checkoutSessionsCreate.mock.calls[0][0]).not.toHaveProperty("payment_method_types");
   });
 
+  test("sends the caller's intent as the Checkout Session's idempotency key", async () => {
+    await createSetupCheckoutSession(
+      "cus_1",
+      "sub_1",
+      "https://app.formbricks.com/billing",
+      "org_1",
+      undefined,
+      "intent-1"
+    );
+
+    expect(mocks.checkoutSessionsCreate).toHaveBeenCalledWith(expect.any(Object), {
+      idempotencyKey: "intent-1:setup-checkout-session",
+    });
+  });
+
+  test("sends no request options without an intent", async () => {
+    await createSetupCheckoutSession("cus_1", "sub_1", "https://app.formbricks.com/billing", "org_1");
+
+    expect(mocks.checkoutSessionsCreate.mock.calls[0]).toHaveLength(1);
+  });
+
   // ENG-6866: Stripe 2026-09-30.endive removed `payment_method_types` from Checkout Session creation.
   test("restricts an upgrade checkout to cards with allowed_payment_method_types on endive, even for EUR", async () => {
     mocks.apiVersion = "2026-09-30.endive";

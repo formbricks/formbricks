@@ -55,27 +55,6 @@ export const getApiKey = reactCache(async (apiKeyId: string): Promise<{ organiza
   }
 });
 
-export const getIntegration = reactCache(
-  async (integrationId: string): Promise<{ workspaceId: string } | null> => {
-    try {
-      const integration = await prisma.integration.findUnique({
-        where: {
-          id: integrationId,
-        },
-        select: {
-          workspaceId: true,
-        },
-      });
-      return integration;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-      throw error;
-    }
-  }
-);
-
 export const getInvite = reactCache(async (inviteId: string): Promise<{ organizationId: string } | null> => {
   validateInputs([inviteId, ZString]);
 
@@ -312,28 +291,6 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ worksp
     throw error;
   }
 });
-
-export const getFeedbackSource = reactCache(
-  async (feedbackSourceId: string): Promise<{ workspaceId: string } | null> => {
-    validateInputs([feedbackSourceId, ZId]);
-    try {
-      const feedbackSource = await prisma.feedbackSource.findUnique({
-        where: {
-          id: feedbackSourceId,
-        },
-        select: { workspaceId: true },
-      });
-
-      return feedbackSource;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-
-      throw error;
-    }
-  }
-);
 
 export const getContactAttributeKey = reactCache(
   async (contactAttributeKeyId: string): Promise<{ workspaceId: string } | null> => {

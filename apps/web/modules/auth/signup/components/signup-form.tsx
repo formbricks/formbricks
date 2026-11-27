@@ -11,14 +11,15 @@ import { useTranslation } from "react-i18next";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import { SETUP_TOKEN_MAX_LENGTH } from "@formbricks/types/instance";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
+import { createSignup } from "@/modules/auth/lib/pre-login-api-client";
 import {
   buildSignupWithoutVerificationSuccessPath,
   buildVerificationRequestedPath,
 } from "@/modules/auth/lib/verification-links";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { getSignupErrorPlacement } from "@/modules/auth/signup/lib/signup-error";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
@@ -27,13 +28,13 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
   name: ZUserName,
   email: z.email(),
   password: ZUserPassword,
+  setupToken: z.string().max(SETUP_TOKEN_MAX_LENGTH).optional(),
 });
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
@@ -53,9 +54,13 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
+  /** Whether the instance's one SAML connection exists, looked up where the page renders. */
+  samlConnectionExists: boolean;
   isTurnstileConfigured: boolean;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
+  /** The instance requires `SETUP_TOKEN` to create the first administrator (ENG-7313). */
+  isSetupTokenRequired?: boolean;
 }
 
 export const SignupForm = ({
@@ -73,9 +78,11 @@ export const SignupForm = ({
   emailVerificationDisabled,
   isSsoEnabled,
   samlSsoEnabled,
+  samlConnectionExists,
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
+  isSetupTokenRequired = false,
 }: Readonly<SignupFormProps>) => {
   const [showLogin, setShowLogin] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -122,18 +129,29 @@ export const SignupForm = ({
       name: "",
       email: emailFromSearchParams || "",
       password: "",
+      setupToken: "",
     },
     resolver: zodResolver(ZSignupInput),
   });
 
-  /** Show a failed `createUserAction` under the field that caused it, or as a toast. */
-  const surfaceSignupError = (errorMessage: string) => {
-    const placement = getSignupErrorPlacement(errorMessage, t);
-    if ("field" in placement) {
-      form.setError(placement.field, { type: "manual", message: placement.message });
+  /**
+   * Show a failed sign-up under the field that caused it, or as a toast. The placement keys on the
+   * problem's stable error code (`details.reason`); a code it doesn't place toasts the problem's message.
+   */
+  const surfaceSignupError = (error: unknown) => {
+    const errorMessage = getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
+    const placement = getSignupErrorPlacement(getV3ApiErrorReason(error, errorMessage), t, errorMessage);
+    // The setup-token field is on the page only when the instance asked for it as the page rendered;
+    // if that changed since, an error under a missing field would show nothing.
+    if (!("field" in placement)) {
+      toast.error(placement.toast);
       return;
     }
-    toast.error(placement.toast);
+    if (placement.field === "setupToken" && !isSetupTokenRequired) {
+      toast.error(placement.message);
+      return;
+    }
+    form.setError(placement.field, { type: "manual", message: placement.message });
   };
 
   const handleSubmit = async (data: TSignupInput) => {
@@ -150,31 +168,22 @@ export const SignupForm = ({
       };
       const normalizedEmail = data.email.toLowerCase();
 
-      const createUserResponse = await createUserAction({
-        name: data.name,
-        email: normalizedEmail,
-        password: data.password,
-        userLocale,
-        inviteToken: inviteToken ?? "",
-        turnstileToken,
-        subscribeToSecurityUpdates,
-        subscribeToProductUpdates,
-      });
-
-      if (!createUserResponse?.data) {
+      let token: string;
+      try {
+        ({ emailToken: token } = await createSignup({
+          name: data.name,
+          email: normalizedEmail,
+          password: data.password,
+          userLocale,
+          inviteToken: inviteToken ?? "",
+          setupToken: isSetupTokenRequired ? data.setupToken : undefined,
+          turnstileToken,
+          subscribeToSecurityUpdates,
+          subscribeToProductUpdates,
+        }));
+      } catch (error) {
         resetTurnstileIfConfigured();
-        surfaceSignupError(getFormattedErrorMessage(createUserResponse));
-        return;
-      }
-
-      const emailTokenActionResponse = await createEmailTokenAction({ email: normalizedEmail });
-      const token = emailTokenActionResponse?.data;
-
-      if (!token) {
-        resetTurnstileIfConfigured();
-
-        const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-        toast.error(errorMessage);
+        surfaceSignupError(error);
         return;
       }
 
@@ -276,6 +285,31 @@ export const SignupForm = ({
                       </FormItem>
                     )}
                   />
+                  {isSetupTokenRequired && (
+                    <FormField
+                      control={form.control}
+                      name="setupToken"
+                      render={({ field }) => (
+                        <FormItem className="w-full text-left">
+                          <FormLabel>{t("setup.signup.setup_token")}</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              data-testid="signup-setup-token"
+                              name="setupToken"
+                              value={field.value ?? ""}
+                              onBlur={field.onBlur}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              autoComplete="off"
+                              maxLength={SETUP_TOKEN_MAX_LENGTH}
+                              required
+                              className="bg-white"
+                            />
+                          </FormControl>
+                          <FormError role="alert" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
                 <PasswordChecks password={form.watch("password")} />
               </div>
@@ -353,7 +387,9 @@ export const SignupForm = ({
                       nameInputRef.current?.focus();
                     }
               }
-              disabled={showLogin && !form.formState.isValid}
+              disabled={
+                showLogin && (!form.formState.isValid || (isSetupTokenRequired && !form.watch("setupToken")))
+              }
               className="h-11 w-full justify-center sm:h-10"
               loading={showLogin && form.formState.isSubmitting}>
               {t("auth.continue_with_email")}
@@ -369,6 +405,7 @@ export const SignupForm = ({
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
           samlSsoEnabled={samlSsoEnabled}
+          samlConnectionExists={samlConnectionExists}
           returnToUrl={returnToUrl}
           source="signup"
         />

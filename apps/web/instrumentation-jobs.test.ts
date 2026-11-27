@@ -108,6 +108,12 @@ vi.mock("@formbricks/jobs", () => ({
       scope: "global",
       upsert: mockUpsertDeletionCleanupDrain,
     },
+    oauthClientCleanup: {
+      name: "oauth-client.cleanup",
+      scheduleId: "oauth-client-cleanup",
+      scope: "global",
+      upsert: vi.fn(),
+    },
     surveyArchivePurge: {
       name: "survey-archive-purge.process",
       remove: mockRemoveSurveyArchivePurge,
@@ -218,6 +224,10 @@ vi.mock("@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job", () 
   processDeletionCleanupDrainJob: mockProcessDeletionCleanupDrainJob,
 }));
 
+vi.mock("@/modules/auth/lib/oauth-client-cleanup", () => ({
+  OAUTH_CLIENT_CLEANUP_INTERVAL_MS: 24 * 60 * 60 * 1000,
+  processOauthClientCleanupJob: vi.fn(),
+}));
 vi.mock("@/modules/email/lib/email-audit-maintenance", () => ({
   processEmailAuditMaintenanceJob: mockProcessEmailAuditMaintenanceJob,
 }));
@@ -348,6 +358,7 @@ describe("instrumentation-jobs", () => {
         "data-retention.sweep": expect.any(Function),
         "deletion-cleanup.drain": expect.any(Function),
         "email-audit.maintain": expect.any(Function),
+        "oauth-client.cleanup": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),

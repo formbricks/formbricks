@@ -231,6 +231,16 @@ describe("writeFormbricksFile", () => {
     expect(survey).not.toHaveProperty("metadata");
   });
 
+  test("leaves out the survey's custom CSS: styling is not part of the file, and the importer drops it", () => {
+    const { survey } = write(
+      buildSurvey({
+        customCss: { light: '[data-fb-part="headline"] { color: #ff00aa; }', dark: null },
+      })
+    );
+
+    expect(survey).not.toHaveProperty("customCss");
+  });
+
   test("writes /storage media paths as absolute URLs, private ones against the app URL", () => {
     const { survey } = write(buildSurvey());
 

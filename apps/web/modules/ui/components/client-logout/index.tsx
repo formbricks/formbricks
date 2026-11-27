@@ -4,12 +4,10 @@ import { useEffect } from "react";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 
 export const ClientLogout = () => {
-  const { signOut: signOutWithAudit } = useSignOut();
+  const { signOut } = useSignOut();
 
   useEffect(() => {
-    void signOutWithAudit({
-      reason: "forced_logout",
-      redirectUrl: "/auth/login",
+    void signOut({
       redirect: false,
       callbackUrl: "/auth/login",
       clearWorkspaceId: true,

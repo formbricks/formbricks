@@ -48,7 +48,7 @@ export const createTeamMembership = async (
   invite: CreateMembershipInvite,
   userId: string,
   options?: TDeferredTeamMembershipProjection
-): Promise<void> => {
+): Promise<string[]> => {
   const teamIds = invite.teamIds || [];
   const committedTeamIds: string[] = [];
 
@@ -85,6 +85,8 @@ export const createTeamMembership = async (
       });
       committedTeamIds.push(teamId);
     }
+    // The teams written, so a caller that defers the projection reconciles only those.
+    return committedTeamIds;
   } catch (error) {
     logger.error(error, `Error creating team membership ${invite.organizationId} ${userId}`);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

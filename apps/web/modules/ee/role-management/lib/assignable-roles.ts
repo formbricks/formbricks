@@ -15,7 +15,8 @@ export type TAssignableRolesContext = Readonly<{
  * - Owners give every role; Billing only on Formbricks Cloud.
  * - Managers give the roles below their own: Member and, like Member, Dashboard viewer.
  * - The Dashboard viewer is offered only while Access Control and Dashboards are both entitled (ADR-0025).
- * - Everyone else gives nothing here; team admins invite Members through `inviteUserAction`'s own rule.
+ * - Everyone else gives nothing here; team admins invite Members through the single invite's own rule
+ *   (`POST /api/internal/invites`).
  *
  * Shared by the pickers and the server actions, so what the UI offers and what the server accepts are
  * one rule.

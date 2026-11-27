@@ -192,6 +192,10 @@ spec:
             - name: MCP_OAUTH_JWKS_URL
               value: {{ .Values.formbricks.mcpOauthJwksUrl | quote }}
             {{- end }}
+            {{- if and (include "formbricks.envoy.appRateLimitsDelegated" .) (not (hasKey .Values.deployment.env "ENVOY_RATE_LIMITING_ENABLED")) }}
+            - name: ENVOY_RATE_LIMITING_ENABLED
+              value: "1"
+            {{- end }}
             {{- if .Values.authzed.enabled }}
             {{- if not (hasKey .Values.deployment.env "AUTHZED_ENABLED") }}
             - name: AUTHZED_ENABLED

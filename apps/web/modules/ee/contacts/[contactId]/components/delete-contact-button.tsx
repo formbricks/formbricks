@@ -6,8 +6,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteContactAction } from "@/modules/ee/contacts/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { deleteContact } from "@/modules/ee/contacts/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 
@@ -28,18 +28,12 @@ export const DeleteContactButton = ({ contactId, isReadOnly, isQuotasAllowed }: 
   const handleDeletePerson = async () => {
     try {
       setIsDeletingPerson(true);
-      const deletePersonResponse = await deleteContactAction({ contactId });
-
-      if (deletePersonResponse?.data) {
-        router.refresh();
-        router.push(`${workspaceBasePath}/contacts`);
-        toast.success(t("workspace.contacts.contact_deleted_successfully"));
-      } else {
-        const errorMessage = getFormattedErrorMessage(deletePersonResponse);
-        toast.error(errorMessage);
-      }
+      await deleteContact(contactId);
+      router.refresh();
+      router.push(`${workspaceBasePath}/contacts`);
+      toast.success(t("workspace.contacts.contact_deleted_successfully"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeletingPerson(false);
       setDeleteDialogOpen(false);

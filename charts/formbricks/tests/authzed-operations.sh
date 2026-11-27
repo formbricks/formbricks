@@ -9,34 +9,9 @@ readonly COMMON_ARGS=(--set formbricks.webappUrl=https://qa.example.com)
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "${temp_dir}"' EXIT
 
-# `helm template` deliberately omits NOTES.txt, while Helm 3.15 still contacts Kubernetes during a dry-run
-# install. Evaluate the real notes through `tpl` in a minimal ConfigMap chart so this contract remains
-# clusterless and release-accurate across supported Helm versions.
-notes_chart="${temp_dir}/notes-chart"
-mkdir -p "${notes_chart}/charts" "${notes_chart}/templates"
-cp "${CHART_DIR}/Chart.yaml" "${notes_chart}/Chart.yaml"
-cp "${CHART_DIR}"/charts/*.tgz "${notes_chart}/charts/"
-cp "${CHART_DIR}/values.yaml" "${notes_chart}/values.yaml"
-cp "${CHART_DIR}/templates/_helpers.tpl" "${notes_chart}/templates/_helpers.tpl"
-cp "${CHART_DIR}/templates/NOTES.txt" "${notes_chart}/notes.txt"
-printf '%s\n' \
-  'apiVersion: v1' \
-  'kind: ConfigMap' \
-  'metadata:' \
-  '  name: notes-contract' \
-  'data:' \
-  '  notes: |' \
-  '{{ tpl (.Files.Get "notes.txt") . | nindent 4 }}' >"${notes_chart}/templates/notes.yaml"
-
-render_notes() {
-  local release_name="$1"
-  shift
-
-  helm template "${release_name}" "${notes_chart}" --namespace qa "${COMMON_ARGS[@]}" "$@" \
-    --show-only templates/notes.yaml \
-    | sed -n '/^  notes: |/,$p' \
-    | sed '1d; s/^    //'
-}
+# shellcheck source=lib/notes.sh
+source "${SCRIPT_DIR}/lib/notes.sh"
+build_notes_chart "${temp_dir}"
 
 authzed_operations_notes() {
   sed -n '/SpiceDB Authorization Operations:/,/^---$/p' <<<"$1"

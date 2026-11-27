@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { PUT } from "./route";
 
 /** Setting an HTTP request step's expected response body (ADR 0054): who may, which step, what is stored and audited. */
@@ -79,7 +80,7 @@ const put = (stepId: string, body: unknown) =>
     new NextRequest(`http://localhost/api/v3/workflows/${WORKFLOW_ID}/steps/${stepId}/expected-response`, {
       method: "PUT",
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
     }),
     { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId }) }
   );

@@ -44,7 +44,7 @@ export const testURLmatch = (
  * the auth flows fall back to `WEBAPP_URL` the same way they do for any other invalid callback.
  *
  * 2048 is the conventional safe maximum, and it is not a new constraint on this codebase:
- * `resendVerificationEmailAction` has capped its callback at 2000 since it was written. The widest
+ * `POST /api/internal/verification-emails` has capped its callback at 2000 since it was written. The widest
  * legitimate callback in the app is an invite link, `/invite?token=<jwt>`, which measures ~640
  * characters with a long address — so this leaves roughly threefold headroom.
  */

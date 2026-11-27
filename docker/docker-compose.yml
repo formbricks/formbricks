@@ -22,6 +22,10 @@ x-environment: &environment
     # Set BETTER_AUTH_URL on a new install; this one needs no value.
     NEXTAUTH_URL:
 
+    # Optional comma-separated extra origins trusted for sign-in, and for dashboard writes from clients that
+    # send no Sec-Fetch-Site header. Browsers that send it must be same-origin with the app.
+    # BETTER_AUTH_TRUSTED_ORIGINS:
+
     # PostgreSQL DB for Formbricks to connect to
     <<: *formbricks-database
 
@@ -114,6 +118,9 @@ x-environment: &environment
     # Set the below to 0 to enable Password Reset (will required Email Configuration)
     PASSWORD_RESET_DISABLED: 1
 
+    # Optional: require this token to create the first administrator on a fresh instance (min. 16 characters)
+    # SETUP_TOKEN:
+
     # Set the below to 1 to disable logins with email
     # EMAIL_AUTH_DISABLED:
 
@@ -163,6 +170,8 @@ x-environment: &environment
     # S3_SECRET_KEY:
     # S3_REGION:
     # S3_BUCKET_NAME:
+    # Without S3_REGION, the AWS SDK falls back to AWS_REGION
+    # AWS_REGION:
 
     # Set a third party S3 compatible storage service endpoint like StorJ leave empty if you use Amazon S3
     # S3_ENDPOINT_URL:
@@ -576,7 +585,7 @@ services:
   vllm:
     restart: always
     profiles: ["qwen"]
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.33.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.34.0}
     deploy:
       resources:
         reservations:

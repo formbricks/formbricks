@@ -182,6 +182,18 @@ describe("parseRecallInformation", () => {
     expect(result.subheader?.default).toBe("Antwort vom Sonntag, 15. Januar 2023");
   });
 
+  test("localizes a day-first date in a rich-text template and a plain-text label", () => {
+    const token = "#recall:appointment/fallback:unbekannt#";
+    const responseData = { appointment: "15-01-2023" };
+
+    expect(replaceRecallInfo(`<p>Termin am ${token}</p>`, responseData, {}, "default", "rich", "de-DE")).toBe(
+      "<p>Termin am Sonntag, 15. Januar 2023</p>"
+    );
+    expect(replaceRecallInfo(`Termin am ${token}`, responseData, {}, "default", "text", "de-DE")).toBe(
+      "Termin am Sonntag, 15. Januar 2023"
+    );
+  });
+
   test("should replace recall info in headline", () => {
     const question: TSurveyOpenTextElement = {
       ...baseQuestion,

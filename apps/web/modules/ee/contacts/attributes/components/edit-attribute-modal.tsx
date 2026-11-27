@@ -7,7 +7,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
-import { updateContactAttributeKeyAction } from "../actions";
+import { updateAttributeKey } from "../lib/api-client";
 
 const getDataTypeIcon = (dataType: string) => {
   switch (dataType) {
@@ -55,17 +55,10 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
     setIsUpdating(true);
 
     try {
-      const updateContactAttributeKeyResponse = await updateContactAttributeKeyAction({
-        id: attribute.id,
+      await updateAttributeKey(attribute.id, {
         name: formData.name || undefined,
         description: formData.description || undefined,
       });
-
-      if (!updateContactAttributeKeyResponse?.data) {
-        const errorMessage = getFormattedErrorMessage(updateContactAttributeKeyResponse);
-        toast.error(errorMessage);
-        return;
-      }
 
       toast.success(t("workspace.contacts.attribute_updated_successfully"));
       setOpen(false);
@@ -73,8 +66,7 @@ export function EditAttributeModal({ attribute, open, setOpen }: Readonly<EditAt
       // The lists read through TanStack Query, which a router refresh does not reach.
       void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
     } finally {
       setIsUpdating(false);
     }

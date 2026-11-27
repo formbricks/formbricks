@@ -94,13 +94,13 @@ export const renderSurvey = async ({
 
   // Every prop passed to a client component is serialized into the RSC payload and readable in the
   // page source, so the survey handed to them must never carry the PIN — the pin gate itself stays
-  // server-side (see the `survey.pin` branch below and `validateSurveyPinAction`) — nor its stored
-  // custom CSS, which carries the editable source. Compiled CSS goes through `customCss` below.
+  // server-side (see the `survey.pin` branch below and `POST /api/internal/link-survey-pin-verifications`)
+  // — nor its stored custom CSS, which carries the editable source. Compiled CSS goes through `customCss` below.
   const publicSurvey: TSurvey = { ...omitCustomCssSource(survey), pin: null };
 
   // The single-use link exactly as it appears in the URL. The PIN and verify-email screens hand it back to
-  // their actions, which repeat the single-use check this page already passed (ENG-4041). A repeated
-  // parameter arrives as an array, which those actions' schemas would reject outright, leaving the gate
+  // their routes, which repeat the single-use check this page already passed (ENG-4041). A repeated
+  // parameter arrives as an array, which those routes' schemas would reject outright, leaving the gate
   // impossible to pass.
   const linkSuId = singleSearchParamValue(searchParams.suId);
   const linkSuToken = singleSearchParamValue(searchParams.suToken);
@@ -235,7 +235,8 @@ export const renderSurvey = async ({
 
 /**
  * Workspace + survey CSS, compiled only (ENG-3552). A PIN-protected survey gets none here: it gets it from
- * validateSurveyPinAction once the PIN is right, together with the survey itself.
+ * the PIN check (`POST /api/internal/link-survey-pin-verifications`) once the PIN is right, together with
+ * the survey itself.
  */
 async function getRendererCustomCss(
   survey: TSurvey,

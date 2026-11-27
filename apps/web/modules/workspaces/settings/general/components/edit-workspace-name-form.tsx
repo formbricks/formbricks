@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TWorkspace, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -19,7 +19,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
+import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
 
 interface EditWorkspaceNameProps {
   workspace: TWorkspace;
@@ -54,24 +54,12 @@ export const EditWorkspaceNameForm: React.FC<EditWorkspaceNameProps> = ({ worksp
         return;
       }
 
-      const updatedWorkspaceResponse = await updateWorkspaceAction({
-        workspaceId: workspace.id,
-        data: {
-          name,
-        },
-      });
-
-      if (updatedWorkspaceResponse?.data) {
-        toast.success(t("workspace.general.workspace_name_updated_successfully"));
-        form.resetField("name", { defaultValue: updatedWorkspaceResponse.data.name });
-        router.refresh();
-      } else {
-        const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
-        toast.error(errorMessage);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(t("workspace.general.error_saving_workspace_information"));
+      const updated = await patchWorkspaceSettings(workspace.id, { name });
+      toast.success(t("workspace.general.workspace_name_updated_successfully"));
+      form.resetField("name", { defaultValue: updated.name });
+      router.refresh();
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.general.error_saving_workspace_information")));
     }
   };
 

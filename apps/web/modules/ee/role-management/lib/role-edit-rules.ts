@@ -25,8 +25,8 @@ export const isRoleEditDisabled = ({
   isUserManagementDisabledFromUi ||
   memberId === userId ||
   // The last-owner rule belongs to memberships, not invites: re-roling a pending owner invite touches
-  // no membership, so `updateInviteAction` carries no such guard. `undefined` is the only invite
-  // marker — an unaccepted membership row is still a membership, and the server counts it, so testing
+  // no membership, so `PATCH /api/internal/invites/{inviteId}` has no such guard. `undefined` is the only
+  // invite marker — an unaccepted membership row is still a membership, and the server counts it, so testing
   // for `undefined` rather than falsiness keeps this in step with `hasMoreThanOneActiveOwner`.
   (memberAccepted !== undefined && memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
   (currentUserRole === "manager" && memberRole === "owner");

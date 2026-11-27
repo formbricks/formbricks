@@ -31,6 +31,9 @@ checksums:
     auth/forgot-password/reset/success/text: 27380a18e2c15751a541bed797895713
     auth/forgot-password/reset_password: c21b33e73f096fd7b02171d399b36adf
     auth/forgot-password/reset_password_description: d5b9cfe064b5e1adb7c9af91f535e3be
+    auth/invite/accept_invitation: 2b5c46af9868f48be185fdd26c7b52a0
+    auth/invite/already_a_member: 330042b51818d0c19fd0fd7eb880eb35
+    auth/invite/already_a_member_description: 183f9b074e23951aa00a34d54c8862a7
     auth/invite/create_account: bc53a57281d2701563f94f3169518028
     auth/invite/email_does_not_match: 56f4253b158e3d5ab34e6d23e990a0de
     auth/invite/email_does_not_match_description: 8a33aad9e2c6cbc14c6caef46536a80c
@@ -44,6 +47,8 @@ checksums:
     auth/invite/login: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/invite/welcome_to_organization: 5dedd03b80d2a8d60fa906318dba2149
     auth/invite/welcome_to_organization_description: d3c912d4056cc4af9c08fb2a0919823a
+    auth/invite/you_are_invited: 072d613513cce39b14b26f9f8f305be0
+    auth/invite/you_are_invited_description: bbe2fce9f0d256aa11ad13a643d6920e
     auth/last_used: 9049bf77c57c92b7a5a760ba2a40128c
     auth/login/backup_code: 870711a6df11ae55366d018255b466cf
     auth/login/create_an_account: bc53a57281d2701563f94f3169518028
@@ -68,7 +73,6 @@ checksums:
     auth/login/oauth_second_factor_unavailable_title: feaba4c3c7933fcafbab42ffe9bcc69c
     auth/login/oauth_signup_not_allowed_description: a03f3faa0668235bcf6f91b861d1df4a
     auth/login/oauth_signup_not_allowed_title: 8afe5de3881de0b4c5d8893ac9ff4a87
-    auth/login/please_verify_your_email_to_continue: 2ac048d93a4ec24950404a0c5fbfcd3a
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
     auth/oauth/access/all_hint: c1270b19103dca8170db5ca4bcc3e88e
@@ -181,7 +185,7 @@ checksums:
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/signup/password_requirements: 58d15c4e16b28c51b83977d0c2af17bc
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b
-    auth/signup/password_validation_minimum_8_and_maximum_128_characters: ec704690a454c7f01e59856c39206259
+    auth/signup/password_validation_minimum_8_characters_and_maximum_72_bytes: 4a97a8bfd5bf9048b3896657145f9b74
     auth/signup/password_validation_uppercase_and_lowercase: ae98b485024dbff1022f6048e22443cd
     auth/signup/please_verify_captcha: 12938ca7ca13e3f933737dd5436fa1c0
     auth/signup/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
@@ -394,6 +398,7 @@ checksums:
     common/hidden: fa290c6ada5869d744ed35e9cca64699
     common/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     common/hidden_fields: 3de6cfd308293a826cb8679fd1d49972
+    common/hide: a6088b934651055bb27314d111be510b
     common/hide_password: dd9813264cfc4a7ae515cd5644943c1b
     common/html: f750870203043349d570d8f5865ca0f8
     common/id: c8886d38aeea2ed5f785aba4fc96784b
@@ -933,6 +938,9 @@ checksums:
     setup/organization/create/no_membership_found_description: ba067dacf419041c8bcdb51ee6b0125b
     setup/organization/create/title: b021d3fcb90cccd0c516ed144fb16d58
     setup/signup/create_administrator: e5b7e90150ebecf18a248f50a011bb7f
+    setup/signup/setup_token: 4caba14b8765e528884c1d9de67427de
+    setup/signup/setup_token_invalid: 9582398c0fe6ea31a816bdade8b0b016
+    setup/signup/setup_token_needs_email_sign_up: 2008142a40682de7c5d1ec592addcb91
     setup/signup/this_user_has_all_the_power: 1af3a7367d412d17f0f16c0e104b3520
     templates/address: 5a9a8bc26f90d84c90105690a2eb23a1
     templates/address_description: e45b92c5cfff59ae7381e8bfb43b173f
@@ -3243,6 +3251,9 @@ checksums:
     workspace/settings/billing/billing_currency_conflict: 4893a1a8f2a3eb5bda0dedfbbfae6ec3
     workspace/settings/billing/billing_interval_toggle: 62c76eb73507108fc6aefdf1ab86cc38
     workspace/settings/billing/cancel_at_period_end: c252f54e4ee6f9419a945f3cb7c31e80
+    workspace/settings/billing/card_declined: 9f4a6e88eb76b144f797a2161ef55029
+    workspace/settings/billing/card_expired: c79e4cc9e59d6a2c535ededa82f69850
+    workspace/settings/billing/card_insufficient_funds: dacabe76d30eb06df047815e7eb4ca29
     workspace/settings/billing/card_payment_method_required: dcbbca2348a137392d05292f18da8e87
     workspace/settings/billing/comparison_addon: 4f35a82638402eb9dcb31e00be8997be
     workspace/settings/billing/comparison_best_for: f08508c34b7d27068257186ad96c77f2
@@ -3748,7 +3759,6 @@ checksums:
     workspace/settings/general/only_org_owner_can_perform_action: 0244ff3c6de787935e592eac4c5e4f0b
     workspace/settings/general/organization_created_successfully: 1ce874980bdd7d5de8402c276fb97a57
     workspace/settings/general/organization_deleted_successfully: e51fd7ee9efda04a373450ea21b242db
-    workspace/settings/general/organization_deletion_disabled: 6fb0e71c218ed4ab3be175f1094feada
     workspace/settings/general/organization_invite_link_ready: e54b37c4ec2e5a9ea9f6bc6e5b512b0b
     workspace/settings/general/organization_name: 73c9b31c9032a22bd84a07881942bb04
     workspace/settings/general/organization_name_description: ff517b4749a332b94a26110d7c7e771f
@@ -3915,6 +3925,7 @@ checksums:
     workspace/surveys/ai_create/prompt_helper_pmf: 2b723fab80c2b865276a47e89e04d37e
     workspace/surveys/ai_create/prompt_helper_pmf_label: e47851c38ac0ee43597b4288d21500f8
     workspace/surveys/ai_create/prompt_label: 7d6d9969f13a0fb453cd63e239dec385
+    workspace/surveys/ai_create/prompt_needs_more_detail: 0b6fabb3fac8934bb548f1e5a9857583
     workspace/surveys/ai_create/prompt_placeholder: 75155ac1c57f46766b8e9c8531a9b25f
     workspace/surveys/ai_create/provider_auth_failed: 3c6539beae89a928a23c532dd330e4f7
     workspace/surveys/ai_create/regenerate: 79bc737effc16d0546c048c6aa2ec415
@@ -4009,9 +4020,9 @@ checksums:
     workspace/surveys/edit/app_survey_description: bdfacfce478e97f70b700a1382dfa687
     workspace/surveys/edit/assign: 0554da40e5fa892a47d93ddf6639b654
     workspace/surveys/edit/audience: a4d9fab4214a641e2d358fbb28f010e0
+    workspace/surveys/edit/auto_advance_after_one_answer: 66b6aea3191a357d0e46dc7fdcad05df
+    workspace/surveys/edit/auto_advance_after_one_answer_description: bb22de4e66b5b83f72f928bc8c1c0679
     workspace/surveys/edit/auto_close_on_inactivity: 093db516799315ccd4242a3675693012
-    workspace/surveys/edit/auto_progress_rating_and_nps: 76b98e95a5b850850baa0ccc3c7fbf7c
-    workspace/surveys/edit/auto_progress_rating_and_nps_description: cd0cba45fea0157aee460914da3879b4
     workspace/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     workspace/surveys/edit/auto_save_disabled_tooltip: d2dcdbb63a8e5db40fff711f85dd4dbd
     workspace/surveys/edit/auto_save_failed: 460812aa4bf51b7888dc7d78bcadad9c
@@ -4478,6 +4489,15 @@ checksums:
     workspace/surveys/edit/max_file_size_limit_is_mb: 183aecf2f5bb17cd13cf048a2a725b4a
     workspace/surveys/edit/max_file_size_limit_is_mb_upgrade: 6bbebb9deb49fd351babcc39cd76b47c
     workspace/surveys/edit/missing_first: a0c8802636ade7bac86a0dacba00b8d4
+    workspace/surveys/edit/missing_label/choice_image_alt_text: b3c79212f5df722f5c28e8503cbe2fb7
+    workspace/surveys/edit/missing_label/in_question: 851bfe3a4369309e943eeacaa9d736a4
+    workspace/surveys/edit/missing_label/in_question_for_languages: 8a3e755711485669bfa89599ef2ebff8
+    workspace/surveys/edit/missing_label/on_ending_card: 49d1ab850ca7afd3d0db5d3dc5677b2d
+    workspace/surveys/edit/missing_label/on_ending_card_for_languages: 96e1f61eacebbedc4716fbf98ad7e43f
+    workspace/surveys/edit/missing_label/on_welcome_card: d688fe2a6b0b087e77337a318df5c4b5
+    workspace/surveys/edit/missing_label/on_welcome_card_for_languages: 8fe9dfa282b2292ece8f6d53cd4d285f
+    workspace/surveys/edit/missing_label/question_text: 659f1e0bbc4e96f5320a5b1992c4b61f
+    workspace/surveys/edit/missing_label/subfield_label: ef6fd9dec55f2979b69423e542a50b5d
     workspace/surveys/edit/mobile_preview: 7f21be8b4113adfa0dc16748923b5b55
     workspace/surveys/edit/move_question_to_block: e8d7ef1e2f727921cb7f5788849492ad
     workspace/surveys/edit/multiply: 8f11f66eb447d2f7e4a81648baf1abc3

@@ -1,6 +1,5 @@
 "use client";
 
-import { $generateHtmlFromNodes } from "@lexical/html";
 import { $isLinkNode } from "@lexical/link";
 import {
   $isListNode,
@@ -15,6 +14,7 @@ import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
 import type { LexicalNode, RangeSelection } from "lexical";
 import {
+  $addUpdateTag,
   $createParagraphNode,
   $getRoot,
   $getSelection,
@@ -44,7 +44,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
-import { toEditorOutputHtml } from "../lib/exported-html";
+import { CONTENT_IMPORT_TAG, registerContentWriteBack } from "../lib/content-write-back";
 import { $insertTextAtCursor } from "../lib/insert-text";
 import { $generateRootNodesFromHtml } from "../lib/root-nodes";
 import type { TEditorToolbarActions, TextEditorProps } from "./editor";
@@ -254,6 +254,7 @@ export const ToolbarPlugin = (
         const root = $getRoot();
         if (root) {
           editor.update(() => {
+            $addUpdateTag(CONTENT_IMPORT_TAG);
             const nodes = $generateRootNodesFromHtml(editor, props.getText());
             root.clear();
             root.append(...nodes);
@@ -278,6 +279,7 @@ export const ToolbarPlugin = (
     if (props.setFirstRender && props.firstRender) {
       props.setFirstRender(false);
       editor.update(() => {
+        $addUpdateTag(CONTENT_IMPORT_TAG);
         const nodes = $generateRootNodesFromHtml(editor, props.getText());
         const root = $getRoot();
         root.clear();
@@ -287,18 +289,11 @@ export const ToolbarPlugin = (
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time firstRender initialization; adding editor/props would re-seed the editor on unrelated changes
   }, []);
 
-  // Register text-saving update listener - always active for each editor instance
+  // Writes edits back to the owner. Loading the stored value (tagged above) and selection changes don't.
   useEffect(() => {
-    const unregister = editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const textInHtml = toEditorOutputHtml($generateHtmlFromNodes(editor), {
-          keepEscapedText: props.keepEscapedText,
-        });
-        setText.current(textInHtml);
-      });
+    return registerContentWriteBack(editor, (html) => setText.current(html), {
+      keepEscapedText: props.keepEscapedText,
     });
-
-    return unregister;
   }, [editor, props.keepEscapedText]);
 
   useEffect(() => {

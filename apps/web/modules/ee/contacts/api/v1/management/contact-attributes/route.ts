@@ -1,3 +1,4 @@
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -5,7 +6,7 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getContactAttributes } from "./lib/contact-attributes";
 
 export const GET = withV1ApiWrapper({
-  handler: async ({ authentication }: THandlerParams) => {
+  handler: async ({ req, authentication }: THandlerParams) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
@@ -20,11 +21,12 @@ export const GET = withV1ApiWrapper({
         };
       }
 
+      const { limit, offset } = parseV1Pagination(req.nextUrl.searchParams);
       const workspaceIds = [
         ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
       ];
 
-      const attributes = await getContactAttributes(workspaceIds);
+      const attributes = await getContactAttributes(workspaceIds, limit, offset);
       return {
         response: responses.successResponse(attributes),
       };

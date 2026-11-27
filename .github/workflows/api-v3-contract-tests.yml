@@ -68,6 +68,7 @@ jobs:
           postgres: ${{ job.services.postgres.id }}
           cache: ${{ job.services.valkey.id }}
 
+      - uses: ./.github/actions/stage-ci-network
       - uses: ./.github/actions/dangerous-git-checkout
 
       # This workflow is resolved from the base branch but tests the PR head, so branches cut before
@@ -328,7 +329,7 @@ jobs:
       # CHECK_STORAGE=auto skip path, which is itself part of what this step proves.
       - name: Install the deployment-check browser
         if: steps.harness.outputs.present == 'true' && hashFiles('apps/deployment-check/package.json') != ''
-        run: pnpm --filter @formbricks/deployment-check exec playwright install --with-deps chromium
+        run: timeout --kill-after=10s 420 bash "$RUNNER_TEMP/formbricks-ci/install-playwright-ci.sh" chromium
         shell: bash
 
       - name: Run the deployment check

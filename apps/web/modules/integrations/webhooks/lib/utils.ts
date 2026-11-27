@@ -49,12 +49,11 @@ export const isDiscordWebhook = (urlString: string) => {
   return DISCORD_WEBHOOK_URL_PATTERN.test(url.toString());
 };
 
-/** The URL input's border and background for the result of the endpoint check, if there is one. */
-export const getEndpointAccessibleClassName = (endpointAccessible: boolean | undefined): string | null => {
+/** The URL field's border and fill for the last endpoint test: passed, failed, or not yet run. */
+export const getEndpointStatusClassName = (endpointAccessible: boolean | undefined): string => {
   if (endpointAccessible === true) return "border-green-500 bg-green-50";
   if (endpointAccessible === false) return "border-red-200 bg-red-50";
-  if (endpointAccessible === undefined) return "border-slate-200 bg-white";
-  return null;
+  return "border-slate-200 bg-white";
 };
 
 export type TNewWebhookInputProblem = "missing_url" | "missing_trigger" | "missing_survey" | "discord_url";

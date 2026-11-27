@@ -14,7 +14,7 @@ get:
     deleted while you page may be missed or skipped, so a full extraction should page with
     `sortBy=createdAt` and reconcile on a later run.
 
-    Session cookie, `x-api-key`, or a Bearer token.
+    `x-api-key` or a Bearer token.
   tags:
     - V3 Surveys
   parameters:

@@ -12,7 +12,7 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspace } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -24,13 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
-import {
-  createLanguageAction,
-  deleteLanguageAction,
-  getSurveysUsingGivenLanguageAction,
-  updateLanguageAction,
-} from "../lib/actions";
+import { patchWorkspaceSettings } from "@/modules/workspaces/settings/lib/api-client";
+import { createLanguage, deleteLanguage, listLanguageSurveys, updateLanguage } from "../lib/api-client";
 import { type TLanguagesValidationError, getLanguagesValidationError } from "../lib/validate-languages";
 import { AddLanguageButton } from "./add-language-button";
 import { LanguageLabels } from "./language-labels";
@@ -41,6 +36,9 @@ interface EditLanguageProps {
   readonly locale: TUserLocale;
   readonly isReadOnly: boolean;
 }
+
+const getFirstFailure = (results: PromiseSettledResult<unknown>[]) =>
+  results.find((result): result is PromiseRejectedResult => result.status === "rejected");
 
 /** The toast for each problem; the longer messages stay up longer. */
 const getValidationToast = (
@@ -154,37 +152,26 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     }
 
     try {
-      const surveysUsingLanguageResponse = await getSurveysUsingGivenLanguageAction({
-        languageId,
-      });
+      const surveysUsingLanguage = await listLanguageSurveys(languageId);
 
-      if (surveysUsingLanguageResponse?.serverError) {
-        toast.error(getFormattedErrorMessage(surveysUsingLanguageResponse));
-      } else if (surveysUsingLanguageResponse?.data) {
-        if (surveysUsingLanguageResponse.data.length > 0) {
-          const surveyList = surveysUsingLanguageResponse.data
-            .map((surveyName) => `• ${surveyName}`)
-            .join("\n");
-          setConfirmationModal({
-            isOpen: true,
-            languageId,
-            text: `${t("workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
-            isButtonDisabled: true,
-          });
-        } else {
-          setConfirmationModal({
-            isOpen: true,
-            languageId,
-            text: t("workspace.languages.delete_language_confirmation"),
-            isButtonDisabled: false,
-          });
-        }
+      if (surveysUsingLanguage.length > 0) {
+        const surveyList = surveysUsingLanguage.map(({ name }) => `• ${name}`).join("\n");
+        setConfirmationModal({
+          isOpen: true,
+          languageId,
+          text: `${t("workspace.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("workspace.languages.remove_language_from_surveys_to_remove_it_from_workspace")}`,
+          isButtonDisabled: true,
+        });
       } else {
-        const errorMessage = getFormattedErrorMessage(surveysUsingLanguageResponse);
-        toast.error(errorMessage);
+        setConfirmationModal({
+          isOpen: true,
+          languageId,
+          text: t("workspace.languages.delete_language_confirmation"),
+          isButtonDisabled: false,
+        });
       }
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -203,6 +190,8 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   const handleCancelChanges = async () => {
     setLanguages(workspace.languages);
+    // A save that failed part-way may have stored some rows; re-read so Cancel shows what was stored.
+    router.refresh();
     setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
     setDeletedLanguageIds([]);
     setIsEditing(false);
@@ -231,28 +220,37 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
       toast.error(message, { duration });
       return;
     }
-    const results = await Promise.all(
-      languages.map((lang) => {
-        return lang.id === "new"
-          ? createLanguageAction({
-              workspaceId: workspace.id,
-              languageInput: { code: lang.code, alias: lang.alias },
-            })
-          : updateLanguageAction({
-              workspaceId: workspace.id,
-              languageId: lang.id,
-              languageInput: { alias: lang.alias },
-            });
-      })
+    // Settled rather than all: every row is written even when one is refused, as before, and the first
+    // refusal is the one shown.
+    const writeResults = await Promise.allSettled(
+      languages.map((lang) =>
+        lang.id === "new"
+          ? createLanguage(workspace.id, { code: lang.code, alias: lang.alias })
+          : updateLanguage(lang.id, { alias: lang.alias })
+      )
     );
-    const errorResult = results.find((result) => result?.serverError);
-    if (errorResult) {
-      toast.error(getFormattedErrorMessage(errorResult));
-      // The other rows of this save may have landed: re-read them so the form shows what was stored.
-      // The re-read brings back rows staged for removal too, so drop the staged removals with it: the
-      // next Save must not delete a row the form shows again.
-      setDeletedLanguageIds([]);
-      router.refresh();
+    // The rows that landed keep their stored ids, so a save after a later step fails (a refused row,
+    // the default language, a deletion) updates them instead of creating them a second time; refused rows
+    // stay as typed for the user to correct. Matched by code, which validation keeps unique, so a row
+    // edited while the save ran still matches.
+    const createdIds = new Map<string, string>();
+    languages.forEach((lang, index) => {
+      const result = writeResults[index];
+      if (lang.id === "new" && result.status === "fulfilled") createdIds.set(lang.code, result.value.id);
+    });
+    if (createdIds.size > 0) {
+      setLanguages((current) =>
+        current.map((lang) => {
+          const id = lang.id === "new" ? createdIds.get(lang.code) : undefined;
+          return id ? { ...lang, id } : lang;
+        })
+      );
+    }
+    const failedWrite = getFirstFailure(writeResults);
+    if (failedWrite) {
+      toast.error(
+        getV3ApiErrorMessage(failedWrite.reason, t("common.something_went_wrong_please_try_again"))
+      );
       return;
     }
 
@@ -260,15 +258,14 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     // exists, which a language added in this same edit does not until the writes above land.
     const storedDefaultLanguage = normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "";
     if (defaultLanguage !== storedDefaultLanguage) {
-      const defaultLanguageResult = await updateWorkspaceAction({
-        workspaceId: workspace.id,
-        // Only the key being changed: the action merges it onto the stored config, so a stale
+      try {
+        // Only the key being changed: the server merges it onto the stored config, so a stale
         // `channel`/`industry` from this page's render can never overwrite a newer value.
-        data: { config: { defaultSurveyLanguage: defaultLanguage || null } },
-      });
-
-      if (!defaultLanguageResult?.data) {
-        toast.error(getFormattedErrorMessage(defaultLanguageResult));
+        await patchWorkspaceSettings(workspace.id, {
+          config: { defaultSurveyLanguage: defaultLanguage || null },
+        });
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
         return;
       }
     }
@@ -276,14 +273,13 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     // Deletions go last. The server checks a delete against the *stored* default, so removing the language
     // that used to be the default is only legal once the new default written above has landed.
     if (deletedLanguageIds.length > 0) {
-      const deletionResults = await Promise.all(
-        deletedLanguageIds.map((languageId) =>
-          deleteLanguageAction({ languageId, workspaceId: workspace.id })
-        )
+      const failedDeletion = getFirstFailure(
+        await Promise.allSettled(deletedLanguageIds.map((languageId) => deleteLanguage(languageId)))
       );
-      const failedDeletion = deletionResults.find((result) => result?.serverError);
       if (failedDeletion) {
-        toast.error(getFormattedErrorMessage(failedDeletion));
+        toast.error(
+          getV3ApiErrorMessage(failedDeletion.reason, t("common.something_went_wrong_please_try_again"))
+        );
         // Re-read from the server: the rows that survived have to come back rather than stay hidden.
         setDeletedLanguageIds([]);
         router.refresh();
@@ -409,7 +405,7 @@ const EditSaveButtons: React.FC<{
       <Button onClick={onSave} size="sm" disabled={disabled || isSaving} loading={isSaving}>
         {t("common.save_changes")}
       </Button>
-      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled}>
+      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled || isSaving}>
         {t("common.cancel")}
       </Button>
     </div>

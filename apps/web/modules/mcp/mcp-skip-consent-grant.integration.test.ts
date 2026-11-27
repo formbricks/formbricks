@@ -4,6 +4,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DELETE as revokeGrant } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
 import {
@@ -220,6 +221,7 @@ describe("a skipConsent client", () => {
     const revoked = await revokeGrant(
       new NextRequest(`http://localhost:3000/api/internal/mcp-grants/${setup.clientId}`, {
         method: "DELETE",
+        headers: SAME_ORIGIN_HEADERS,
       }),
       { params: Promise.resolve({ clientId: setup.clientId }) }
     );

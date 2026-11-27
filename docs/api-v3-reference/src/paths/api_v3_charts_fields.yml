@@ -7,8 +7,7 @@ get:
     Write chart queries against this list — the chart query validator refuses any field that is not
     in it, so the catalog cannot drift from what the API accepts.
 
-    Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
-    a Bearer token.
+    Needs read access to the workspace and to the Feedback Dataset. `x-api-key` or a Bearer token.
   tags:
     - V3 Charts
   parameters:

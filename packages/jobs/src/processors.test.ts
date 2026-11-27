@@ -347,6 +347,7 @@ describe("@formbricks/jobs processor registry", () => {
     [JOB_NAMES.creativeStatsFlush, "creative stats flush"],
     [JOB_NAMES.dataRetentionSweep, "data retention sweep"],
     [JOB_NAMES.deletionCleanupDrain, "deletion cleanup drain"],
+    [JOB_NAMES.oauthClientCleanup, "OAuth client cleanup"],
     [JOB_NAMES.surveyArchivePurge, "survey archive purge"],
     [JOB_NAMES.surveyScheduling, "survey scheduling"],
     [JOB_NAMES.workflowRunReconcile, "workflow run reconcile"],

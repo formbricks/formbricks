@@ -12,6 +12,7 @@ import {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { MAX_RESPONSE_TTC } from "@formbricks/types/responses";
 import { getContactByUserId } from "@/modules/api/v2/management/responses/lib/contact";
 import {
   getOrganizationBilling,
@@ -146,6 +147,50 @@ describe("Response Lib", () => {
 
       expect(prisma.response.create).toHaveBeenCalled();
       expect(result).toEqual(ok(response));
+    });
+
+    // ENG-2874: v2 management stored whatever ttc a caller sent, so negative and absurd timings flowed
+    // into summaries and exports. It now clamps each element to [0, MAX_RESPONSE_TTC] like v1 and v3.
+    test("clamp each ttc element to [0, 24h] and total the clamped values on a finished response", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      await createResponse(
+        { ...responseInput, finished: true, ttc: { q1: -5, q2: 10 ** 12, q3: 1500 } },
+        resolvedContext
+      );
+
+      const stored = vi.mocked(prisma.response.create).mock.calls[0][0].data.ttc;
+      expect({ ...(stored as object) }).toEqual({
+        q1: 0,
+        q2: MAX_RESPONSE_TTC,
+        q3: 1500,
+        _total: MAX_RESPONSE_TTC + 1500,
+      });
+    });
+
+    test("clamp each ttc element on an unfinished response without adding a total", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      await createResponse(
+        { ...responseInput, finished: false, ttc: { q1: -5, q2: 10 ** 12 } },
+        resolvedContext
+      );
+
+      const stored = vi.mocked(prisma.response.create).mock.calls[0][0].data.ttc;
+      expect({ ...(stored as object) }).toEqual({ q1: 0, q2: MAX_RESPONSE_TTC });
+    });
+
+    // `_total` is derived: summing a caller-supplied one would count it twice.
+    test("ignore a caller-supplied _total and derive it from the clamped elements", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      await createResponse(
+        { ...responseInput, finished: true, ttc: { q1: 1000, _total: 10 ** 12 } },
+        resolvedContext
+      );
+
+      const stored = vi.mocked(prisma.response.create).mock.calls[0][0].data.ttc;
+      expect({ ...(stored as object) }).toEqual({ q1: 1000, _total: 1000 });
     });
 
     test("link the resolved contact and snapshot its attributes", async () => {

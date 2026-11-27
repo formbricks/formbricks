@@ -80,6 +80,7 @@ jobs:
           postgres: ${{ job.services.postgres.id }}
           cache: ${{ job.services.valkey.id }}
 
+      - uses: ./.github/actions/stage-ci-network
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Install pnpm
@@ -122,6 +123,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          source "$RUNNER_TEMP/formbricks-ci/ci-network.sh"
+          ci_pull_image rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
+
           # Start RustFS server in background
           docker run -d \
             --name rustfs-server \
@@ -140,6 +144,9 @@ jobs:
       - name: Bootstrap RustFS bucket and browser upload CORS
         run: |
           set -euo pipefail
+
+          source "$RUNNER_TEMP/formbricks-ci/ci-network.sh"
+          ci_pull_image rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
 
           docker run --rm \
             --network host \
@@ -164,7 +171,7 @@ jobs:
       # actions/cache.
 
       # Cache the downloaded browser binaries so re-runs skip the ~100MB
-      # Chromium download. `--with-deps` below still runs the (uncacheable) apt
+      # Chromium download. The installer below still runs the (uncacheable) apt
       # step, but a cache hit avoids the browser fetch itself.
       # NOTE: Actions caches are branch-scoped and every merge_group run happens on a
       # throwaway `gh-readonly-queue/...` branch, so this misses ~always there. It still
@@ -181,10 +188,10 @@ jobs:
         timeout-minutes: 12
         env:
           # Turborepo hashes its own process environment, not the `.env` file this value
-          # is otherwise written to. E2E_TESTING changes the emitted CSP
-          # (apps/web/next.config.mjs), so it has to be visible here — otherwise any
-          # shared or remote Turbo cache would happily replay the non-E2E build for this
-          # job. No behavioural change today: Next already reads the same value via dotenv.
+          # is otherwise written to. E2E_TESTING is in the web build's `build.env`
+          # (apps/web/turbo.json), so it has to be visible here — otherwise any shared or
+          # remote Turbo cache would happily replay the non-E2E build for this job. The
+          # page CSP no longer depends on it at build time: proxy.ts reads it per request.
           E2E_TESTING: "1"
         run: |
           set -euo pipefail
@@ -220,12 +227,9 @@ jobs:
           # Chromium runs the full suite; Firefox also runs the SDK's strict-CSP journey.
           # `ffmpeg` is a separate download required for failure videos. WebKit is not enabled.
           #
-          # Bounded with `timeout` and logged to a file that is always echoed below:
-          # the `--with-deps` apt step has hung for 40+ minutes on the Ubuntu mirror,
-          # and because it is backgrounded that looked like a hung build with no output.
-          # 420s is ~5x the observed healthy install; it runs concurrently with the
-          # ~247s build, so it only becomes this step's critical path when it misbehaves.
-          (timeout 420 pnpm exec playwright install chromium firefox ffmpeg --with-deps \
+          # The shared installer bounds apt separately and falls back to another Ubuntu mirror.
+          # Keep the total 420s budget and print its log even when the build fails.
+          (timeout --kill-after=10s 420 bash "$RUNNER_TEMP/formbricks-ci/install-playwright-ci.sh" chromium firefox ffmpeg \
             > /tmp/playwright-install.log 2>&1) &
           PW_INSTALL_PID=$!
 

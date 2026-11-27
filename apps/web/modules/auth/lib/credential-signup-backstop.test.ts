@@ -14,17 +14,27 @@ vi.mock("@/modules/auth/lib/signup-request-context", () => ({
 }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: vi.fn() }));
+const { loggerWarn } = vi.hoisted(() => ({ loggerWarn: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: loggerWarn } }));
 
-const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
+const constantsOverrides = vi.hoisted(() => ({
+  SIGNUP_ENABLED: true,
+  SETUP_TOKEN: undefined as string | undefined,
+}));
 vi.mock("@/lib/constants", () => ({
+  ENCRYPTION_KEY: "0".repeat(64), // read at load by lib/crypto, which the setup-token check uses
   get SIGNUP_ENABLED() {
     return constantsOverrides.SIGNUP_ENABLED;
+  },
+  get SETUP_TOKEN() {
+    return constantsOverrides.SETUP_TOKEN;
   },
 }));
 
 beforeEach(() => {
   vi.clearAllMocks();
   constantsOverrides.SIGNUP_ENABLED = true;
+  constantsOverrides.SETUP_TOKEN = undefined;
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(isBootstrapAdminSignup).mockReturnValue(false);
@@ -87,6 +97,16 @@ describe("enforceCredentialSignupBackstop", () => {
       });
     });
 
+    // ENG-2347: a refused sign-up leaves a trace, whichever layer refused it.
+    test("logs the rejection", async () => {
+      await expect(enforceCredentialSignupBackstop("intruder@example.com")).rejects.toBeDefined();
+
+      expect(loggerWarn).toHaveBeenCalledWith(
+        { layer: "better-auth-user-create-backstop" },
+        expect.stringContaining("closed-sign-up policy")
+      );
+    });
+
     // ENG-2247: admitted, and marked — the marker is what stops a second concurrent sign-up from
     // using the same exception, since only one row can carry it past the unique index.
     test("still allows the first administrator during fresh-instance setup, and marks the row", async () => {
@@ -94,6 +114,19 @@ describe("enforceCredentialSignupBackstop", () => {
 
       expect(await enforceCredentialSignupBackstop("admin@example.com")).toEqual({
         data: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin },
+      });
+    });
+
+    // ENG-7313: this hook has no form and therefore no way to present SETUP_TOKEN. The sign-up route
+    // checks the token before it reaches here; any other in-process caller is refused like a closed
+    // instance rather than allowed through on freshness alone.
+    test("refuses the fresh-instance exception when SETUP_TOKEN is configured", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+
+      await expect(enforceCredentialSignupBackstop("admin@example.com")).rejects.toMatchObject({
+        status: "FORBIDDEN",
+        body: { code: SIGNUP_DISABLED_ERROR_CODE },
       });
     });
 

@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
-import { createTeamMembership } from "@/modules/auth/invite/lib/team";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { acceptInviteMembership } from "./membership";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/authzed/organization-membership", () => ({ reconcileOrganizationMembership: vi.fn() }));
-vi.mock("@/modules/auth/invite/lib/team", () => ({ createTeamMembership: vi.fn() }));
+vi.mock("@/modules/auth/signup/lib/team", () => ({ createTeamMembership: vi.fn() }));
 
 const invite = { organizationId: "org1", role: "member" as const, teamIds: ["team1"] };
 

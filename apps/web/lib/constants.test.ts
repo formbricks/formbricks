@@ -30,6 +30,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     BETTER_AUTH_URL: undefined,
     NEXTAUTH_SECRET: undefined,
     NEXTAUTH_URL: undefined,
+    WEBAPP_URL: undefined,
     ...overrides,
   };
 };
@@ -104,7 +105,31 @@ describe("auth secret and URL resolution", () => {
     expect(AUTH_TRUSTED_ORIGINS).toStrictEqual(["https://auth.example.com", "https://legacy.example.com"]);
   });
 
-  test("trusted origins is empty when no auth URL is configured", async () => {
+  test("trusts WEBAPP_URL, so a WEBAPP_URL-only instance never falls back to the request Host", async () => {
+    setTestEnv({ WEBAPP_URL: "https://app.example.com" });
+
+    const { AUTH_TRUSTED_ORIGINS } = await loadConstants();
+
+    expect(AUTH_TRUSTED_ORIGINS).toStrictEqual(["https://app.example.com"]);
+  });
+
+  test("reduces a WEBAPP_URL with a subpath or trailing slash to its origin", async () => {
+    setTestEnv({ WEBAPP_URL: "https://app.example.com/formbricks/" });
+
+    const { AUTH_TRUSTED_ORIGINS } = await loadConstants();
+
+    expect(AUTH_TRUSTED_ORIGINS).toStrictEqual(["https://app.example.com"]);
+  });
+
+  test("does not list an origin twice when WEBAPP_URL equals the auth URL", async () => {
+    setTestEnv({ BETTER_AUTH_URL: "https://app.example.com", WEBAPP_URL: "https://app.example.com" });
+
+    const { AUTH_TRUSTED_ORIGINS } = await loadConstants();
+
+    expect(AUTH_TRUSTED_ORIGINS).toStrictEqual(["https://app.example.com"]);
+  });
+
+  test("trusted origins is empty when no URL is configured", async () => {
     setTestEnv();
 
     const { AUTH_TRUSTED_ORIGINS } = await loadConstants();

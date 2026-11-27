@@ -9,7 +9,16 @@ import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
 export const rateLimitConfigs = {
   // Authentication endpoints - stricter limits for security
   auth: {
-    login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
+    // Wrong passwords per account (SEC-18), keyed on the hashed address and charged only on a failure, so a
+    // correct sign-in never spends it. The per-IP limit is Better Auth's own `/sign-in/email` rule. 10 is far
+    // beyond a person's typos but ends a guess run spread over many IPs; the 15-minute window is also the
+    // longest a stranger who trips it can lock the owner out of password sign-in (SSO and reset stay open).
+    loginFailuresPerAccount: {
+      interval: 900,
+      allowedPerInterval: 10,
+      namespace: "auth:login:account",
+      failClosed: true,
+    }, // 10 failures per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup", failClosed: true }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot", failClosed: true }, // 5 per hour
     // Mail a single account can receive from forgot-password (reset link or SSO hint), keyed by user id, so
@@ -37,7 +46,6 @@ export const rateLimitConfigs = {
       namespace: "auth:verify:account",
       failClosed: true,
     }, // 3 per hour
-    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token", failClosed: true }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
     // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
     // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
     // address lands here, often in a burst at the start of the day. The markup budget is the real bound.
@@ -49,6 +57,10 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    // The dashboard's own `/api/internal` routes, per signed-in user: every page load, refetch and open tab
+    // reads through here, where the server actions and server-rendered pages they replace had no per-user
+    // bucket. Writes also charge their own budget (`actions.stateMutation` and the like) on top.
+    internal: { interval: 60, allowedPerInterval: 600, namespace: "api:internal" }, // 600 per minute
     v3StateMutation: {
       interval: 60,
       allowedPerInterval: 120,
@@ -93,6 +105,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalAiTranslate: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:ai-translations",
+    }, // 20 per minute per user — one call per target language, each up to 8192 output tokens
     v3SurveyVisibility: {
       interval: 60,
       allowedPerInterval: 10,
@@ -140,6 +157,17 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:internal:retention-runs:export",
     }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
+    internalFeedbackCsvImport: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "api:internal:feedback-sources:csv-import",
+    }, // 10 per minute per user — each upload is parsed and written to the Hub in full (up to the file cap)
+    internalHeicConversion: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:heic-conversions",
+    }, // 20 per minute per user, instead of v3 — each conversion decodes a whole photo in process; the
+    // dashboard converts one per HEIC file a user picks, so a person never comes near this
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,
@@ -184,12 +212,41 @@ export const rateLimitConfigs = {
       namespace: "action:send-link-survey-email",
       failClosed: true,
     }, // 10 per hour
+    // Wrong PINs per survey, whatever IP they come from (ENG-7095). A PIN is 4 characters, so the per-IP
+    // limit below lets a proxy pool exhaust it in minutes. Charged on a wrong guess only; a right one is
+    // refunded, so respondents never spend it. 20 per 15 minutes caps a guess run at 1,920 a day, about five
+    // days for all 10,000 values. The cost is that someone who knows the survey id can keep the PIN screen
+    // refusing everyone for the rest of a window by spending the budget: the PIN gate holds, availability of
+    // that one gate does not. The budget is shared by every respondent, so a large audience typing 20 wrong
+    // PINs in one window locks the right ones out too until it passes. The window is kept short for that reason.
+    validateSurveyPinFailuresPerSurvey: {
+      interval: 900,
+      allowedPerInterval: 20,
+      namespace: "action:validate-survey-pin:survey",
+      failClosed: true,
+    }, // 20 failures per 15 minutes per survey
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,
       namespace: "action:validate-survey-pin",
       failClosed: true,
     }, // 10 per minute — prevents brute-force PIN guessing
+    // Setup, enable and disable of 2FA each check a password or a code, so without a limit a session holder
+    // had an unthrottled password oracle and unlimited TOTP guesses (SEC-18). One budget per user covers all
+    // three. A normal pass is two or three calls; 10 an hour leaves room for typos, and a 6-digit code at
+    // 10 guesses an hour is out of reach. Only the account's own session can spend it.
+    twoFactorManage: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "action:two-factor-manage",
+      failClosed: true,
+    }, // 10 per hour per user
+    webhookTest: { interval: 60, allowedPerInterval: 10, namespace: "action:webhook-test" }, // 10 per minute per user — each call makes the server send a signed request to an external URL
+    webhookSecretReveal: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "action:webhook-secret-reveal",
+    }, // 30 per minute per user — a read; its own budget so revealing a secret never spends the workspace's write budget
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: {
@@ -215,6 +272,9 @@ export const rateLimitConfigs = {
       namespace: "action:create-organization",
       failClosed: true,
     }, // 5 per day
+    // One action is at most three model calls, and the editor runs up to AI_TRANSLATION_ACTIONS_PER_RUN (20) actions back to back for a
+    // full survey. 30 a minute leaves room for that and a second run, and stops a loop draining the
+    // provider quota every tenant shares (SEC-19).
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,

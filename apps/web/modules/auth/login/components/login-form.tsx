@@ -50,6 +50,8 @@ interface LoginFormProps {
   isMultiOrgEnabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
+  /** Whether the instance's one SAML connection exists, looked up where the page renders. */
+  samlConnectionExists: boolean;
   oauthError?: string;
   emailJustVerified?: boolean;
   prefilledEmail?: string;
@@ -70,6 +72,7 @@ export const LoginForm = ({
   isMultiOrgEnabled,
   isSsoEnabled,
   samlSsoEnabled,
+  samlConnectionExists,
   oauthError,
   emailJustVerified,
   prefilledEmail,
@@ -176,12 +179,9 @@ export const LoginForm = ({
       });
 
       if (error) {
-        // Better Auth (re)sends its own verification email for an unverified address, so we only
-        // point the user at their inbox instead of minting a verification token ourselves.
-        if (error.code === "EMAIL_NOT_VERIFIED") {
-          toast.error(t("auth.login.please_verify_your_email_to_continue"));
-          return;
-        }
+        // One message for every credential failure (ENG-670, ENG-2099). An unverified account with the
+        // right password gets it too: the server answers it as a wrong password, so the screen cannot
+        // tell anyone whether the address is registered. Its fresh verification link is in the inbox.
         toast.error(error.message ?? t("common.something_went_wrong"));
         return;
       }
@@ -354,6 +354,7 @@ export const LoginForm = ({
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
               samlSsoEnabled={samlSsoEnabled}
+              samlConnectionExists={samlConnectionExists}
               returnToUrl={resolvedCallbackUrl}
               source="signin"
             />

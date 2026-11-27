@@ -10,9 +10,12 @@ between more than two paths, for example to send a different survey for each of 
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
-{/* SCREENSHOT PLACEHOLDER: switch-panel.webp. A Switch step on the canvas with its Gold, Silver and Default
-branches, and its panel open showing the Variable and two cases. Save to
-/images/platform/workflows/switch-panel.webp and replace this comment with a <Frame>. */}
+<Frame>
+  <img
+    src="/images/platform/workflows/switch-panel.webp"
+    alt="Switch step on the canvas with Gold, Silver and Default branches, and its panel showing the Variable and two cases"
+  />
+</Frame>
 
 ## Add a Switch
 
@@ -40,12 +43,17 @@ Cases are tried in order and the first that matches wins, so put the most specif
 empty, which means "do nothing" for that case. Branches never join again, so steps after a Switch belong to one
 branch. Deleting a Switch deletes its branches too, after you confirm.
 
+On the canvas, the Switch card shows the Variable it compares and how many cases it has, such as
+`tier · 2 cases + Default`. A survey question shows as a chip with its code.
+
 A Switch counts as one step toward the [25 steps](/workflows/limits) a workflow can have.
 
 ## Operators
 
 A case uses the same operators and comparison as an [If/else](/workflows/if-else#operators), so the
-[rules for comparing values](/workflows/if-else#how-values-are-compared) apply here too. To match on more than one
+[rules for comparing values](/workflows/if-else#how-values-are-compared) apply here too. For a survey question,
+the cases offer the operators survey logic shows for that question type, and number comparisons show as `=`,
+`>`, `<` and the other symbols. To match on more than one
 Variable, use an If/else instead.
 
 ## Run detail

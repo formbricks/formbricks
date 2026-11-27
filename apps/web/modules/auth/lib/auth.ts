@@ -6,6 +6,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, jwt, twoFactor } from "better-auth/plugins";
+import { after } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -13,7 +14,6 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   AUTH_SECRET,
   AUTH_TRUSTED_ORIGINS,
-  AUTH_URL,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_DISABLED,
@@ -36,21 +36,31 @@ import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gat
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
-import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
+import {
+  auditPasswordReset,
+  auditSignOutOnSessionDelete,
+  betterAuthLogger,
+  signInAuditPlugin,
+} from "./better-auth-observability";
+import { passwordByteLimitBeforeHandler } from "./better-auth-password-bytes";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
+import { isPasswordSignInRequest } from "./better-auth-request-context";
+import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
+import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
-import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
+import { revokeOAuthConsentBeforeHandler, revokeOAuthGrantsAfterPasswordReset } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { recordOAuthConsentWrites } from "./oauth-consent-writes";
 import { boundOAuthRecordsBeforeHandler } from "./oauth-record-bounds";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
-import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { getAuthBaseUrl, getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { createTemplateKeyedRateLimitStorage } from "./rate-limit-template-key";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
+import { isInSignupRequest } from "./signup-request-context";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
@@ -93,6 +103,40 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
 };
 
 /**
+ * Send one Better Auth verification link. Throws on failure — a throw or a falsy mailer return — after
+ * logging it; see the `sendVerificationEmail` callback below for why both count and who catches.
+ */
+const deliverVerificationEmail = async (user: { id: string; email: string }, url: string): Promise<void> => {
+  const { sendVerificationLinkEmail } = await import("@/modules/email");
+  try {
+    const sent = await sendVerificationLinkEmail({
+      email: user.email,
+      locale: await getUserLocale(user.id),
+      verifyLink: url,
+    });
+    if (!sent) {
+      throw new Error("Verification email was not sent (mailer reported no delivery)");
+    }
+  } catch (error) {
+    // A capped verification email (ENG-3823) must look the same as a sent one: the resend paths
+    // rethrow, so an error here only for unverified accounts would tell anyone which addresses have
+    // one. The limit is logged where it refused.
+    if (error instanceof TooManyRequestsError) {
+      return;
+    }
+    // Domain only — never the address, the token, or the verify URL (all three are sensitive and
+    // the URL grants account access).
+    // `err`, not `error`: pino serializes an Error's message and stack only under `err`, and after
+    // the sign-up response this line is the only record of a failed send.
+    logger.error(
+      { err: error, userId: user.id, emailDomain: user.email.split("@")[1] },
+      "Failed to send verification email"
+    );
+    throw error;
+  }
+};
+
+/**
  * Better Auth server instance (ENG-1054 — NextAuth → Better Auth migration).
  *
  * CUTOVER (the ENG-1054 flip): Better Auth owns sessions. Its HTTP handler is mounted at
@@ -119,19 +163,19 @@ export const auth = betterAuth({
   // outage. Note a falsy value here does NOT stop BA falling through to its own hardcoded default
   // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
   secret: AUTH_SECRET,
-  baseURL: AUTH_URL,
+  baseURL: getAuthBaseUrl(),
   // `/update-user` is served over HTTP for nobody (ENG-3189). Better Auth mounts it beside our own
   // profile surface, and every field it can reach is one Formbricks does not let a client write there:
   //
   //  - `name` is the identity provider's for an SSO user — re-read on every sign-in
-  //    (`overrideUserInfo`) and locked in `updateUserAction` — yet a raw POST landed the write anyway,
+  //    (`overrideUserInfo`) and locked in `PATCH /api/internal/users/me` — yet a raw POST landed the write anyway,
   //    unaudited, until the next sign-in silently reverted it.
   //  - `image` has no `User` column at all, so the write reached Prisma and threw an unhandled 500 —
   //    the same hazard `ssoProfileSyncUpdateBefore` and `user.create.before` strip on the SSO paths.
   //  - `email` the endpoint refuses itself, and our two `additionalFields` are `input: false`.
   //
   // So there is nothing left for it to legitimately do, and a 404 at the router is a smaller, more
-  // complete answer than a `hooks.before` gate: profile writes go through `updateUserAction`, which
+  // complete answer than a `hooks.before` gate: profile writes go through `PATCH /api/internal/users/me`, which
   // owns the SSO name lock, the verified email-change flow, rate limiting, and the audit entry. The
   // path is HTTP-only — `auth.api.updateUser` stays available to server code (`api/index.mjs` applies
   // `disabledPaths` in the router alone), which is what the SSO hooks and the service layer use.
@@ -139,10 +183,11 @@ export const auth = betterAuth({
   // `/request-password-reset` (ENG-3639) for the same reason. It answered after the user lookup, token
   // write and SMTP send, so its response time told password accounts from everything else, and it
   // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
-  // forgotPasswordAction and the profile action both use `auth.api.requestPasswordReset` in-process.
+  // the forgot-password route and the profile's password-reset route both use `auth.api.requestPasswordReset`
+  // in-process.
   //
   // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
-  // `createUserAction`: Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,
+  // the sign-up route (`POST /api/internal/signups`): Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,
   // the app-level IP limit, org provisioning and the audit entry. A raw POST skipped all of them and
   // still created the account. The form, `/setup` included, calls `auth.api.signUpEmail` in-process, so
   // closing the route leaves the action as the only way in. `signupPolicyBeforeHandler` and the
@@ -150,14 +195,54 @@ export const auth = betterAuth({
   //
   // `/send-verification-email` (ENG-3823). Anyone could call it for any address, limited only per IP, and
   // spend that address's verification-email cap so the user's own resend went nowhere. Nothing calls it
-  // over HTTP: `resendVerificationEmailAction` uses `auth.api.sendVerificationEmail` in-process and limits
+  // over HTTP: `POST /api/internal/verification-emails` uses `auth.api.sendVerificationEmail` in-process and limits
   // each account, and the resend on sign-in runs inside `/sign-in/email`.
+  //
+  // The account-security routes (ENG-7268). Each has a stricter in-app counterpart that calls
+  // `auth.api.*` in-process, and a raw POST with a stolen or borrowed session cookie skipped it:
+  //
+  //  - `/two-factor/disable` removed 2FA with the password alone, where `disableTwoFactorAuthAction`
+  //    also asks for a TOTP or backup code; `/two-factor/generate-backup-codes` minted fresh codes the
+  //    same way. `/two-factor/enable`, `/get-totp-uri`, `/send-otp` and `/verify-otp` likewise have no
+  //    caller (the login form needs only `/two-factor/verify-totp` and `/verify-backup-code`, which stay).
+  //  - `/verify-password` answered valid or invalid at Better Auth's default ~100 per 10 s, around the
+  //    5-per-hour limit on account deletion that exists so a stolen session cannot brute-force the password.
+  //  - `/change-password` skipped the HIBP check and `ZUserPassword` (ENG-4042); `/change-email` skipped
+  //    the verified email-change flow.
+  //  - `/link-social` and `/unlink-account` fight `accountLinking.enabled: false` and the verify-before-
+  //    link recovery flow.
+  //  - `/oauth2/create-client`, `/update-client`, `/delete-client` and `/client/rotate-secret` (ENG-3253)
+  //    are the session-authenticated client CRUD. No screen calls them, and they skip the redirect
+  //    allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
+  //    for its own `https` redirect URI, or repoint one with `update-client`, then phish a consent.
+  //    Closed by path rather than with `clientPrivileges`, because the plugin also asserts that hook
+  //    on `/oauth2/register` whenever a session cookie rides along, which would break MCP
+  //    self-registration from a signed-in browser. `/admin/oauth2/*` is `SERVER_ONLY` upstream, so it
+  //    is never routable. Registration stays `/oauth2/register` only.
+  //
+  // Whatever Better Auth adds next is not open by default: `native-endpoints.integration.test.ts`
+  // fails on any declared route that is neither listed here nor on its explicit allow-list (ADR 0017).
   disabledPaths: [
     "/token",
     "/update-user",
     "/request-password-reset",
     "/sign-up/email",
     "/send-verification-email",
+    "/verify-password",
+    "/change-password",
+    "/change-email",
+    "/two-factor/enable",
+    "/two-factor/disable",
+    "/two-factor/generate-backup-codes",
+    "/two-factor/get-totp-uri",
+    "/two-factor/send-otp",
+    "/two-factor/verify-otp",
+    "/link-social",
+    "/unlink-account",
+    "/oauth2/create-client",
+    "/oauth2/update-client",
+    "/oauth2/delete-client",
+    "/oauth2/client/rotate-secret",
   ],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
@@ -182,7 +267,7 @@ export const auth = betterAuth({
     // account that still carried a password could sign in around the IdP — and around whatever the IdP
     // enforces, such as MFA, conditional access, or deprovisioning.
     enabled: EMAIL_AUTH_ENABLED,
-    // Matches ZUserPassword (min 8 / max 128); the upper+digit composition rule stays enforced
+    // Matches ZUserCurrentPassword (min 8 / max 128; ZUserPassword adds the 72-byte bcrypt limit); the upper+digit composition rule stays enforced
     // by ZUserPassword at the app layer (deferred policy modernization → design doc §10.6).
     minPasswordLength: 8,
     maxPasswordLength: 128,
@@ -217,8 +302,12 @@ export const auth = betterAuth({
     },
     // After a successful reset, send the security notification (parity with the retired
     // completePasswordReset) and audit it. Better Auth already revoked sessions
-    // (revokeSessionsOnPasswordReset above). Both are best-effort — never fail the completed reset.
+    // (revokeSessionsOnPasswordReset above); the OAuth grants it leaves are revoked here (ENG-7364).
+    // All of it is best-effort — never fail the completed reset. The revocation starts first and overlaps
+    // the notification and audit; it is still awaited because a dropped promise would leave 30-day refresh
+    // tokens alive in a serverless runtime, and its transaction carries its own timeout.
     onPasswordReset: async ({ user }) => {
+      const revocation = revokeOAuthGrantsAfterPasswordReset(user.id);
       try {
         const { sendPasswordResetNotifyEmail } = await import("@/modules/email");
         await sendPasswordResetNotifyEmail({ email: user.email, locale: await getUserLocale(user.id) });
@@ -226,18 +315,20 @@ export const auth = betterAuth({
         logger.error({ error, userId: user.id }, "Failed to send password-reset notification email");
       }
       await auditPasswordReset(user.id);
+      await revocation;
     },
   },
 
   emailVerification: {
-    // BA sends the verification email on signup (used by the createUserAction signup flow). When
+    // BA sends the verification email on signup (used by the sign-up route's flow). When
     // EMAIL_VERIFICATION_DISABLED the user still receives it but isn't blocked from signing in —
     // requireEmailVerification (above) gates that.
     sendOnSignUp: true,
-    // Resend a fresh verification link when an unverified user tries to sign in (the original sign-up
-    // link may have expired). The login form surfaces this as a "check your inbox" message — without
-    // this flag BA would throw EMAIL_NOT_VERIFIED without sending anything, leaving no recovery path
-    // and making that message untrue. (ENG-1054)
+    // Resend a fresh verification link when an unverified user tries to sign in with the right password
+    // (the original sign-up link may have expired). Without this flag BA would throw EMAIL_NOT_VERIFIED
+    // without sending anything, leaving no recovery path (ENG-1054). Since ENG-2099 that answer is
+    // rewritten to the wrong-password one (`maskUnverifiedSignInAfterHandler`), so this email is the
+    // only place the user learns they still have to verify.
     sendOnSignIn: true,
     // OFF since ENG-2562, and the reason is worth keeping: this used to be `true` "because clicking the
     // signed link proves email ownership". It does — but it does not prove the clicker chose the
@@ -260,36 +351,26 @@ export const auth = betterAuth({
     //  2. a FALSY RETURN — `sendEmail` returns false without throwing when SMTP isn't configured, and
     //     Better Auth ignores the return value entirely. Silent on every path.
     // So: treat both as failures and make them attributable — log with the user id, and rethrow so the
-    // paths that DO propagate (resend, sign-in resend) fail loudly instead of claiming success.
+    // path that DOES propagate (resend) fails loudly instead of claiming success.
     // Deliberately NOT surfaced in the sign-up response: that response must not vary by what happened to
     // one address, or it becomes an account-existence oracle (ENG-2099). The verification-requested
     // screen derives its "nothing was sent" state from IS_SMTP_CONFIGURED instead.
+    //
+    // ENG-7094: inside the sign-up route the send runs after the response. Better Auth only sends for
+    // an address it just created, so waiting on SMTP there made a free address answer measurably slower
+    // than a registered one. The sign-up path never surfaced a send failure anyway (see 1. above), and
+    // `deliverVerificationEmail` logs its own, so nothing is lost by not awaiting it.
+    //
+    // ENG-2099: the same holds for the resend on a password sign-in. Better Auth sends only when the
+    // password matched an unverified account, so awaiting SMTP there made that answer slower than the
+    // identical wrong-password one. Better Auth also calls it through `runInBackgroundOrAwait`, so a
+    // failed send never reached that response either.
     sendVerificationEmail: async ({ user, url }) => {
-      const { sendVerificationLinkEmail } = await import("@/modules/email");
-      try {
-        const sent = await sendVerificationLinkEmail({
-          email: user.email,
-          locale: await getUserLocale(user.id),
-          verifyLink: url,
-        });
-        if (!sent) {
-          throw new Error("Verification email was not sent (mailer reported no delivery)");
-        }
-      } catch (error) {
-        // A capped verification email (ENG-3823) must look the same as a sent one: the resend paths
-        // rethrow, so an error here only for unverified accounts would tell anyone which addresses have
-        // one. The limit is logged where it refused.
-        if (error instanceof TooManyRequestsError) {
-          return;
-        }
-        // Domain only — never the address, the token, or the verify URL (all three are sensitive and
-        // the URL grants account access).
-        logger.error(
-          { error, userId: user.id, emailDomain: user.email.split("@")[1] },
-          "Failed to send verification email"
-        );
-        throw error;
+      if (isInSignupRequest() || isPasswordSignInRequest()) {
+        after(() => deliverVerificationEmail(user, url).catch(() => undefined));
+        return;
       }
+      await deliverVerificationEmail(user, url);
     },
     // Composed: records the ENG-2562 "this request just verified someone" marker for the auto-sign-in
     // after-hook, then re-homes the "token" provider's Brevo-on-first-verification side effect. See
@@ -379,6 +460,10 @@ export const auth = betterAuth({
       update: {
         after: recordActivityOnSessionUpdate,
       },
+      // The `userSignedOut` audit, for `/sign-out` only (see the hook for the other deletions it skips).
+      delete: {
+        after: auditSignOutOnSessionDelete,
+      },
     },
   },
 
@@ -396,19 +481,26 @@ export const auth = betterAuth({
       // an anonymous sign-in writes, the authorization-code record authorize writes) before anything else
       // runs. See oauth-record-bounds.ts.
       boundOAuthRecordsBeforeHandler(ctx);
+      // SEC-18: refuse a password sign-in once the account's wrong-password budget is spent. Right after the
+      // record bounds, so a locked account costs no further work. See better-auth-sign-in-budget.ts.
+      await signInBudgetBeforeHandler(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
       // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
       await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
       // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which used
-      // to be served beside createUserAction and bypassed it entirely. The HTTP route is now closed
+      // to be served beside the sign-up route and bypassed it entirely. The HTTP route is now closed
       // (`disabledPaths`, ENG-3988), so this guards in-process callers other than the action. Runs
       // BEFORE the endpoint because a rejection from the create hook would be swallowed into Better
       // Auth's synthetic duplicate-email 200, a fake success. See signup-policy.ts.
       // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
       // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
       await signupPolicyBeforeHandler(ctx);
+      // bcrypt ignores everything past byte 72: refuse such a password on the native password-set path
+      // (`/reset-password`) the way `ZUserPassword` does in the action. See better-auth-password-bytes.ts.
+      passwordByteLimitBeforeHandler(ctx);
+      // Ahead of the breach check: it is cheaper, and a rejected password then costs no outbound HIBP call.
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
@@ -416,6 +508,11 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
+      // SEC-17 / ENG-3990: "trust this device" is off for real: refuse `trustDevice` on the 2FA verify
+      // paths and drop an already-issued `trust_device` cookie at sign-in. Path-disjoint from everything
+      // below (verify / sign-in vs consent). See better-auth-trust-device-gate.ts.
+      const trustDevice = trustDeviceBeforeHandler(ctx);
+      if (trustDevice) return trustDevice;
       // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
       // the provider writes the consent. See mcp-grant-consent.ts.
       requireValidMcpGrantOnConsentBeforeHandler(ctx);
@@ -457,7 +554,7 @@ export const auth = betterAuth({
       "/sign-in/email": { window: 60, max: 5 },
       "/reset-password": { window: 60, max: 5 },
       // ENG-2562: verifying must stay generous. (Sending, the amplification vector, is closed over HTTP by
-      // `disabledPaths`; its only way in is `resendVerificationEmailAction`, limited per IP and account.)
+      // `disabledPaths`; its only way in is `POST /api/internal/verification-emails`, limited per IP and account.)
       // It is a top-level GET clicked out of a mail client — frequently behind a corporate NAT shared by
       // many users, and often prefetched by a mail-security scanner before the human clicks. It also
       // already requires a signed, expiring token, so a tight per-IP cap buys very little and risks
@@ -521,8 +618,8 @@ export const auth = betterAuth({
     // oauthProvider() resumed a pending MCP authorization with that session and minted an authorization
     // code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
-    // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
-    // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
+    // backup codes. Trusted-device is off and enforced server-side (`hooks.before`, SEC-17): Better Auth
+    // has no option to disable it, so 2FA is required every login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
     // User.twoFactorSecret|backupCodes into the twoFactor table, and move the login-time TOTP/
     // backup challenge out of the credentials authorize into Better Auth's flow.
     twoFactor({

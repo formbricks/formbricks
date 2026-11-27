@@ -1843,6 +1843,7 @@ export function Survey({
           recallValues,
           currentVariables,
           selectedLanguage,
+          "rich",
           dayFirstLocale
         )}
       />

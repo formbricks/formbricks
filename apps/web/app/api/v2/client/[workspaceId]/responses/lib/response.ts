@@ -111,6 +111,6 @@ export const createResponse = async (
 
     return buildClientResponse(responsePrisma, contact);
   } catch (error) {
-    return handleClientResponseCreateError(error, responseInput.displayId);
+    return handleClientResponseCreateError(error);
   }
 };

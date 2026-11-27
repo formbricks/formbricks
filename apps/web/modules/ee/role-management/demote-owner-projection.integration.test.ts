@@ -1,15 +1,17 @@
+import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as createApiKeyRoute } from "@/app/api/internal/api-keys/route";
+import { PATCH as updateMemberRoute } from "@/app/api/internal/members/[userId]/route";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { getAuthzedClient } from "@/lib/authzed/client";
-import { createApiKeyAction } from "@/modules/organization/settings/api-keys/actions";
-import { updateMembershipAction } from "./actions";
 
 /**
  * Demoting an owner takes the rights the role gave away in SpiceDB as soon as the change commits
- * (ENG-7282), through the real server actions against real PostgreSQL and SpiceDB. The harness runs no
- * outbox worker, so what the test sees is what the action itself projected.
+ * (ENG-7282), through the real internal routes against real PostgreSQL and SpiceDB. The harness runs no
+ * outbox worker, so what the test sees is what the route itself projected.
  */
 
 const session = vi.hoisted(() => ({ userId: "" }));
@@ -37,6 +39,23 @@ const as = (userId: string) => {
   session.userId = userId;
 };
 
+/** A session write to an internal route, as the dashboard sends it (same-origin, JSON). */
+const send = (
+  handler: (req: NextRequest, context: never) => Promise<Response>,
+  url: string,
+  method: "PATCH" | "POST",
+  body: unknown,
+  params: Record<string, string> = {}
+) =>
+  handler(
+    new NextRequest(`http://localhost${url}`, {
+      method,
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+    { params: Promise.resolve(params) } as never
+  );
+
 /** The relations SpiceDB holds for the demoted user on a resource, read straight from the graph. */
 const relationsOf = async (resourceType: "organization" | "team", resourceId: string) =>
   (
@@ -46,15 +65,15 @@ const relationsOf = async (resourceType: "organization" | "team", resourceId: st
     })
   ).relationships.map(({ relation }) => relation);
 
-const mintApiKey = () =>
-  createApiKeyAction({
-    organizationId: ids.organization,
-    apiKeyData: {
+/** Mints an organization-manage key, as the API keys page does; answers the route's status. */
+const mintApiKey = async () =>
+  (
+    await send(createApiKeyRoute, `/api/internal/api-keys?organizationId=${ids.organization}`, "POST", {
       label: "key minted after demotion",
-      workspaceAccess: [{ workspaceId: ids.workspace, permission: "manage" }],
+      workspacePermissions: [{ workspaceId: ids.workspace, permission: "manage" }],
       organizationAccess: { accessControl: { read: true, write: true } },
-    },
-  } as never);
+    })
+  ).status;
 
 beforeEach(async () => {
   await resetDb();
@@ -83,16 +102,18 @@ beforeEach(async () => {
 
 /**
  * Owner A demotes the other owner, and asserts the outbox has not delivered that change yet: what SpiceDB
- * holds afterwards is what the action projected itself.
+ * holds afterwards is what the route projected itself.
  */
 const demote = async (role: "member" | "dashboard_viewer") => {
   as(ids.owner);
-  const demotion = await updateMembershipAction({
-    organizationId: ids.organization,
-    userId: ids.demoted,
-    data: { role },
-  });
-  expect(demotion?.serverError).toBeUndefined();
+  const demotion = await send(
+    updateMemberRoute,
+    `/api/internal/members/${ids.demoted}?organizationId=${ids.organization}`,
+    "PATCH",
+    { role },
+    { userId: ids.demoted }
+  );
+  expect(demotion.status, await demotion.clone().text()).toBe(200);
 
   // The fixture drained everything before it, so an undelivered event for this membership is the demotion's.
   const undelivered = await prisma.authzedProjectionOutbox.count({
@@ -112,7 +133,7 @@ describe("demoting an owner", () => {
 
     expect(await relationsOf("organization", ids.organization)).toEqual(["member"]);
     as(ids.demoted);
-    expect((await mintApiKey())?.serverError).toBeDefined();
+    expect(await mintApiKey()).toBe(403);
     expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
   });
 
@@ -124,7 +145,7 @@ describe("demoting an owner", () => {
     expect(await relationsOf("organization", ids.organization)).toEqual(["dashboard_viewer"]);
     expect(await relationsOf("team", ids.team)).toEqual(["contributor"]);
     as(ids.demoted);
-    expect((await mintApiKey())?.serverError).toBeDefined();
+    expect(await mintApiKey()).toBe(403);
     expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(0);
   });
 
@@ -132,7 +153,7 @@ describe("demoting an owner", () => {
     await demote("member");
 
     as(ids.owner);
-    expect((await mintApiKey())?.serverError).toBeUndefined();
+    expect(await mintApiKey()).toBe(201);
     expect(await prisma.apiKey.count({ where: { organizationId: ids.organization } })).toBe(1);
   });
 });

@@ -61,6 +61,12 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 </Note>
 
 <Note>
+  **`country` is only set through your CDN.** Formbricks reads it from the `CF-IPCountry` (Cloudflare) or
+  `CloudFront-Viewer-Country` (AWS CloudFront) request header and runs no GeoIP lookup of its own. If
+  requests don't pass through a CDN that sets one of these headers, `country` stays empty.
+</Note>
+
+<Note>
   Responses collected before a field existed carry nothing for it and read back as unset, so a filter or an
   export column can legitimately be empty for older responses.
 </Note>

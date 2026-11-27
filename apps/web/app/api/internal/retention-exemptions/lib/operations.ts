@@ -1,6 +1,7 @@
 import "server-only";
 import { addYears } from "date-fns";
 import { prisma } from "@formbricks/database";
+import type { TRequestMeta } from "@/app/api/internal/lib/types";
 import { buildKeysetPage } from "@/app/api/v3/lib/keyset-cursor";
 import {
   createdResponse,
@@ -38,11 +39,7 @@ import { serializeRetentionExemption } from "../serializers";
 
 const EXEMPTIONS_PATH = "/api/internal/retention-exemptions";
 
-type TRequestContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance?: string;
-};
+type TRequestContext = TRequestMeta & { authentication: TV3Authentication };
 
 /**
  * The active exemptions, newest first. Every member may read them (ENG-3695), but only for surveys
