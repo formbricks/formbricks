@@ -95,6 +95,7 @@ node "$helper" run "$work_dir/compose.json" hub-migrate --rm --network "$network
 node "$helper" seed-sql | docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
 node "$helper" truth-seed-sql "${CUBE_SMOKE_TRUTH_SUBMISSIONS:-3000}" |
   docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
+node "$helper" topic-seed-sql | docker exec -i "$postgres" psql -v ON_ERROR_STOP=1 -q -U postgres -d formbricks
 
 # As the Helm chart's default cube.containerSecurityContext runs it: uid 1000, a read-only root
 # filesystem, no capabilities and no privilege escalation. Cube must need no writable path of its own.
@@ -123,6 +124,9 @@ node "$helper" check-queries "$work_dir/compose.json" "$cube_url"
 # Answer OR groups, five answer rules, embedded filters with a grouping and disjoint picks, each checked
 # against the same question asked of Postgres in plain SQL.
 node "$helper" check-correctness "$work_dir/compose.json" "$cube_url" "$postgres"
+# The taxonomy topic dimensions (Hub's taxonomy_current_record_topics view) against hand-worked numbers,
+# then after a rename, a removed subtopic, a removed topic and a newly activated run.
+node "$helper" check-topics "$work_dir/compose.json" "$cube_url" "$postgres"
 
 # Opt-in (CUBE_SMOKE_BENCH_SUBMISSIONS=20000): times 1-25 answer-rule self-joins over a large tenant.
 if [ -n "${CUBE_SMOKE_BENCH_SUBMISSIONS:-}" ]; then
