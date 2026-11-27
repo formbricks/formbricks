@@ -207,6 +207,16 @@ describe("resolvePrismaCliTls: URLs pg decodes differently", () => {
     expect(resolve(`${base}\n`)).toEqual({ databaseUrl: base, verifiesServerCertificate: false });
   });
 
+  test("accepts a leading space pg reads the same way, and rejects one next to a trailing newline it keeps", () => {
+    expect(pgParse(`  ${base}?sslmode=verify-full`).sslmode).toBe("verify-full");
+    expect(resolve(`  ${base}?sslmode=verify-full`)).toEqual({
+      databaseUrl: strictUrl(),
+      verifiesServerCertificate: true,
+    });
+    expect(pgParse(`  ${base}?ssl=true\n`).ssl).toBe("true\n");
+    expect(() => resolve(`  ${base}?ssl=true\n`)).toThrow("reads ssl in the database URL differently");
+  });
+
   // A space at the edge alone sends pg-connection-string down its re-encoding path, so pg keeps it in the last value.
   test.each([
     ["sslmode=disable ", "sslmode", "disable "],

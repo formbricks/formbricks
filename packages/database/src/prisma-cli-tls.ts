@@ -201,7 +201,7 @@ const mergeEnvMode = (
   if (fromEnv < fromUrl) {
     throw new PrismaCliTlsConfigError(
       `PGSSLMODE=${envMode} would make migrations weaker than the TLS that the other settings in the database URL ` +
-        "ask for; set sslmode in DATABASE_URL instead."
+        "ask for; set sslmode in the database URL instead."
     );
   }
   return fromEnv > fromUrl ? envMode : urlImplied;
