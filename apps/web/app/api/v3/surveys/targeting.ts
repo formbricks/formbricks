@@ -118,17 +118,6 @@ export async function assertV3OwnSegmentNotNestedElsewhere(
 }
 
 /**
- * Persist app-survey contact targeting onto the survey's own private segment. Writes the segment row
- * directly — mirroring updateSurveyInternal — so empty filters ("show to everyone") are supported, which
- * the EE updateSegment service rejects. Entitlement is gated by the caller before invoking this.
- *
- * ENG-7269: the write's own `where` repeats that the segment is private and used by `ownerSurveyId` alone,
- * so a segment shared after the caller read the survey refuses the write instead of retargeting the
- * surveys that now use it.
- *
- * Pass a transaction client (`tx`) to write atomically alongside the survey update.
- */
-/**
  * ENG-7269: the survey's targeting changed between this request's read and its write (another save of the
  * same survey). The request was fine, so the v3 layer answers 409 and the caller re-reads and retries.
  */
@@ -139,6 +128,17 @@ export class V3SurveyTargetingChangedError extends Error {
   }
 }
 
+/**
+ * Persist app-survey contact targeting onto the survey's own private segment. Writes the segment row
+ * directly — mirroring updateSurveyInternal — so empty filters ("show to everyone") are supported, which
+ * the EE updateSegment service rejects. Entitlement is gated by the caller before invoking this.
+ *
+ * ENG-7269: the write's own `where` repeats that the segment is private and used by `ownerSurveyId` alone,
+ * so a segment shared after the caller read the survey refuses the write instead of retargeting the
+ * surveys that now use it.
+ *
+ * Pass a transaction client (`tx`) to write atomically alongside the survey update.
+ */
 export async function setV3SurveySegmentFilters(
   {
     segmentId,

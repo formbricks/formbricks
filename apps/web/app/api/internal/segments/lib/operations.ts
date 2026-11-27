@@ -337,7 +337,8 @@ export async function updateSegmentOperation({
 
     // ENG-6870: connecting a survey targets it with the whole stored tree, as attaching one does.
     const storedSurveyIds = new Set(oldObject.surveys);
-    if (body.surveys?.some((surveyId) => !storedSurveyIds.has(surveyId))) {
+    const connectsSurveys = body.surveys?.some((surveyId) => !storedSurveyIds.has(surveyId)) ?? false;
+    if (connectsSurveys) {
       await assertSegmentSurveyFiltersVisible(
         data.filters ?? oldObject.filters,
         workspaceId,
@@ -346,9 +347,11 @@ export async function updateSegmentOperation({
       );
     }
 
+    // A filter change, or a survey connected to the stored tree, was checked against `oldObject.filters`:
+    // the write lands only while they are still stored.
     updated = await updateSegment(segmentId, data, {
       connectedSurveyIds,
-      ...(data.filters && { expectedFilters: oldObject.filters }),
+      ...((data.filters || connectsSurveys) && { expectedFilters: oldObject.filters }),
     });
   } catch (error) {
     return updateRefusalOrThrow(error, context);

@@ -952,6 +952,31 @@ describe("copySurveyToOtherWorkspace", () => {
     expect(prisma.survey.create).not.toHaveBeenCalled();
   });
 
+  test("refuses a cross-workspace copy whose shared segment nests a private segment there (ENG-7269)", async () => {
+    const surveyWithPublicSegment = {
+      ...mockExistingSurveyDetails,
+      segment: { id: "seg_public", title: "Public Segment", isPrivate: false, filters: [{ id: "nests" }] },
+    };
+    vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue(surveyWithPublicSegment);
+    vi.mocked(doesWorkspaceExist).mockResolvedValue(sourceWorkspaceId);
+    vi.mocked(getWorkspaceWithLanguages)
+      .mockResolvedValueOnce(mockSourceWorkspace)
+      .mockResolvedValueOnce(mockTargetWorkspace);
+    targetingMocks.assertNoAddedPrivateSegmentReferences.mockRejectedValueOnce(
+      new InvalidInputError("A segment filter can't use a survey's own targeting segment")
+    );
+
+    await expect(
+      copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId)
+    ).rejects.toThrow(InvalidInputError);
+    expect(targetingMocks.assertNoAddedPrivateSegmentReferences).toHaveBeenCalledWith(
+      surveyWithPublicSegment.segment.filters,
+      [],
+      targetWorkspaceId
+    );
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+  });
+
   test("should handle public segment: connect if same workspace, create new if different workspace (no existing in target)", async () => {
     const surveyWithPublicSegment = {
       ...mockExistingSurveyDetails,

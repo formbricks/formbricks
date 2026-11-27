@@ -781,6 +781,18 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
 
+    test("answers a survey linked to the segment since the read with the same refusal, not a 500 (ENG-7269)", async () => {
+      vi.mocked(prisma.segment.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("No record found", { code: "P2025", clientVersion: "test" })
+      );
+
+      await expect(resetSegmentInSurvey(surveyId)).rejects.toThrow(
+        new InvalidInputError(
+          "This survey's targeting segment is also used by other surveys, so it can't be reset here."
+        )
+      );
+    });
+
     test("refuses emptying a private segment another segment nests (ENG-7269)", async () => {
       vi.mocked(prisma.segment.findFirst).mockResolvedValue({
         ...privateSegmentPrisma,
