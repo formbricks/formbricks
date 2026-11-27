@@ -4,6 +4,7 @@ import { EyeIcon } from "lucide-react";
 import { type Dispatch, type ReactNode, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { useEditorIssues } from "@/modules/survey/editor/components/editor-issues-context";
 import {
   OptionsShowIfCounts,
@@ -297,6 +298,8 @@ export const QuestionShowIfSettings = ({
 interface ShowIfBadgeProps {
   readonly localSurvey: TSurvey;
   readonly target: Exclude<TShowIfTarget, { type: "option" }>;
+  /** Makes the chip a button that takes the author to the show-if: the card's Settings tab. */
+  readonly onOpen?: () => void;
 }
 
 /**
@@ -304,7 +307,7 @@ interface ShowIfBadgeProps {
  * "Optional · code" (review of ENG-6949): the Flow tab's eye chip, read-only, so a block or question
  * that can be hidden says so without opening its Settings tab. Nothing when it has none.
  */
-export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
+export const ShowIfBadge = ({ localSurvey, target, onOpen }: ShowIfBadgeProps) => {
   const { t, i18n } = useTranslation();
   const elementIcons = useElementIcons();
   const showIf = getCardShowIf(localSurvey, target);
@@ -316,15 +319,42 @@ export const ShowIfBadge = ({ localSurvey, target }: ShowIfBadgeProps) => {
     target.type === "block"
       ? t("workspace.surveys.edit.flow.show_block_if")
       : t("workspace.surveys.edit.flow.show_question_if");
-  return (
-    <span
-      className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600"
-      title={`${label} ${toPlainText(parts)}`}>
+  const content = (
+    <>
       <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
       <span className="sr-only">{label}</span>
       <span className="flex min-w-0 items-center gap-1">
         <FlowTextParts parts={parts} elementIcons={elementIcons} centered />
       </span>
-    </span>
+    </>
+  );
+  const chipClassName =
+    "inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600";
+  const title = `${label} ${toPlainText(parts)}`;
+
+  if (!onOpen) {
+    return (
+      <span className={chipClassName} title={title}>
+        {content}
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-show-if-chip
+      className={cn(
+        chipClassName,
+        "cursor-pointer hover:border-slate-300 hover:bg-slate-200 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden"
+      )}
+      title={title}
+      onClick={(event) => {
+        // The chip sits inside the card's header, which opens and closes the card: this click is not for it.
+        event.stopPropagation();
+        onOpen();
+      }}>
+      {content}
+    </button>
   );
 };

@@ -45,13 +45,13 @@ import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/ty
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import type { TRevealRequest } from "@/modules/survey/editor/components/block-card";
+import { EditorErrorBadge } from "@/modules/survey/editor/components/editor-error-badge";
 import { EditorIssueBar } from "@/modules/survey/editor/components/editor-issue-bar";
 import { EditorIssuesProvider } from "@/modules/survey/editor/components/editor-issues-context";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
 import { EMBEDDED_DATA_CARD_ID } from "@/modules/survey/editor/components/embedded-data-card";
 import { FlowView } from "@/modules/survey/editor/components/flow-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
-import { ReviewView } from "@/modules/survey/editor/components/review-view";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
@@ -59,7 +59,11 @@ import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-ba
 import { isCustomCssBlockingManualSave } from "@/modules/survey/editor/lib/custom-css-autosave";
 import { describeRuleSummary } from "@/modules/survey/editor/lib/flow-outline-text";
 import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flow-tab-notice";
-import { focusActiveTab, focusIssueTarget } from "@/modules/survey/editor/lib/focus-issue";
+import {
+  focusActiveTab,
+  focusIssueTarget,
+  focusSettingsField,
+} from "@/modules/survey/editor/lib/focus-issue";
 import {
   findIssueOwnerBlock,
   findRuleId,
@@ -74,7 +78,7 @@ import {
   type TIssueTab,
   areIssueListsEqual,
   collectEditorIssues,
-  countIssuesByTab,
+  getFlaggedPlaces,
   getIssueTargetIds,
   getPublishTargetStatus,
   reconcileIssues,
@@ -92,7 +96,7 @@ import {
   isOutboundBlocked,
   withoutVisibilityControls,
 } from "@/modules/survey/visibility/lib/state";
-import { type TErrorSummaryGroup, type TErrorSummaryItem } from "@/modules/ui/components/error-summary";
+import { type TErrorSummaryItem } from "@/modules/ui/components/error-summary/error-list";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { getEditorWorkspace, getWorkspaceLanguages } from "../lib/api-client";
 import type { TSharedSegmentEdit } from "../lib/shared-segment-edit";
@@ -233,6 +237,8 @@ export const SurveyEditor = ({
   // refused, so nothing is flagged before the author tries to publish.
   const [issueReport, setIssueReport] = useState<{
     issues: TEditorIssue[];
+    // Every place the attempt flagged, kept after a place is fixed so breaking it again flags it again.
+    flaggedPlaces: Set<string>;
     targetStatus: TSurveyStatus;
   } | null>(null);
   // A failed save or publish that is not about the survey's content: the server refused, or the network failed.
@@ -241,8 +247,8 @@ export const SurveyEditor = ({
   const [summaryFocusRequest, setSummaryFocusRequest] = useState(0);
   // The attempt whose bar already took focus: leaving the review tab and coming back must not take it again.
   const [focusedSummaryRequest, setFocusedSummaryRequest] = useState(0);
-  // Set when the review tab was opened from one of the bar's tab chips; it then lists only that tab's problems.
-  const [reviewFilter, setReviewFilter] = useState<TIssueTab | null>(null);
+  // The list the menu bar's red badge opens.
+  const [isErrorPanelOpen, setIsErrorPanelOpen] = useState(false);
   // Bumped when an issue's link is followed, so a question card the author folded opens again.
   const [revealRequest, setRevealRequest] = useState<TRevealRequest | null>(null);
   // The Flow tab's open blocks, kept here because the tab unmounts on every switch: coming back keeps
@@ -403,6 +409,8 @@ export const SurveyEditor = ({
   );
 
   const issues = issueReport?.issues ?? NO_ISSUES;
+  // Nothing left to list: the list closes, and opens closed the next time errors appear.
+  if (issues.length === 0 && isErrorPanelOpen) setIsErrorPanelOpen(false);
   // What the cards' red bars and borders are drawn from. A fresh array for every refused attempt, so a card
   // switches back to its Questions tab again on a second try.
   const invalidElements = useMemo(
@@ -422,7 +430,7 @@ export const SurveyEditor = ({
 
   const reportIssues = useCallback((found: TEditorIssue[], targetStatus: TSurveyStatus) => {
     setSystemError(null);
-    setIssueReport({ issues: found, targetStatus });
+    setIssueReport({ issues: found, flaggedPlaces: getFlaggedPlaces(found), targetStatus });
     setSummaryFocusRequest((count) => count + 1);
   }, []);
   const clearIssues = useCallback(() => {
@@ -448,9 +456,10 @@ export const SurveyEditor = ({
       t
     );
 
-  // After a refused attempt the issues follow the survey as it is edited: fixed ones disappear, and the
-  // summary goes away with the last one. The check runs when the survey settles, not when the report
-  // changes, because a fresh report was built from the current survey already.
+  // After a refused attempt the issues follow the survey as it is edited: fixed ones disappear, broken ones
+  // come back. The report stays (empty) after the last fix, so the badge returns if something breaks again.
+  // The check runs when the survey settles, not when the report changes, because a fresh report was built from
+  // the current survey already.
   const debouncedSurveyForIssues = useDebouncedValue(localSurvey, ISSUE_RECHECK_DEBOUNCE_MS);
   const issueReportRef = useRef(issueReport);
   useEffect(() => {
@@ -462,10 +471,12 @@ export const SurveyEditor = ({
     // The custom CSS check is still running: its problem stays until it answers, and this runs again then.
     if (surveyCustomCssValidation.status === "pending") return;
 
-    const next = reconcileIssues(report.issues, collectFor(debouncedSurveyForIssues, report.targetStatus));
+    const next = reconcileIssues(
+      report.flaggedPlaces,
+      collectFor(debouncedSurveyForIssues, report.targetStatus)
+    );
     setIssueReport((current) => {
       if (!current) return current;
-      if (next.length === 0) return null;
       return areIssueListsEqual(current.issues, next) ? current : { ...current, issues: next };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see the comment above
@@ -475,27 +486,25 @@ export const SurveyEditor = ({
     return <LoadingSkeleton />;
   }
 
-  // Opening the review tab is asking for the check: it runs against the survey as it is now, so the tab lists
-  // everything in the way, and the cards carry the same problems when the author goes to fix them.
-  const openReview = (filter: TIssueTab | null = null) => {
-    setReviewFilter(filter);
-    // A draft-save report (CSS only) must not narrow Review to draft rules: Publish needs more.
+  // Clicking a disabled Activate is asking for the list: the check runs again against the survey as it is now,
+  // so the list has everything in the way, and the cards carry the same errors when the author goes to fix them.
+  const openErrorPanel = () => {
+    // A draft-save report (CSS only) must not narrow the list to draft rules: Activate needs more.
     const reported = issueReport?.targetStatus;
     const targetStatus = reported && reported !== "draft" ? reported : getPublishTargetStatus(localSurvey);
     const found = collectFor(localSurvey, targetStatus);
-    setIssueReport(found.length > 0 ? { issues: found, targetStatus } : null);
-    setActiveView("review");
-  };
-
-  const handleTabChange = (tab: TSurveyEditorTabs) => {
-    if (tab === "review") openReview();
-    else setActiveView(tab);
+    setIssueReport(
+      found.length > 0 ? { issues: found, flaggedPlaces: getFlaggedPlaces(found), targetStatus } : null
+    );
+    setIsErrorPanelOpen(found.length > 0);
   };
 
   const goToIssue = (issue: TEditorIssue) => {
     setActiveView(issue.tab);
 
     if (!issue.targetId) {
+      // A Settings problem about one input (the response limit) lands on it.
+      if (issue.tab === "settings" && focusSettingsField(issue.field)) return;
       // Nothing on the tab to land on (a Language or Settings entry): the tab itself, never the page body.
       focusActiveTab();
       return;
@@ -533,20 +542,6 @@ export const SurveyEditor = ({
   }));
   const summaryItems: TErrorSummaryItem[] = summaryEntries.map((entry) => entry.item);
 
-  // The bar's chips: how many problems each tab has.
-  const tabCounts = countIssuesByTab(issues);
-  const summaryGroups: TErrorSummaryGroup[] = tabCounts.map(({ tab, count }) => ({
-    key: tab,
-    label: tabLabels[tab],
-    count,
-    onSelect: () => openReview(tab),
-  }));
-  // A filter whose tab has since been fixed falls back to the whole list.
-  const activeReviewFilter = tabCounts.some(({ tab }) => tab === reviewFilter) ? reviewFilter : null;
-  const reviewItems = activeReviewFilter
-    ? summaryEntries.filter((entry) => entry.tab === activeReviewFilter).map((entry) => entry.item)
-    : summaryItems;
-
   // After the null guard, we can safely narrow the setter type for child components
   const setLocalSurveyNonNull = setLocalSurvey as Dispatch<SetStateAction<TSurvey>>;
   const previewSurvey = debouncedPreviewSurvey ?? localSurvey;
@@ -562,6 +557,18 @@ export const SurveyEditor = ({
         onIssuesFound={reportIssues}
         onIssuesCleared={clearIssues}
         onSystemError={reportSystemError}
+        errorCount={issues.length}
+        onBlockedActivateClick={openErrorPanel}
+        errorBadge={
+          issues.length > 0 ? (
+            <EditorErrorBadge
+              items={summaryItems}
+              errorCount={issues.length}
+              open={isErrorPanelOpen}
+              onOpenChange={setIsErrorPanelOpen}
+            />
+          ) : null
+        }
         workspace={localWorkspace}
         responseCount={responseCount}
         finishedResponseCount={finishedResponseCount}
@@ -590,12 +597,7 @@ export const SurveyEditor = ({
         <RestrictedSurveyBanner ownerName={ownerName} className="rounded-none border-x-0 border-t-0 px-5" />
       )}
       <EditorIssueBar
-        items={summaryItems}
-        groups={summaryGroups}
-        problemCount={issues.length}
         systemError={systemError}
-        isReviewOpen={activeView === "review"}
-        onReviewAll={() => openReview()}
         shouldFocus={summaryFocusRequest > focusedSummaryRequest}
         onFocused={() => setFocusedSummaryRequest(summaryFocusRequest)}
       />
@@ -605,8 +607,7 @@ export const SurveyEditor = ({
           ref={surveyEditorRef}>
           <SurveyEditorTabs
             activeId={activeView}
-            setActiveId={handleTabChange}
-            reviewIssueCount={issues.length}
+            setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
             isFollowUpsTabVisible={isFollowUpsTabVisible}
@@ -706,17 +707,6 @@ export const SurveyEditor = ({
               linkedCreatives={linkedCreatives}
               sharedSegmentEdit={sharedSegmentEdit}
               setSharedSegmentEdit={setSharedSegmentEdit}
-            />
-          )}
-
-          {activeView === "review" && (
-            <ReviewView
-              items={reviewItems}
-              problemCount={issues.length}
-              filterLabel={activeReviewFilter ? tabLabels[activeReviewFilter] : undefined}
-              filterCount={tabCounts.find(({ tab }) => tab === activeReviewFilter)?.count}
-              onClearFilter={() => setReviewFilter(null)}
-              focusRequest={summaryFocusRequest}
             />
           )}
 

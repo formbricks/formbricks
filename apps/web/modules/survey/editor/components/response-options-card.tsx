@@ -13,6 +13,7 @@ import {
   isDestinationSettingLocked,
   joinCreativeNames,
 } from "@/modules/ee/creatives/lib/survey-side";
+import { useEditorIssues } from "@/modules/survey/editor/components/editor-issues-context";
 import {
   type TSurveySchedulingConfig,
   getSurveySchedulingTimeLabel,
@@ -24,6 +25,7 @@ import {
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { DatePicker } from "@/modules/ui/components/date-picker";
+import { FieldError, getFieldErrorAria } from "@/modules/ui/components/field-error";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Slider } from "@/modules/ui/components/slider";
@@ -41,6 +43,22 @@ interface ResponseOptionsCardProps {
 
 const NO_CREATIVES: readonly TSurveyLinkedCreative[] = [];
 
+// The two Response options fields a refused publish can mark: the response limit and the closed message heading.
+const useResponseOptionsIssues = () => {
+  const issues = useEditorIssues();
+  const responseLimitIssue = issues.find(
+    (issue) => issue.tab === "settings" && issue.field === "responseLimit"
+  );
+  const closedMessageIssue = issues.find(
+    (issue) => issue.tab === "settings" && issue.field === "closedMessage"
+  );
+  return {
+    responseLimitIssue,
+    closedMessageIssue,
+    hasFieldIssue: !!responseLimitIssue || !!closedMessageIssue,
+  };
+};
+
 export const ResponseOptionsCard = ({
   localSurvey,
   setLocalSurvey,
@@ -57,8 +75,15 @@ export const ResponseOptionsCard = ({
   );
   const surveySchedulingTimeLabel = getSurveySchedulingTimeLabel(surveySchedulingConfig);
   const surveySchedulingTimeZoneLabel = surveySchedulingConfig.timeZone;
+  const { responseLimitIssue, closedMessageIssue, hasFieldIssue } = useResponseOptionsIssues();
   // Open for every survey type, so settings like auto-advance are visible without hunting.
   const [open, setOpen] = useState(true);
+  // A refused publish over one of these fields opens the card again if it was folded, so the field is in view.
+  const [hadFieldIssue, setHadFieldIssue] = useState(hasFieldIssue);
+  if (hasFieldIssue !== hadFieldIssue) {
+    setHadFieldIssue(hasFieldIssue);
+    if (hasFieldIssue) setOpen(true);
+  }
   const autoComplete = localSurvey.autoComplete !== null;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
@@ -443,6 +468,8 @@ export const ResponseOptionsCard = ({
                         type="number"
                         min={finishedResponseCount ? (finishedResponseCount + 1).toString() : "1"}
                         id="autoCompleteResponses"
+                        isInvalid={!!responseLimitIssue}
+                        {...getFieldErrorAria("autoCompleteResponses-error", responseLimitIssue?.message)}
                         value={localSurvey.autoComplete?.toString()}
                         onChange={handleInputResponse}
                         onBlur={handleInputResponseBlur}
@@ -453,6 +480,13 @@ export const ResponseOptionsCard = ({
                 />
               </p>
             </label>
+            {responseLimitIssue ? (
+              <FieldError
+                id="autoCompleteResponses-error"
+                message={responseLimitIssue.message}
+                className="bg-slate-50 px-4 pb-4"
+              />
+            ) : null}
           </AdvancedOptionToggle>
 
           {/* recaptcha for spam protection */}
@@ -511,13 +545,20 @@ export const ResponseOptionsCard = ({
                 childBorder={true}>
                 <div className="flex w-full items-center gap-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
-                    <Label htmlFor="headline">{t("workspace.surveys.edit.heading")}</Label>
+                    <Label htmlFor="heading">{t("workspace.surveys.edit.heading")}</Label>
                     <Input
                       id="heading"
-                      className="mt-2 mb-4 bg-white"
+                      className="mt-2 bg-white"
                       name="heading"
+                      isInvalid={!!closedMessageIssue}
+                      {...getFieldErrorAria("heading-error", closedMessageIssue?.message)}
                       defaultValue={surveyClosedMessage.heading}
                       onChange={(e) => handleClosedSurveyMessageChange({ heading: e.target.value })}
+                    />
+                    <FieldError
+                      id="heading-error"
+                      message={closedMessageIssue?.message}
+                      className="mt-1 mb-4"
                     />
 
                     <Label htmlFor="headline">{t("workspace.surveys.edit.subheading")}</Label>

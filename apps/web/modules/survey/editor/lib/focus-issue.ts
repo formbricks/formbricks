@@ -93,3 +93,35 @@ export const focusActiveTab = () => {
     document.querySelector<HTMLElement>('nav[aria-label="Tabs"] [aria-current="page"]')?.focus();
   });
 };
+
+// Settings problems have no card to land on, but some name an input: the id of the control to take focus.
+const SETTINGS_FIELD_CONTROL_IDS: Record<string, string> = {
+  responseLimit: "autoCompleteResponses",
+  closedMessage: "heading",
+};
+
+/**
+ * Takes the author to the input a Settings problem is about, e.g. the response limit. The card holding it may
+ * still be opening, so this retries frame by frame; it does nothing for a field with no input of its own.
+ */
+export const focusSettingsField = (field: string | null): boolean => {
+  const controlId = field ? SETTINGS_FIELD_CONTROL_IDS[field] : undefined;
+  if (typeof window === "undefined" || !controlId) return false;
+
+  let frames = 0;
+  const attempt = () => {
+    const control = document.getElementById(controlId);
+    if (control) {
+      control.focus({ preventScroll: true });
+      keepFocusOutOfPreview(control);
+      control.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "center",
+      });
+      return;
+    }
+    if (frames++ < MAX_FRAMES) requestAnimationFrame(attempt);
+  };
+  requestAnimationFrame(attempt);
+  return true;
+};

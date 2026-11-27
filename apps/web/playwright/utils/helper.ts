@@ -719,10 +719,14 @@ export const fillChoiceOptions = async (page: Page, values: string[]) => {
 // editor and would be reported as publish failures.
 const errorToastsOf = (page: Page): Locator => page.locator(".formbricks__toast__error");
 
-// What stopped a save or publish is listed in a "There is a problem" / "There are N problems" bar under the editor's menu bar,
-// which stays until it is fixed. It also carries a save that failed for a reason outside the survey.
-export const EDITOR_PROBLEMS_NAME = /^There (is a problem|are \d+ problems)/;
-const editorProblemsOf = (page: Page): Locator => page.getByRole("region", { name: EDITOR_PROBLEMS_NAME });
+// What stopped a save or publish is counted by a red "N errors found" badge in the editor's menu bar, which stays
+// until it is fixed; hovering it lists them. A save that failed for a reason outside the survey says so in a
+// "Something went wrong" bar under the menu bar.
+export const EDITOR_ERRORS_BADGE_NAME = /^\d+ errors? found$/;
+const editorProblemsOf = (page: Page): Locator =>
+  page
+    .getByRole("button", { name: EDITOR_ERRORS_BADGE_NAME })
+    .or(page.getByRole("region", { name: /^Something went wrong/ }));
 
 // The editor button that activates a survey: "Activate", "Schedule survey" once a publish date is set,
 // or the CX editor's "Save & Close".
@@ -753,7 +757,7 @@ export const activateSurvey = async (
   await trigger.click({ noWaitAfter: true });
   const actionName = via === "schedule" ? "Schedule survey" : "Activate";
 
-  // The editor validates before it opens the dialog and reports a problem in its problems box (or, for
+  // The editor validates before it opens the dialog and shows an errors badge (or, for
   // a few messages, a toast), so wait for whichever comes first and fail with the editor's own message
   // rather than a locator timeout.
   const dialog = page.getByRole("dialog", { name: "Who can view this survey in your workspace?" });

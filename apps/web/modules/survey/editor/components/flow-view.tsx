@@ -180,7 +180,7 @@ export const FlowView = ({
       .map((issue) => issue.message);
     if (showIfMessages.length > 0) return showIfMessages;
     return hiddenProblemCount > 0
-      ? [t("workspace.surveys.edit.issue_card_problems", { count: hiddenProblemCount })]
+      ? [t("workspace.surveys.edit.issue_card_errors", { count: hiddenProblemCount })]
       : [];
   };
 

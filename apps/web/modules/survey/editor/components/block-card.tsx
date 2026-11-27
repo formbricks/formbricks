@@ -5,7 +5,15 @@ import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, GripIcon, PencilIcon } from "lucide-react";
-import { type Dispatch, type KeyboardEvent, type SetStateAction, memo, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type KeyboardEvent,
+  type SetStateAction,
+  memo,
+  useCallback,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
@@ -180,6 +188,12 @@ const BlockCardComponent = ({
 
   const [isBlockCollapsed, setIsBlockCollapsed] = useState(false);
   const [blockTab, setBlockTab] = useState("questions");
+  // A question's show-if chip asks for that question's Settings tab; taken once the tabs have switched.
+  const [questionSettingsRequest, setQuestionSettingsRequest] = useState<{
+    elementId: string;
+    request: number;
+  } | null>(null);
+  const clearQuestionSettingsRequest = useCallback(() => setQuestionSettingsRequest(null), []);
 
   // Questions live on the Questions tab, so a flagged one switches back to it: the
   // error is then visible, and the publish check's scroll finds the question's card (the Settings tab
@@ -348,7 +362,7 @@ const BlockCardComponent = ({
           onOpenChange={() => setIsBlockCollapsed(!isBlockCollapsed)}
           className={cn(isBlockCollapsed ? "h-full" : "")}>
           <Collapsible.CollapsibleTrigger asChild>
-            <div className="block h-full w-full cursor-pointer hover:bg-slate-100">
+            <div className="block h-full w-full cursor-pointer hover:bg-slate-100 has-[[data-show-if-chip]:hover]:bg-transparent">
               <div
                 className="flex h-full items-center justify-between px-4 py-2"
                 data-testid="block-card-header">
@@ -406,7 +420,14 @@ const BlockCardComponent = ({
                             .join(" · ")}
                         </p>
                       )}
-                      <ShowIfBadge localSurvey={localSurvey} target={{ type: "block", blockIdx }} />
+                      <ShowIfBadge
+                        localSurvey={localSurvey}
+                        target={{ type: "block", blockIdx }}
+                        onOpen={() => {
+                          setIsBlockCollapsed(false);
+                          setBlockTab("settings");
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -517,11 +538,18 @@ const BlockCardComponent = ({
                                       <ShowIfBadge
                                         localSurvey={localSurvey}
                                         target={{ type: "element", blockIdx, elementIdx: elementIndex }}
+                                        onOpen={() => {
+                                          setActiveElementId(element.id);
+                                          setQuestionSettingsRequest((previous) => ({
+                                            elementId: element.id,
+                                            request: (previous?.request ?? 0) + 1,
+                                          }));
+                                        }}
                                       />
                                       {!isOpen && elementIssues.length > 0 && (
                                         <p className="flex shrink-0 items-center gap-1 text-xs text-error">
                                           <AlertCircleIcon aria-hidden="true" className="size-3.5 shrink-0" />
-                                          {t("workspace.surveys.edit.issue_card_problems", {
+                                          {t("workspace.surveys.edit.issue_card_errors", {
                                             count: elementIssues.length,
                                           })}
                                         </p>
@@ -572,6 +600,12 @@ const BlockCardComponent = ({
                             <QuestionTabs
                               content={renderElementForm(element, elementIdx)}
                               hasSettingsIssue={codeIssues.has(element.id)}
+                              settingsRequest={
+                                questionSettingsRequest?.elementId === element.id
+                                  ? questionSettingsRequest.request
+                                  : 0
+                              }
+                              onSettingsRequestHandled={clearQuestionSettingsRequest}
                               settings={
                                 <AdvancedSettings
                                   // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.

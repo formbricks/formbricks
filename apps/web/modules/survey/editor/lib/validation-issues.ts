@@ -17,7 +17,7 @@ import {
 } from "./validation";
 
 // The tabs an issue can live on: every tab but the one that lists them.
-export type TIssueTab = Exclude<TSurveyEditorTabs, "review">;
+export type TIssueTab = TSurveyEditorTabs;
 
 /**
  * One thing that stops a survey from being published, with where it is and what to do about it.
@@ -110,6 +110,44 @@ const getInvalidLanguageCodes = (issue: TDescribableIssue & { params?: unknown }
   if (Array.isArray(codes)) return codes.filter((code): code is string => typeof code === "string");
   const absent = ABSENT_TRANSLATION_PATTERN.exec(issue.message)?.[1];
   return absent ? absent.split(",").map((code) => code.trim()) : [];
+};
+
+const DUPLICATE_LABELS_PATTERN = /duplicate (choice|row|column) labels/i;
+
+/**
+ * "Two rows have the same label in German": the schema's English sentence names the question (the row already
+ * says where it is) and leaves the languages as codes in its params, so both are rebuilt here.
+ */
+const withDuplicateLabelsMessage = (
+  issue: TDescribableIssue,
+  t: TFunction,
+  locale: string
+): TDescribableIssue => {
+  const kind = DUPLICATE_LABELS_PATTERN.exec(issue.message)?.[1]?.toLowerCase();
+  if (!kind) return issue;
+
+  const codes = (issue as { params?: { invalidLanguageCodes?: unknown } }).params?.invalidLanguageCodes;
+  const languages = (Array.isArray(codes) ? codes : [])
+    .filter((code): code is string => typeof code === "string" && code !== "default")
+    .map((code) => getLanguageLabel(code, locale) ?? code)
+    .join(", ");
+
+  // Literal t() calls, so the translation scanner sees every key in use.
+  let message: string;
+  if (kind === "choice") {
+    message = languages
+      ? t("workspace.surveys.edit.issue_duplicate_choices_in", { languages })
+      : t("workspace.surveys.edit.issue_duplicate_choices");
+  } else if (kind === "row") {
+    message = languages
+      ? t("workspace.surveys.edit.issue_duplicate_rows_in", { languages })
+      : t("workspace.surveys.edit.issue_duplicate_rows");
+  } else {
+    message = languages
+      ? t("workspace.surveys.edit.issue_duplicate_columns_in", { languages })
+      : t("workspace.surveys.edit.issue_duplicate_columns");
+  }
+  return { ...issue, message };
 };
 
 /** Inline text for a field the author left empty. Literal t() calls so the translation scanner sees every key. */
@@ -260,7 +298,8 @@ const getShowIfItemLabel = (collection: string, n: number, t: TFunction): string
 const getConditionMessage = (schemaMessage: string, t: TFunction): string | null => {
   // An operator that takes no value was given one: asking for a value would say the opposite of what to fix.
   if (/should not be (present|defined)/i.test(schemaMessage)) return null;
-  if (/left operand/i.test(schemaMessage)) return t("workspace.surveys.edit.issue_show_if_question");
+  if (/left operand|(element|question) id cannot be empty/i.test(schemaMessage))
+    return t("workspace.surveys.edit.issue_show_if_question");
   if (/right operand/i.test(schemaMessage)) return t("workspace.surveys.edit.issue_show_if_value");
   return null;
 };
@@ -325,10 +364,56 @@ const SURVEY_LEVEL_TABS = new Map<string, TIssueTab>([
   ["followUps", "followUps"],
   ["triggers", "settings"],
   ["segment", "settings"],
+  ["autoComplete", "settings"],
+  ["closeOn", "settings"],
+  ["publishOn", "settings"],
+  ["surveyClosedMessage", "settings"],
+  ["displayOption", "settings"],
+  ["displayLimit", "settings"],
+  ["displayPercentage", "settings"],
+  ["recontactDays", "settings"],
+  ["autoClose", "settings"],
+  ["delay", "settings"],
+  ["pin", "settings"],
+  ["recaptcha", "settings"],
 ]);
+
+const mapEndingIssue = (
+  issue: TDescribableIssue,
+  survey: TSurvey,
+  path: TPath,
+  t: TFunction
+): TEditorIssue[] => {
+  const endingIndex = typeof path[1] === "number" ? path[1] : -1;
+  const ending = survey.endings[endingIndex];
+  const location = t("workspace.surveys.edit.issue_location_ending", { number: endingIndex + 1 });
+  // An empty redirect URL is reported twice (the format check and the "cannot be empty" check): keep the
+  // second, and drop the "Ending card N:" the schema puts in front, since the location already says it.
+  if (
+    path[2] === "url" &&
+    ending?.type === "redirectToUrl" &&
+    !ending.url?.trim() &&
+    /must start with/i.test(issue.message)
+  )
+    return [];
+  const message = issue.message.replace(/^Ending card \d+:\s*/i, "");
+  return [mapCardIssue({ ...issue, message }, ending?.id ?? null, path.slice(2), location, t)];
+};
 
 /** A problem about the survey as a whole: it names the tab it most likely lives on. */
 const mapSurveyLevelIssue = (issue: TDescribableIssue, root: string | number | undefined, t: TFunction) => {
+  // The schema's "Response limit must be greater than 0": the same problem, field and words as the rule check
+  // below, so the two merge and the Response options card can mark the field.
+  if (root === "autoComplete") {
+    return withKey({
+      tab: "settings",
+      targetId: null,
+      level: "field",
+      field: "responseLimit",
+      message: t("workspace.surveys.edit.response_limit_can_t_be_set_to_0"),
+      location: null,
+    });
+  }
   const known = typeof root === "string" ? SURVEY_LEVEL_TABS.get(root) : undefined;
   const fallbackTab: TIssueTab = isConditionalLogicMessage(issue.message) ? "flow" : "elements";
 
@@ -466,9 +551,7 @@ const mapZodIssue = (issue: TDescribableIssue, survey: TSurvey, t: TFunction): T
   }
 
   if (root === "endings") {
-    const endingIndex = typeof path[1] === "number" ? path[1] : -1;
-    const location = t("workspace.surveys.edit.issue_location_ending", { number: endingIndex + 1 });
-    return [mapCardIssue(issue, survey.endings[endingIndex]?.id ?? null, path.slice(2), location, t)];
+    return mapEndingIssue(issue, survey, path, t);
   }
 
   if (root === "showConditions") {
@@ -524,7 +607,8 @@ export const getSchemaIssues = (survey: TSurvey, t: TFunction, locale: string): 
       continue;
     }
 
-    for (const found of mapZodIssue(issue, survey, t)) {
+    // After the translation check above, which tells a duplicate-labels issue by its English sentence.
+    for (const found of mapZodIssue(withDuplicateLabelsMessage(issue, t, locale), survey, t)) {
       if (!isRepeatedShowIf(found, issues)) issues.push(found);
     }
   }
@@ -675,15 +759,18 @@ export const collectEditorIssues = (context: TCollectIssuesContext, t: TFunction
 const getIssueIdentity = (issue: TEditorIssue): string =>
   issue.targetId ?? `${issue.tab}:${issue.field ?? ""}:${issue.languageCode ?? ""}`;
 
+/** The places a list of issues sits on: what `reconcileIssues` remembers as flagged. */
+export const getFlaggedPlaces = (issues: TEditorIssue[]): Set<string> =>
+  new Set(issues.map(getIssueIdentity));
+
 /**
  * After the first failed attempt the issues follow the survey as the author edits. A place that was not
  * flagged then stays unflagged, so a question just added and not yet filled in is not marked until the
- * next publish; places already flagged update, and disappear once fixed.
+ * next publish; places flagged by the attempt update, disappear once fixed, and come back if the author
+ * breaks them again (the places are those of the attempt, not of what is left on screen).
  */
-export const reconcileIssues = (previous: TEditorIssue[], next: TEditorIssue[]): TEditorIssue[] => {
-  const flagged = new Set(previous.map(getIssueIdentity));
-  return next.filter((issue) => flagged.has(getIssueIdentity(issue)));
-};
+export const reconcileIssues = (flagged: ReadonlySet<string>, next: TEditorIssue[]): TEditorIssue[] =>
+  next.filter((issue) => flagged.has(getIssueIdentity(issue)));
 
 export const areIssueListsEqual = (a: TEditorIssue[], b: TEditorIssue[]): boolean =>
   a.length === b.length && a.every((issue, index) => issue.key === b[index].key);

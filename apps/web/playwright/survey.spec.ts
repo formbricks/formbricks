@@ -1226,20 +1226,26 @@ test.describe("Overlapping file uploads", () => {
   });
 });
 
-test.describe("Publishing a survey with problems", () => {
-  test("lists the problem, jumps to its field, and publishes once it is fixed", async ({ page, users }) => {
+test.describe("Publishing a survey with errors", () => {
+  test("counts the error, lists it, jumps to its field, and publishes once it is fixed", async ({
+    page,
+    users,
+  }) => {
     const user = await users.create();
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await createSurveyFromScratch(page);
 
     const headline = page.locator('[data-issue-field$=":headline"] .editor-input').first();
-    const summary = page.getByRole("region", { name: helper.EDITOR_PROBLEMS_NAME });
-    // With one problem the bar spells it out as a link to its field, instead of "Go to first".
-    const goToFirstProblem = summary.getByRole("button", { name: /Enter a question/ });
+    const badge = page.getByRole("button", { name: helper.EDITOR_ERRORS_BADGE_NAME });
+    const activate = page.getByRole("button", { name: "Activate", exact: true });
 
-    await test.step("an emptied question headline stops the publish and is listed", async () => {
+    await test.step("a survey with no errors shows no badge", async () => {
       await expect(headline).toBeVisible();
+      await expect(badge).toBeHidden();
+    });
+
+    await test.step("an emptied question headline stops the publish and the badge counts it", async () => {
       await headline.fill("");
       // The live preview re-renders after the edit, and may move focus to its own first control when it is
       // done. Waiting for it to show the empty headline settles that before anything below is clicked, and
@@ -1248,20 +1254,20 @@ test.describe("Publishing a survey with problems", () => {
         page.getByTestId("fb__surveys__auto-close-wrapper-test").getByText("What would you like to know?")
       ).toBeHidden();
 
-      await page.getByRole("button", { name: "Activate", exact: true }).click();
-      await expect(summary.getByRole("heading", { name: helper.EDITOR_PROBLEMS_NAME })).toBeFocused();
-      await expect(summary).toContainText("There is a problem");
-      await expect(goToFirstProblem).toBeVisible();
+      await activate.click();
+      await expect(badge).toHaveText("1 error found");
+      await expect(activate).toHaveAttribute("aria-disabled", "true");
     });
 
-    await test.step("the bar goes to the field", async () => {
-      await goToFirstProblem.click();
+    await test.step("the badge lists it, and the list goes to the field", async () => {
+      await badge.hover();
+      await page.getByRole("button", { name: "Enter a question" }).click();
       await expect(headline).toBeFocused();
     });
 
-    await test.step("fixing it clears the problem and the survey publishes", async () => {
+    await test.step("fixing it clears the badge and the survey publishes", async () => {
       await helper.fillRichTextEditor(page, "Question*", "How was it?");
-      await expect(summary).toBeHidden();
+      await expect(badge).toBeHidden();
 
       await helper.publishSurvey(page);
     });

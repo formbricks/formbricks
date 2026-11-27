@@ -2,59 +2,30 @@
 
 import { useTranslation } from "react-i18next";
 import { keepFocusOutOfPreview } from "@/modules/survey/editor/lib/focus-issue";
-import {
-  ErrorSummary,
-  type TErrorSummaryGroup,
-  type TErrorSummaryItem,
-} from "@/modules/ui/components/error-summary";
+import { ErrorSummary } from "@/modules/ui/components/error-summary";
 
 interface EditorIssueBarProps {
-  readonly items: readonly TErrorSummaryItem[];
-  readonly groups: readonly TErrorSummaryGroup[];
-  readonly problemCount: number;
-  /** A failed save or publish that is not about the survey's content; it replaces the list while it lasts. */
+  /** A failed save or publish that is not about the survey's content; the bar shows only while there is one. */
   readonly systemError: string | null;
-  /** The review tab lists the problems itself, so the bar steps aside there; a failed save still shows. */
-  readonly isReviewOpen: boolean;
-  readonly onReviewAll: () => void;
   readonly shouldFocus: boolean;
   readonly onFocused: () => void;
 }
 
-/** The slim bar under the menu bar: how many problems the survey has, or why the last save failed. */
-export const EditorIssueBar = ({
-  items,
-  groups,
-  problemCount,
-  systemError,
-  isReviewOpen,
-  onReviewAll,
-  shouldFocus,
-  onFocused,
-}: EditorIssueBarProps) => {
+/**
+ * The slim bar under the menu bar for why the last save failed when the survey's content is not the reason.
+ * Errors in the content are listed by the badge in the menu bar.
+ */
+export const EditorIssueBar = ({ systemError, shouldFocus, onFocused }: EditorIssueBarProps) => {
   const { t } = useTranslation();
 
-  if (!systemError && (items.length === 0 || isReviewOpen)) return null;
-
-  // A bar that lists its problems says where each one is, since there is no list to read that from.
-  const barItems = items.map((item) => ({
-    ...item,
-    label: item.location
-      ? t("workspace.surveys.edit.issue_inline_entry", { location: item.location, message: item.label })
-      : item.label,
-  }));
+  if (!systemError) return null;
 
   return (
     <ErrorSummary
-      heading={t("workspace.surveys.edit.issue_summary_heading", { count: systemError ? 1 : problemCount })}
-      items={systemError ? [] : barItems}
-      groups={systemError ? [] : groups}
-      description={systemError ?? undefined}
-      goToFirstLabel={t("workspace.surveys.edit.issue_summary_go_to_first")}
-      reviewAllLabel={t("workspace.surveys.edit.issue_summary_review_all")}
-      onReviewAll={onReviewAll}
+      heading={t("workspace.surveys.edit.issue_system_error_heading")}
+      description={systemError}
       shouldFocus={shouldFocus}
-      // The preview can take focus when the editor scrolls to the first problem: hand it back to the heading.
+      // The preview can take focus when the editor scrolls to the first error: hand it back to the heading.
       onFocused={(heading) => {
         onFocused();
         keepFocusOutOfPreview(heading);

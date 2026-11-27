@@ -8,6 +8,7 @@ import {
   collectEditorIssues,
   countIssuesByTab,
   getFieldIssue,
+  getFlaggedPlaces,
   getIssueTargetIds,
   getPublishTargetStatus,
   getSchemaIssues,
@@ -285,6 +286,17 @@ describe("getSchemaIssues", () => {
     ]);
   });
 
+  test("reports an empty redirect URL once, without the schema's card prefix", () => {
+    const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
+      endings: [{ id: "end2", type: "redirectToUrl", url: "", label: "Go" }],
+    });
+
+    const messages = getSchemaIssues(survey, t, "en-US")
+      .filter((issue) => issue.targetId === "end2")
+      .map((issue) => issue.message);
+    expect(messages).toEqual(["Redirect URL cannot be empty"]);
+  });
+
   test("puts an empty ending card headline on that ending", () => {
     const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
       endings: [{ id: "end1", type: "endScreen", headline: { default: "", de: "Danke" } }],
@@ -548,6 +560,43 @@ describe("getSchemaIssues", () => {
     expect(issues.length).toBeGreaterThan(0);
     expect(issues.some((found) => found.tab === "language")).toBe(false);
     expect(issues[0]).toMatchObject({ tab: "elements", targetId: "q1" });
+  });
+
+  test("names the language of duplicate labels, in the editor's words and without the question's number", () => {
+    const survey = buildSurvey([
+      block([
+        {
+          id: "q1",
+          type: "multipleChoiceSingle",
+          headline: { default: "Pick one", de: "Wähle eins" },
+          required: true,
+          shuffleOption: "none",
+          choices: [
+            { id: "c1", label: { default: "A", de: "Gleich" } },
+            { id: "c2", label: { default: "B", de: "Gleich" } },
+          ],
+        },
+      ]),
+    ]);
+
+    const [issue] = getSchemaIssues(survey, t, "en-US");
+
+    expect(issue.message).toBe('workspace.surveys.edit.issue_duplicate_choices_in:{"languages":"German"}');
+  });
+
+  test("sends the schema's response limit error to Settings, on the response limit, in the editor's words", () => {
+    const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
+      autoComplete: 0,
+    });
+
+    expect(getSchemaIssues(survey, t, "en-US")).toEqual([
+      expect.objectContaining({
+        tab: "settings",
+        targetId: null,
+        field: "responseLimit",
+        message: "workspace.surveys.edit.response_limit_can_t_be_set_to_0",
+      }),
+    ]);
   });
 
   test("does not ask for a value when the operator takes none", () => {
@@ -855,18 +904,31 @@ describe("keeping issues in step with edits", () => {
   const trigger = issue({ tab: "settings", field: "trigger" });
 
   test("drops what was fixed", () => {
-    expect(reconcileIssues([headline, secondHeadline], [secondHeadline])).toEqual([secondHeadline]);
+    expect(reconcileIssues(getFlaggedPlaces([headline, secondHeadline]), [secondHeadline])).toEqual([
+      secondHeadline,
+    ]);
   });
 
   test("does not flag a place that was not flagged: a question just added stays unmarked until the next publish", () => {
-    expect(reconcileIssues([headline], [headline, secondHeadline])).toEqual([headline]);
+    expect(reconcileIssues(getFlaggedPlaces([headline]), [headline, secondHeadline])).toEqual([headline]);
+  });
+
+  test("flags a fixed place again when it is broken again", () => {
+    const flagged = getFlaggedPlaces([headline, secondHeadline]);
+
+    expect(reconcileIssues(flagged, [secondHeadline])).toEqual([secondHeadline]);
+    expect(reconcileIssues(flagged, [headline, secondHeadline])).toEqual([headline, secondHeadline]);
   });
 
   test("keeps an issue with no card by its tab and field", () => {
     expect(
-      reconcileIssues([trigger], [issue({ tab: "settings", field: "trigger", message: "new" })])
+      reconcileIssues(getFlaggedPlaces([trigger]), [
+        issue({ tab: "settings", field: "trigger", message: "new" }),
+      ])
     ).toHaveLength(1);
-    expect(reconcileIssues([trigger], [issue({ tab: "settings", field: "closedMessage" })])).toEqual([]);
+    expect(
+      reconcileIssues(getFlaggedPlaces([trigger]), [issue({ tab: "settings", field: "closedMessage" })])
+    ).toEqual([]);
   });
 
   test("tells a changed list from an unchanged one", () => {

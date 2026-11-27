@@ -2,7 +2,15 @@
 
 import { ArrowLeftIcon, SettingsIcon, UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import formbricks from "@formbricks/js";
@@ -17,6 +25,7 @@ import {
   TSurveyStatus,
   TSurveyVisibility,
 } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/cn";
 import { removeLocalStorage } from "@/lib/localStorage";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
@@ -47,7 +56,9 @@ import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
+import { InfoTooltipContent } from "@/modules/ui/components/info-tooltip";
 import { Input } from "@/modules/ui/components/input";
+import { Tooltip, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { saveSurvey, saveSurveyDraft } from "../lib/api-client";
 import { type TAutoSaveFailure } from "../lib/auto-save-badge";
 import { createAutoSaveInFlight } from "../lib/auto-save-in-flight";
@@ -73,6 +84,12 @@ interface SurveyMenuBarProps {
   onIssuesCleared: () => void;
   /** A save or publish that failed for a reason outside the survey's content; `null` clears it. */
   onSystemError: (message: string | null) => void;
+  /** How many errors the survey has after a refused save or publish; Activate is disabled while there are any. */
+  errorCount: number;
+  /** The red badge listing them, shown between the auto-save badge and the Save button. */
+  errorBadge: ReactNode;
+  /** Activate was clicked while disabled: the editor opens the list of errors. */
+  onBlockedActivateClick: () => void;
   workspace: TWorkspaceWithoutCustomCss;
   responseCount: number;
   finishedResponseCount: number;
@@ -134,6 +151,9 @@ export const SurveyMenuBar = ({
   onIssuesFound,
   onIssuesCleared,
   onSystemError,
+  errorCount,
+  errorBadge,
+  onBlockedActivateClick,
   workspace,
   responseCount,
   finishedResponseCount,
@@ -726,7 +746,14 @@ export const SurveyMenuBar = ({
     return !blockOnUnsavedSharedSegmentEdit();
   };
 
+  // After a refused publish the button says why it is off, and a click on it opens the list of errors.
+  const isActivateBlocked = errorCount > 0;
+
   const handleActivateClick = () => {
+    if (isActivateBlocked) {
+      onBlockedActivateClick();
+      return;
+    }
     if (
       !shouldAskWhoCanView({ gate: visibilityGate, access: surveyAccess, visibility: effectiveVisibility })
     ) {
@@ -823,6 +850,7 @@ export const SurveyMenuBar = ({
           // CX mode hides the manual save, so the badge must not suggest one.
           canSaveManually={!isCxMode}
         />
+        {errorBadge}
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small" alertRole="status">
@@ -882,13 +910,25 @@ export const SurveyMenuBar = ({
         )}
         {/* Always display Publish button for link surveys for better CR */}
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
-          <Button
-            size="sm"
-            disabled={isSurveySaving || isVisibilityRefreshing}
-            loading={isSurveyPublishing}
-            onClick={handleActivateClick}>
-            {draftPrimaryLabel}
-          </Button>
+          <TooltipProvider delayDuration={0}>
+            <Tooltip open={isActivateBlocked ? undefined : false}>
+              <TooltipTrigger asChild>
+                {/* aria-disabled, not disabled: a disabled button takes no hover or click, and both are needed. */}
+                <Button
+                  size="sm"
+                  disabled={isSurveySaving || isVisibilityRefreshing}
+                  loading={isSurveyPublishing}
+                  aria-disabled={isActivateBlocked || undefined}
+                  className={cn(isActivateBlocked && "cursor-not-allowed opacity-50")}
+                  onClick={handleActivateClick}>
+                  {draftPrimaryLabel}
+                </Button>
+              </TooltipTrigger>
+              <InfoTooltipContent side="bottom" align="end">
+                {t("workspace.surveys.edit.issue_activate_blocked_tooltip")}
+              </InfoTooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       <AlertDialog
