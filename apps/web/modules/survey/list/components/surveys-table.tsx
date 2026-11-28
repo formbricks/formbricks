@@ -114,7 +114,7 @@ const getSurveyColumns = ({
     id: "name",
     header: t("common.name"),
     meta: { label: t("common.name") },
-    size: 260,
+    size: 235,
     cell: ({ row }) => {
       const state = rowStates.get(row.original.id);
       const nameCell = (
@@ -141,7 +141,7 @@ const getSurveyColumns = ({
     id: "status",
     header: t("common.status"),
     meta: { label: t("common.status") },
-    size: 140,
+    size: 185,
     cell: ({ row }) => {
       const state = rowStates.get(row.original.id);
       return (
@@ -157,14 +157,14 @@ const getSurveyColumns = ({
     id: "responses",
     header: t("workspace.surveys.completed_responses"),
     meta: { label: t("workspace.surveys.completed_responses") },
-    size: 110,
+    size: 125,
     cell: ({ row }) => <span className="text-slate-900">{row.original.completedResponseCount}</span>,
   },
   {
     id: "type",
     header: t("common.type"),
     meta: { label: t("common.type") },
-    size: 100,
+    size: 150,
     cell: ({ row }) => <SurveyTypeIndicator type={row.original.type} />,
   },
   {
@@ -313,6 +313,8 @@ export const SurveysTable = ({
     <ListTable
       table={table}
       testId="survey-list-table"
+      // Below this the card scrolls sideways, so Status and Type keep room for their labels (ENG-7083).
+      minWidth={1150}
       isLoading={isLoading}
       hasFilters={hasFilters}
       onClearFilters={onClearFilters}
