@@ -52,8 +52,8 @@ identity provider's multi-factor authentication, conditional access and deprovis
   forgot password sends a reset link, also to users who never had a password. This needs password sign-in and
   password reset left on: neither happens with `EMAIL_AUTH_DISABLED=1`, and no reset link goes out with
   `PASSWORD_RESET_DISABLED=1`.
-- **An outage at your identity provider is not covered.** Formbricks still offers the provider, so its users can't
-  sign in until the provider is back.
+- **An outage at your identity provider does not turn password sign-in back on.** Formbricks still offers the
+  provider, so its users sign in with it once it is back, or with another linked provider that works.
 
 There is nothing to configure. See [Authentication Behavior](/self-hosting/auth-behavior#password-sign-in-for-sso-accounts).
 
