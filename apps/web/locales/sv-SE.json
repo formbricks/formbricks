@@ -26,7 +26,7 @@
       "back_to_login": "Tillbaka till inloggning",
       "email-sent": {
         "heading": "Lösenordsåterställning begärd",
-        "sso_hint": "Loggar du in med Google, Microsoft eller en annan leverantör av enkel inloggning (SSO)? Då finns det inget lösenord att återställa. Logga in med den leverantören i stället.",
+        "sso_hint": "Om du loggar in med Google, Microsoft eller en annan leverantör av enkel inloggning (SSO) förklarar mejlet vi skickade hur du loggar in.",
         "text": "Om ett konto med denna e-postadress finns kommer du att få instruktioner för lösenordsåterställning inom kort."
       },
       "reset": {
@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "Inloggning med tvåfaktorsautentisering kan inte slutföras här",
       "oauth_signup_not_allowed_description": "Din identitetsleverantör loggade in dig, men denna Formbricks-instans är inte konfigurerad för att skapa nya konton på detta sätt. Be en administratör att bjuda in dig och försök sedan igen.",
       "oauth_signup_not_allowed_title": "Vi kunde inte skapa ditt konto",
+      "sso_sign_in_required": "Ditt konto använder enkel inloggning (SSO). Logga in med {providers}.",
       "use_a_backup_code": "Använd en reservkod"
     },
     "oauth": {
@@ -902,8 +903,8 @@
     "sso_sign_in_hint_email_heading": "Logga in med enkel inloggning (SSO)",
     "sso_sign_in_hint_email_no_access": "Om du inte längre kan logga in på det här sättet, kontakta din administratör.",
     "sso_sign_in_hint_email_subject": "Så här loggar du in på ditt Formbricks-konto",
-    "sso_sign_in_hint_email_text": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord, så det finns inget att återställa. Du loggar in med:",
-    "sso_sign_in_hint_email_text_unavailable": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder inget lösenord: du loggar in med enkel inloggning (SSO), som just nu inte är tillgänglig i den här Formbricks-instansen. Kontakta din administratör för att få åtkomst igen.",
+    "sso_sign_in_hint_email_text": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto använder enkel inloggning (SSO) i stället för ett lösenord, så det finns ingen återställningslänk. Du loggar in med:",
+    "sso_sign_in_hint_email_text_unavailable": "Vi har fått en begäran om att återställa lösenordet för ditt Formbricks-konto. Ditt konto loggar in med enkel inloggning (SSO), som just nu inte är tillgänglig på den här Formbricks-instansen, och inloggning med lösenord är avstängd. Kontakta din administratör för att få åtkomst igen.",
     "survey_response_finished_email_congrats": "Grattis, du har fått ett nytt svar på din enkät! Någon har precis slutfört din enkät: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vill du inte få dessa aviseringar?",
     "survey_response_finished_email_hey": "Hej 👋",

@@ -58,11 +58,10 @@ export type TReclaimOutcome = {
  * Two deliberate shapes worth not "simplifying":
  *
  * - The password is NULLED, not the row deleted. Sign-in behaviour is identical either way
- *   (`!currentPassword` → the same 401 after the same dummy hash), but the surviving row is what marks
- *   this user as a credential user, which is what lets the password-reset request
- *   (`POST /api/internal/password-reset-requests`) still offer them a reset —
- *   recovery flips `identityProvider` to the SSO provider and nothing ever flips it back, so deleting the
- *   row would lock them out of every password route with no self-service way back.
+ *   (`!currentPassword` → the same 401 after the same dummy hash), and since ENG-2590 the row no longer
+ *   decides the password-reset request either: recovery flips `identityProvider` to the SSO provider, and an
+ *   SSO user gets a reset link exactly when none of their providers is offered. Nulling keeps the change
+ *   minimal and the row's history intact.
  * - The `where` is scoped by `userId`, NOT by `providerAccountId` / `issuer`, even though Better Auth's own
  *   `findCredentialAccount` filters on all four. Those are account-KEY columns and a drifted key is a real
  *   failure mode here (ENG-2555 was exactly that): a row whose key drifted still holds a live hash, and a

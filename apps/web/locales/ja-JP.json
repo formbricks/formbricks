@@ -26,7 +26,7 @@
       "back_to_login": "ログインに戻る",
       "email-sent": {
         "heading": "パスワードのリセット要求を送信しました",
-        "sso_hint": "GoogleやMicrosoft、またはその他のシングルサインオン(SSO)プロバイダーでサインインしていますか?その場合、リセットするパスワードはありません。代わりに、そのプロバイダーでサインインしてください。",
+        "sso_hint": "GoogleやMicrosoftなどのシングルサインオンプロバイダーでサインインしている場合は、送信したメールにサインイン方法が記載されています。",
         "text": "このメールアドレスにアカウントが存在する場合、パスワードリセットの手順がまもなく送信されます。"
       },
       "reset": {
@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "ここでは2要素認証によるサインインを完了できません",
       "oauth_signup_not_allowed_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではこの方法で新しいアカウントを作成できない設定になっています。管理者に招待を依頼してから、もう一度お試しください。",
       "oauth_signup_not_allowed_title": "アカウントを作成できませんでした",
+      "sso_sign_in_required": "お使いのアカウントはシングルサインオンを利用しています。{providers}でサインインしてください。",
       "use_a_backup_code": "バックアップコードを使用"
     },
     "oauth": {
@@ -902,8 +903,8 @@
     "sso_sign_in_hint_email_heading": "シングルサインオンでサインイン",
     "sso_sign_in_hint_email_no_access": "この方法でサインインできなくなった場合は、管理者に連絡してください。",
     "sso_sign_in_hint_email_subject": "Formbricksアカウントへのサインイン方法",
-    "sso_sign_in_hint_email_text": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。お使いのアカウントはパスワードを使用していないため、リセットするものはありません。次の方法でサインインしています:",
-    "sso_sign_in_hint_email_text_unavailable": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。ただし、このアカウントではパスワードを使用しておらず、シングルサインオン(SSO)でログインする設定になっています。現在、このFormbricksインスタンスではSSOをご利用いただけない状態です。再度アクセスできるようにするには、管理者にお問い合わせください。",
+    "sso_sign_in_hint_email_text": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。お使いのアカウントはパスワードではなくシングルサインオン(SSO)を使用しているため、リセット用のリンクはありません。次の方法でサインインしてください:",
+    "sso_sign_in_hint_email_text_unavailable": "Formbricksアカウントのパスワードリセットのリクエストを受け付けました。お使いのアカウントはシングルサインオン(SSO)でサインインする設定になっていますが、現在このFormbricksインスタンスではSSOをご利用いただけません。また、パスワードでのサインインも無効になっています。再びアクセスするには、管理者にお問い合わせください。",
     "survey_response_finished_email_congrats": "おめでとうございます、新しい回答が届きました！{surveyName} アンケートへの回答が完了しました。",
     "survey_response_finished_email_dont_want_notifications": "これらの通知を受け取りたくないですか？",
     "survey_response_finished_email_hey": "こんにちは 👋",

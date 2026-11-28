@@ -302,8 +302,8 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
 };
 
 /**
- * Tell a user who asked for a password reset that their account has no password and signs in with an
- * identity provider instead (ENG-3262). Goes only to the address on file, so naming the provider here
+ * Tell a user who asked for a password reset that their account signs in with an identity provider instead
+ * of a password (ENG-3262, ENG-2590). Goes only to the address on file, so naming the provider here
  * reveals nothing the forgot-password page does not — that page answers identically for every address.
  */
 export const sendSsoSignInHintEmail = async ({

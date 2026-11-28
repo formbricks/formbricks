@@ -61,7 +61,7 @@ anyone's.
 | `password_reset_notification` | A password was reset | Server (the account) | Only a valid reset token sends it |
 | `account_deletion` | An SSO user deletes their account | Server (the account) | User (where it starts) |
 | `sso_recovery_notification` | SSO recovery removed local sign-in factors | Server (the account) | Follows the recovery flow |
-| `sso_sign_in_hint` | Forgot password on an SSO-only account | Whoever asks | Account (where it starts); recipient |
+| `sso_sign_in_hint` | Forgot password on an account that signs in with SSO | Whoever asks | Account (where it starts); recipient |
 | `data_retention_notice` | Nightly data retention sweep | Server (organization members) | Bounded by the sweep |
 | `response_notification` | A response is completed | Server (subscribed members) | Organization |
 | `survey_preview` | "Send preview" from the embed tab | Server (the user) | User |

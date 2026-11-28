@@ -21,7 +21,7 @@ checksums:
     auth/email-change/old_email: a0997d29018f8eca4191f04254d7f3c2
     auth/forgot-password/back_to_login: 6bcc9859839f32dc2b4295e1565919a4
     auth/forgot-password/email-sent/heading: d1f5f21900d34943ec70639431c2c04d
-    auth/forgot-password/email-sent/sso_hint: fcffbf3f7541f9bef42ed6128ca6c8b8
+    auth/forgot-password/email-sent/sso_hint: e517e82e3b4bab13982a1ef0b99c58a2
     auth/forgot-password/email-sent/text: d7068d31cf3cf4590bdecb56bbe024c8
     auth/forgot-password/reset/confirm_password: b5cdb861d8deb598b0613d48098b82b6
     auth/forgot-password/reset/new_password: c3e35b0671004c7bbd9fa9b9654744d7
@@ -73,6 +73,7 @@ checksums:
     auth/login/oauth_second_factor_unavailable_title: feaba4c3c7933fcafbab42ffe9bcc69c
     auth/login/oauth_signup_not_allowed_description: a03f3faa0668235bcf6f91b861d1df4a
     auth/login/oauth_signup_not_allowed_title: 8afe5de3881de0b4c5d8893ac9ff4a87
+    auth/login/sso_sign_in_required: 16afa1c98f740f0c53e4edd353550b27
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
     auth/oauth/access/all_hint: c1270b19103dca8170db5ca4bcc3e88e
@@ -855,8 +856,8 @@ checksums:
     emails/sso_sign_in_hint_email_heading: b88567d0947d3eac36f61685b309c7ef
     emails/sso_sign_in_hint_email_no_access: 8461e56a711ca3092dff6bc80b389fce
     emails/sso_sign_in_hint_email_subject: 3c2cd920e0051fb3ff276f573aef90a9
-    emails/sso_sign_in_hint_email_text: 00938ea236714676b74db761f501fc0c
-    emails/sso_sign_in_hint_email_text_unavailable: 97a59e235f0b3c212fa00d3950aaa402
+    emails/sso_sign_in_hint_email_text: 6c6f46b9f05c1a6fab5a2e5a458df1d0
+    emails/sso_sign_in_hint_email_text_unavailable: ffe4541474a5952561e025c69c549dd4
     emails/survey_response_finished_email_congrats: 4cc39698d6a16f68cf7d9db902c5978e
     emails/survey_response_finished_email_dont_want_notifications: 749171800180682839896dc04a53ca10
     emails/survey_response_finished_email_hey: 20c5157a424f7d49ceeb27e6fb13d194

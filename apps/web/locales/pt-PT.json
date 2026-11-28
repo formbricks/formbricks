@@ -26,7 +26,7 @@
       "back_to_login": "Voltar ao início de sessão",
       "email-sent": {
         "heading": "Pedido de redefinição de palavra-passe efetuado com sucesso",
-        "sso_hint": "Costumas iniciar sessão com o Google, a Microsoft ou outro fornecedor de início de sessão único (SSO)? Então não tens nenhuma palavra-passe para repor. Em vez disso, inicia sessão com esse fornecedor.",
+        "sso_hint": "Se inicias sessão com o Google, a Microsoft ou outro fornecedor de início de sessão único, o email que enviámos explica-te como iniciar sessão.",
         "text": "Se existir uma conta com este email, receberás instruções para redefinir a palavra-passe em breve."
       },
       "reset": {
@@ -87,6 +87,7 @@
       "oauth_second_factor_unavailable_title": "Não é possível concluir aqui o início de sessão com dois fatores",
       "oauth_signup_not_allowed_description": "O teu fornecedor de identidade autenticou-te, mas esta instância do Formbricks não está configurada para criar novas contas desta forma. Pede a um administrador para te convidar e tenta novamente.",
       "oauth_signup_not_allowed_title": "Não conseguimos criar a tua conta",
+      "sso_sign_in_required": "A tua conta utiliza início de sessão único. Inicia sessão com {providers}.",
       "use_a_backup_code": "Usa um código de backup"
     },
     "oauth": {
@@ -902,8 +903,8 @@
     "sso_sign_in_hint_email_heading": "Inicia sessão com o início de sessão único",
     "sso_sign_in_hint_email_no_access": "Se já não consegues iniciar sessão desta forma, contacta o teu administrador.",
     "sso_sign_in_hint_email_subject": "Como iniciar sessão na tua conta Formbricks",
-    "sso_sign_in_hint_email_text": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta não utiliza palavra-passe, por isso não há nada para repor. Inicias sessão com:",
-    "sso_sign_in_hint_email_text_unavailable": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta não utiliza palavra-passe: o início de sessão é feito através de início de sessão único (SSO), que neste momento não está disponível nesta instância do Formbricks. Contacta o teu administrador para voltares a ter acesso.",
+    "sso_sign_in_hint_email_text": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta utiliza início de sessão único (SSO) em vez de uma palavra-passe, por isso não existe nenhum link de reposição. Inicias sessão com:",
+    "sso_sign_in_hint_email_text_unavailable": "Recebemos um pedido para repor a palavra-passe da tua conta Formbricks. A tua conta inicia sessão através de início de sessão único (SSO), que neste momento não está disponível nesta instância do Formbricks, e o início de sessão com palavra-passe está desativado. Contacta o teu administrador para voltares a ter acesso.",
     "survey_response_finished_email_congrats": "Parabéns, recebeste uma nova resposta ao teu inquérito! Alguém acabou de completar o teu inquérito: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Não quer receber estas notificações?",
     "survey_response_finished_email_hey": "Olá 👋",

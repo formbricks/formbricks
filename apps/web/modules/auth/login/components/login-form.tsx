@@ -14,6 +14,7 @@ import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getOAuthErrorVariant } from "@/modules/auth/lib/oauth-error";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
+import { getSsoSignInRequiredProviderNames } from "@/modules/ee/sso/lib/sso-sign-in-required";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -86,7 +87,7 @@ export const LoginForm = ({
   // Any SSO callback failure lands here as `?error=<code>`; classify it so the user is told what
   // happened instead of meeting an untouched form (ENG-2089).
   const oauthErrorVariant = getOAuthErrorVariant(oauthError);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // The `t("…")` calls are written out per variant because `scan-translations` only recognizes literal
   // keys; a key reached through a lookup table reads as unused and fails `pnpm i18n:validate`.
@@ -179,6 +180,19 @@ export const LoginForm = ({
       });
 
       if (error) {
+        // An account linked to SSO, with the right password, while its provider is offered (ENG-2590).
+        // Only a caller who knew the password gets this answer.
+        const ssoProviderNames = getSsoSignInRequiredProviderNames(error);
+        if (ssoProviderNames) {
+          toast.error(
+            t("auth.login.sso_sign_in_required", {
+              providers: new Intl.ListFormat(i18n.resolvedLanguage ?? "en-US", {
+                type: "disjunction",
+              }).format(ssoProviderNames),
+            })
+          );
+          return;
+        }
         // One message for every credential failure (ENG-670, ENG-2099). An unverified account with the
         // right password gets it too: the server answers it as a wrong password, so the screen cannot
         // tell anyone whether the address is registered. Its fresh verification link is in the inbox.

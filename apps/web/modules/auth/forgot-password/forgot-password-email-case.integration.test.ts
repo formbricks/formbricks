@@ -37,8 +37,8 @@ vi.mock("next/headers", () => ({
 /**
  * Pin the two flags the action gates on instead of inheriting them from the loaded `.env`. Both
  * default to a value that makes this suite vacuous — `PASSWORD_RESET_DISABLED` short-circuits the
- * action before the lookup, and `EMAIL_AUTH_ENABLED=false` closes the second arm of
- * `canResetPassword` — so without this the tests pass or fail on whatever the developer's env
+ * action before the lookup, and `EMAIL_AUTH_ENABLED=false` sends an SSO account the hint instead of a
+ * reset link (`chooseForgotPasswordMail`) — so without this the tests pass or fail on whatever the developer's env
  * happens to say rather than on the code.
  */
 vi.mock("@/lib/constants", async (importOriginal) => ({
@@ -72,8 +72,8 @@ beforeEach(async () => {
   vi.mocked(sendPasswordResetLinkEmail).mockResolvedValue(true);
 
   // Create the account through Better Auth itself rather than a raw Prisma insert: it is what writes
-  // the lowercased email and the credential `Account` row that `canResetPassword` gates on, and using
-  // it means the row under test is stored exactly as production stores it.
+  // the lowercased email and the credential `Account` row, and using it means the row under test is
+  // stored exactly as production stores it.
   await auth.api.signUpEmail({ body: { email: STORED_EMAIL, password: PASSWORD, name: "Alice" } });
 });
 

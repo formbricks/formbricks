@@ -225,9 +225,9 @@ describe("verificationAutoSignInAfterHandler", () => {
     expect(mocks.auditVerificationSessionWithheld).toHaveBeenCalledWith(VERIFIED_USER.id, "grant_failed");
   });
 
-  test("audits the refused session when the inactive-user gate blocks the mint", async () => {
-    // `session.create.before` (rejectInactiveUserOnSessionCreate) returns no session for a deactivated
-    // user rather than throwing, so this arrives as a falsy createSession, not an exception.
+  test("audits the refused session when a session hook returns no session", async () => {
+    // A `session.create.before` hook that refuses without throwing arrives as a falsy createSession.
+    // (`gateSessionCreate` throws for a deactivated user instead; the handler's catch logs that.)
     const ctx = buildCtx();
     sessionOf(ctx).mockResolvedValue(null);
 

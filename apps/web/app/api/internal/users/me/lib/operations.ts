@@ -122,7 +122,8 @@ export async function updateNotificationSettingOperation({
 
 /**
  * `POST /api/internal/users/me/password-resets`: email yourself a password reset link. The page signs you
- * out afterwards. Credential accounts only; an SSO account has no password to reset.
+ * out afterwards. Password accounts only: an SSO account signs in with SSO, and gets a reset link only from
+ * forgot-password, when none of its providers is offered (ENG-2590).
  */
 export async function requestPasswordResetOperation(context: TRequestContext): Promise<Response> {
   const { auditLog, requestId, instance } = context;

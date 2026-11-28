@@ -28,7 +28,7 @@ import { getActiveSessionByToken } from "@/modules/auth/lib/proxy-session";
  *
  * Better Auth serves this session from Redis secondary storage and a 5-minute signed cookie cache, so
  * neither the session record nor `result.user` reflects a session whose row was deleted, or a user who
- * was deactivated, after signing in. `rejectInactiveUserOnSessionCreate` only gates session *creation*.
+ * was deactivated, after signing in. `gateSessionCreate` only gates session *creation*.
  * Without this read a deactivated user keeps full access — server actions, v3 session routes, storage —
  * for the life of a rolling 1-day session, and a session whose row is gone (a user-delete cascade, a bare
  * `prisma.session.deleteMany()`, a restore) stays valid until its Redis TTL (ENG-3418). It is the lookup
