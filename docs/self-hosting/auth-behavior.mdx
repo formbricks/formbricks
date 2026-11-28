@@ -53,10 +53,13 @@ such as multi-factor authentication, conditional access and deprovisioning, from
 tries gets "Your account uses single sign-on. Sign in with {provider}." and a forgot-password request gets an
 email naming the provider instead of a reset link.
 
-When none of the account's providers is available, password sign-in works again, so nobody is locked out. That
-happens when the enterprise license lapses, when SAML is used without a SAML license, or when the provider is no
-longer configured. A forgot-password request then sends a reset link, also to a user who never had a password,
-so they can set one. Once a provider is available again, the account goes back to signing in with SSO.
+When Formbricks offers none of the account's providers, password sign-in works again. That happens when the
+enterprise license lapses, when SAML is used without a SAML license, or when the provider is no longer configured.
+A forgot-password request then sends a reset link, also to a user who never had a password, so they can set one.
+Once a provider is offered again, the account goes back to signing in with SSO. This fallback needs password
+sign-in and password reset left on: `EMAIL_AUTH_DISABLED=1` turns off both, and `PASSWORD_RESET_DISABLED=1` stops
+the reset link. An outage at your identity provider doesn't trigger it, because Formbricks still offers the
+provider.
 
 Accounts that signed up with email and password and are not linked to SSO are not affected. To turn off password
 sign-in for every account, set `EMAIL_AUTH_DISABLED=1`.

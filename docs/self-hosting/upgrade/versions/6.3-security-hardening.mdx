@@ -47,9 +47,13 @@ identity provider's multi-factor authentication, conditional access and deprovis
 - **Users who sign in that way today get "Your account uses single sign-on. Sign in with {provider}."** Tell them to
   use the SSO button. Nothing changes for accounts that signed up with email and password and aren't linked to SSO.
 - **Forgot password sends these accounts an email naming their provider** instead of a reset link.
-- **Nobody is locked out when SSO stops working.** While none of an account's providers is available (license
-  lapsed, SAML without a SAML license, provider no longer configured) its password works again, and forgot password
-  sends a reset link, also to users who never had a password.
+- **The password comes back when Formbricks stops offering the provider.** While none of an account's providers is
+  offered (license lapsed, SAML without a SAML license, provider no longer configured) its password works again, and
+  forgot password sends a reset link, also to users who never had a password. This needs password sign-in and
+  password reset left on: neither happens with `EMAIL_AUTH_DISABLED=1`, and no reset link goes out with
+  `PASSWORD_RESET_DISABLED=1`.
+- **An outage at your identity provider is not covered.** Formbricks still offers the provider, so its users can't
+  sign in until the provider is back.
 
 There is nothing to configure. See [Authentication Behavior](/self-hosting/auth-behavior#password-sign-in-for-sso-accounts).
 
